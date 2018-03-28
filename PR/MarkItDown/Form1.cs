@@ -69,6 +69,8 @@ namespace MarkItDown
 
             Rectangle window = GetMarkedWindow();
 
+            if (window.Size.Width == 0 || window.Size.Height == 0) return;
+
             if (e.Button == MouseButtons.Left)
             {
                 Bitmap bm = GetFormImageWithoutBorders(this, window);
@@ -132,7 +134,6 @@ namespace MarkItDown
         }
 
         private bool _scrModeOn = false;
-        private Timer _timer;
 
         private void Form1_Load(object sender, EventArgs e)
         {
@@ -144,28 +145,33 @@ namespace MarkItDown
             {
                 if (ke.KeyChar == 's')
                 {
-                    _scrModeOn = !_scrModeOn;
-                    if (_scrModeOn)
-                    {
-                        _timer.Start();
-                    }
-                    else
-                    {
-                        _timer.Stop();
-                        Text = "[Captured]";
-                    }
+                    Capture(true);
                 }
             };
 
-            _timer = new Timer();
-            //_timer.Enabled = true;
-            _timer.Interval = 500;
-            _timer.Tick += (s, ev) =>
-            {
-                string str = ScreenShot.GetTitleOfForegroundWindow().Replace("[Capturing] ", "");
+            this.LostFocus += (s, ev) => Capture(false);
+        }
 
-                Text = "[Capturing] " + str;
-            };
+        private void Capture(bool set)
+        {
+            if (_scrModeOn == set) return;
+
+            _scrModeOn = set;
+            if (_scrModeOn)
+            {
+                Text = "[Capturing]";
+            }
+            else
+            {
+                using (var bmp = ScreenShot.Capture())
+                {
+                    bmp.Save(Common.CaptureImg);
+                    _myImg.Dispose();
+                }
+
+                _myImg = Image.FromFile(Common.CaptureImg);
+                Text = RootFolder;
+            }
         }
     }
 }
