@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using Common;
 
 namespace scr
 {
@@ -25,10 +23,8 @@ namespace scr
             return sb.ToString();
         }
 
-        public static Bitmap Capture(ScreenCaptureMode screenCaptureMode = ScreenCaptureMode.Window)
+        public static Bitmap Capture(out Rectangle bounds, ScreenCaptureMode screenCaptureMode = ScreenCaptureMode.Window)
         {
-            Rectangle bounds;
-
             if (screenCaptureMode == ScreenCaptureMode.Screen)
             {
                 bounds = Screen.GetBounds(Point.Empty);
@@ -59,14 +55,5 @@ namespace scr
 
         [DllImport("user32.dll")]
         private static extern IntPtr GetWindowRect(IntPtr hWnd, ref Rect rect);
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct Rect
-        {
-            public int Left;
-            public int Top;
-            public int Right;
-            public int Bottom;
-        }
     }
 }

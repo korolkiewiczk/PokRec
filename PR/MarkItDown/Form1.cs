@@ -163,7 +163,8 @@ namespace MarkItDown
             }
             else
             {
-                using (var bmp = ScreenShot.Capture())
+                Rectangle bounds;
+                using (var bmp = ScreenShot.Capture(out bounds))
                 {
                     bmp.Save(Common.CaptureImg);
                     _myImg.Dispose();
