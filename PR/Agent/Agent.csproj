@@ -90,6 +90,10 @@
       <Project>{77f9d67b-adad-48e7-89c5-79ddc70b7d62}</Project>
       <Name>Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\MarkItDown\MarkItDown.csproj">
+      <Project>{1bb55c30-5cdf-4fb1-a6c7-184b6abf0e63}</Project>
+      <Name>MarkItDown</Name>
+    </ProjectReference>
     <ProjectReference Include="..\scr\scr.csproj">
       <Project>{6d66225a-9537-4a7c-8f67-86f4ff6aa848}</Project>
       <Name>scr</Name>
