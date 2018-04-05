@@ -138,7 +138,7 @@ namespace MarkItDown
         private void Form1_Load(object sender, EventArgs e)
         {
             string[] args = Environment.GetCommandLineArgs();
-            _myImg = Image.FromFile(args[0] ?? @"recon\board\board4.png");
+            _myImg = Image.FromFile(args.Length>1? args[1] : @"recon\board\board4.png");
             DoubleBuffered = true;
             Text = RootFolder;
 
@@ -165,14 +165,20 @@ namespace MarkItDown
             else
             {
                 Rectangle bounds;
-                using (var bmp = ScreenShot.Capture(out bounds))
+                string title;
+                using (var bmp = ScreenShot.Capture(out bounds, out title))
                 {
+                    if (bmp == null)
+                    {
+                        Text = "Not captured";
+                        return;
+                    }
                     bmp.Save(Common.CaptureImg);
                     _myImg.Dispose();
                 }
 
                 _myImg = Image.FromFile(Common.CaptureImg);
-                Text = RootFolder;
+                Text = $"{RootFolder} - {title}";
             }
         }
     }

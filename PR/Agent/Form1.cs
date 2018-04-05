@@ -18,8 +18,9 @@ namespace Agent
     public partial class Form1 : Form
     {
         private const string ProjectsDir = "projects";
+        private const string BoardsDir = "boards";
         private Project _currentProject;
-        private bool _scrModeOn;
+        private bool _capture;
 
         public Form1()
         {
@@ -30,56 +31,106 @@ namespace Agent
         {
             var result = Interaction.InputBox("Enter project name");
             if (string.IsNullOrEmpty(result)) return;
+
             _currentProject = new Project()
             {
+                Path = ProjectDirectory,
                 Name = result,
                 Boards = new Boards()
             };
             labelCurrentPrj.Text = result;
-            new SaveLoad(ProjectsDir).SaveProject(_currentProject);
-            //File.WriteAllText(_currentProject.Name+".proj"); JsonConvert.SerializeObject(_currentProject);
+            SaveProject();
+            buttonAddBoard.Enabled = true;
+            buttonBoards.Enabled = true;
         }
 
         private void buttonLoadPrj_Click(object sender, EventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.InitialDirectory = Directory.GetCurrentDirectory();
+            openFileDialog.InitialDirectory = ProjectDirectory;
             openFileDialog.Filter = $@"*{SaveLoad.ProjExtension}|*{SaveLoad.ProjExtension}";
             openFileDialog.ShowDialog();
             if (openFileDialog.FileName != "")
             {
-                _currentProject = new SaveLoad(ProjectsDir).LoadProject(openFileDialog.FileName);
+                _currentProject = ProjectStore(openFileDialog.InitialDirectory).LoadProject(openFileDialog.FileName);
                 labelCurrentPrj.Text = _currentProject.Name;
+                buttonAddBoard.Enabled = true;
+                buttonBoards.Enabled = true;
             }
         }
 
+        private void SaveProject()
+        {
+            ProjectStore(_currentProject.Path).SaveProject(_currentProject);
+        }
+
+        private static string ProjectDirectory => Path.Combine(Directory.GetCurrentDirectory(), ProjectsDir);
+
         private void buttonAddBoard_Click(object sender, EventArgs e)
         {
-            labelMessage.Text = "Select window";
-            this.LostFocus += Capture;
+            textBoxMessage.Text = "Select window";
+            _capture = true;
         }
 
         private void Capture(object sender, EventArgs args)
         {
+            if (!_capture) return;
             Rectangle bounds;
-            using (var bmp = ScreenShot.Capture(out bounds))
+            string title;
+            using (var bmp = ScreenShot.Capture(out bounds, out title))
             {
-                var boardNameFromBounds = BoardNameFromBounds(bounds);
-                bmp.Save(boardNameFromBounds);
+                if (bmp == null) return;
 
-                var board = new Board();
+                var result = Interaction.InputBox("Enter board name");
+                if (string.IsNullOrEmpty(result)) return;
+                var boardNameFromBounds = BoardNameFromBounds(bounds, result);
+                var boardsDir = Path.Combine(_currentProject.Path, BoardsDir);
+                var boardPath = Path.Combine(boardsDir, boardNameFromBounds);
+                if (!Directory.Exists(boardsDir))
+                {
+                    Directory.CreateDirectory(boardsDir);
+                }
+
+                bmp.Save(boardPath);
+
+                var board = new Board
+                {
+                    Name = boardPath,
+                    Rect = bounds
+                };
+
                 _currentProject.Boards.Add(board);
 
-                labelMessage.Text = "Captured " + boardNameFromBounds;
+                SaveProject();
+
+                textBoxMessage.Text = $"Captured window - {title}";
             }
 
-            this.LostFocus -= Capture;
+            _capture = false;
         }
 
-        private string BoardNameFromBounds(Rectangle bounds)
+        private string BoardNameFromBounds(Rectangle bounds, string name)
         {
-            return "board";
-            //projects/prj1.proj - Name, Boards
+            return $"board{bounds.Width}X{bounds.Height} {name}.png";
+        }
+
+        private static SaveLoad ProjectStore(string path) => new SaveLoad(path);
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            Deactivate += Capture;
+            buttonAddBoard.Enabled = false;
+            buttonBoards.Enabled = false;
+        }
+
+        private void buttonBoards_Click(object sender, EventArgs e)
+        {
+            new ManageBoards(ProjectDirectory, _currentProject.Name).ShowDialog();
+        }
+
+        private void buttonExit_Click(object sender, EventArgs e)
+        {
+            Close();
         }
     }
 }

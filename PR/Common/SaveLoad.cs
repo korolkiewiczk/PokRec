@@ -30,6 +30,7 @@ namespace Common
 
         public Project LoadProject(string fileName)
         {
+            if (!Path.HasExtension(fileName)) fileName += ProjExtension;
             string path = Path.Combine(_path, fileName);
             return JsonConvert.DeserializeObject<Project>(File.ReadAllText(path));
         }

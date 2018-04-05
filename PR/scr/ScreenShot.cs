@@ -23,7 +23,7 @@ namespace scr
             return sb.ToString();
         }
 
-        public static Bitmap Capture(out Rectangle bounds, ScreenCaptureMode screenCaptureMode = ScreenCaptureMode.Window)
+        public static Bitmap Capture(out Rectangle bounds, out string title, ScreenCaptureMode screenCaptureMode = ScreenCaptureMode.Window)
         {
             if (screenCaptureMode == ScreenCaptureMode.Screen)
             {
@@ -35,6 +35,18 @@ namespace scr
                 var rect = new Rect();
                 GetWindowRect(foregroundWindowsHandle, ref rect);
                 bounds = new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
+            }
+
+            title = GetTitleOfForegroundWindow();
+
+            return Capture(bounds);
+        }
+
+        public static Bitmap Capture(Rectangle bounds)
+        {
+            if (bounds.Width == 0 || bounds.Height == 0)
+            {
+                return null;
             }
 
             var result = new Bitmap(bounds.Width, bounds.Height);
