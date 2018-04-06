@@ -33,11 +33,12 @@
             this.listBox1 = new System.Windows.Forms.ListBox();
             this.btnShow = new System.Windows.Forms.Button();
             this.btnRefresh = new System.Windows.Forms.Button();
+            this.btnSave = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnDelete
             // 
-            this.btnDelete.Location = new System.Drawing.Point(198, 100);
+            this.btnDelete.Location = new System.Drawing.Point(252, 100);
             this.btnDelete.Name = "btnDelete";
             this.btnDelete.Size = new System.Drawing.Size(36, 23);
             this.btnDelete.TabIndex = 1;
@@ -47,7 +48,7 @@
             // 
             // btnEdit
             // 
-            this.btnEdit.Location = new System.Drawing.Point(198, 71);
+            this.btnEdit.Location = new System.Drawing.Point(252, 71);
             this.btnEdit.Name = "btnEdit";
             this.btnEdit.Size = new System.Drawing.Size(36, 23);
             this.btnEdit.TabIndex = 2;
@@ -60,12 +61,12 @@
             this.listBox1.FormattingEnabled = true;
             this.listBox1.Location = new System.Drawing.Point(13, 13);
             this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(179, 186);
+            this.listBox1.Size = new System.Drawing.Size(233, 186);
             this.listBox1.TabIndex = 3;
             // 
             // btnShow
             // 
-            this.btnShow.Location = new System.Drawing.Point(198, 13);
+            this.btnShow.Location = new System.Drawing.Point(252, 13);
             this.btnShow.Name = "btnShow";
             this.btnShow.Size = new System.Drawing.Size(36, 23);
             this.btnShow.TabIndex = 4;
@@ -75,7 +76,7 @@
             // 
             // btnRefresh
             // 
-            this.btnRefresh.Location = new System.Drawing.Point(198, 42);
+            this.btnRefresh.Location = new System.Drawing.Point(252, 42);
             this.btnRefresh.Name = "btnRefresh";
             this.btnRefresh.Size = new System.Drawing.Size(36, 23);
             this.btnRefresh.TabIndex = 5;
@@ -83,16 +84,28 @@
             this.btnRefresh.UseVisualStyleBackColor = true;
             this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
             // 
+            // btnSave
+            // 
+            this.btnSave.Location = new System.Drawing.Point(252, 176);
+            this.btnSave.Name = "btnSave";
+            this.btnSave.Size = new System.Drawing.Size(36, 23);
+            this.btnSave.TabIndex = 6;
+            this.btnSave.Text = "SV";
+            this.btnSave.UseVisualStyleBackColor = true;
+            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
+            // 
             // ManageBoards
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(244, 216);
+            this.ClientSize = new System.Drawing.Size(295, 216);
+            this.Controls.Add(this.btnSave);
             this.Controls.Add(this.btnRefresh);
             this.Controls.Add(this.btnShow);
             this.Controls.Add(this.listBox1);
             this.Controls.Add(this.btnEdit);
             this.Controls.Add(this.btnDelete);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Name = "ManageBoards";
             this.Text = "ManageBoards";
             this.Load += new System.EventHandler(this.ManageBoards_Load);
@@ -106,5 +119,6 @@
         private System.Windows.Forms.ListBox listBox1;
         private System.Windows.Forms.Button btnShow;
         private System.Windows.Forms.Button btnRefresh;
+        private System.Windows.Forms.Button btnSave;
     }
 }

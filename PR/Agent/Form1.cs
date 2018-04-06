@@ -42,6 +42,9 @@ namespace Agent
             SaveProject();
             buttonAddBoard.Enabled = true;
             buttonBoards.Enabled = true;
+            tabPlay.Enabled = true;
+
+            textBoxMessage.Text = $"Created project {_currentProject.Name}";
         }
 
         private void buttonLoadPrj_Click(object sender, EventArgs e)
@@ -56,6 +59,8 @@ namespace Agent
                 labelCurrentPrj.Text = _currentProject.Name;
                 buttonAddBoard.Enabled = true;
                 buttonBoards.Enabled = true;
+                tabPlay.Enabled = true;
+                textBoxMessage.Text = $"Loaded project {_currentProject.Name}";
             }
         }
 
@@ -75,6 +80,7 @@ namespace Agent
         private void Capture(object sender, EventArgs args)
         {
             if (!_capture) return;
+
             Rectangle bounds;
             string title;
             using (var bmp = ScreenShot.Capture(out bounds, out title))
@@ -82,7 +88,13 @@ namespace Agent
                 if (bmp == null) return;
 
                 var result = Interaction.InputBox("Enter board name");
-                if (string.IsNullOrEmpty(result)) return;
+                if (string.IsNullOrEmpty(result))
+                {
+                    _capture = false;
+                    textBoxMessage.Text = "Not captured. Try again.";
+                    return;
+                }
+
                 var boardNameFromBounds = BoardNameFromBounds(bounds, result);
                 var boardsDir = Path.Combine(_currentProject.Path, BoardsDir);
                 var boardPath = Path.Combine(boardsDir, boardNameFromBounds);
@@ -121,6 +133,7 @@ namespace Agent
             Deactivate += Capture;
             buttonAddBoard.Enabled = false;
             buttonBoards.Enabled = false;
+            tabPlay.Enabled = false;
         }
 
         private void buttonBoards_Click(object sender, EventArgs e)
@@ -131,6 +144,27 @@ namespace Agent
         private void buttonExit_Click(object sender, EventArgs e)
         {
             Close();
+        }
+
+        private void buttonStart_Click(object sender, EventArgs e)
+        {
+            timerGame.Interval = (int) numericInterval.Value;
+            timerGame.Start();
+        }
+
+        private void buttonStop_Click(object sender, EventArgs e)
+        {
+            timerGame.Stop();
+        }
+
+        private void timerGame_Tick(object sender, EventArgs e)
+        {
+            textBoxMessage.Text += ".";
+        }
+
+        private void numericInterval_ValueChanged(object sender, EventArgs e)
+        {
+            timerGame.Interval = (int) numericInterval.Value;
         }
     }
 }

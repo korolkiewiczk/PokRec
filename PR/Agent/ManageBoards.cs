@@ -87,5 +87,10 @@ namespace Agent
         }
 
         private Board SelectedBoard => listBox1.SelectedItem as Board;
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            new SaveLoad(_project.Path).SaveProject(_project);
+        }
     }
 }
