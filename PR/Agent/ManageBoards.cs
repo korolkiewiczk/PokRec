@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
+using System.IO;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Common;
 
@@ -28,7 +23,7 @@ namespace Agent
 
         private void ManageBoards_Load(object sender, EventArgs e)
         {
-            _project = new SaveLoad(_projectDirectory).LoadProject(_name);
+            _project = SaveLoad.LoadProject(Path.Combine(_projectDirectory, _name));
             RefreshListbox();
         }
 
@@ -54,11 +49,6 @@ namespace Agent
             ReleaseDC(IntPtr.Zero, desktopPtr);
         }
 
-        [DllImport("User32.dll")]
-        public static extern IntPtr GetDC(IntPtr hwnd);
-        [DllImport("User32.dll")]
-        public static extern void ReleaseDC(IntPtr hwnd, IntPtr dc);
-
         private void btnDelete_Click(object sender, EventArgs e)
         {
             _project.Boards.Remove(SelectedBoard);
@@ -73,14 +63,14 @@ namespace Agent
 
         private void MarkSelectedBoard()
         {
-            Process.Start("MarkItDown.exe", $@"""{SelectedBoard.Name}""");
+            Process.Start("MarkItDown.exe", $@"""{SaveLoad.GetBoardPath(_project, SelectedBoard)}""");
         }
 
         private void btnRefresh_Click(object sender, EventArgs e)
         {
             using (var bmp = scr.ScreenShot.Capture(SelectedBoard.Rect))
             {
-                bmp.Save(SelectedBoard.Name);
+                bmp.Save(SaveLoad.GetBoardPath(_project,SelectedBoard));
             }
 
             MarkSelectedBoard();
@@ -90,7 +80,13 @@ namespace Agent
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            new SaveLoad(_project.Path).SaveProject(_project);
+            SaveLoad.SaveProject(_project);
         }
+
+        [DllImport("User32.dll")]
+        public static extern IntPtr GetDC(IntPtr hwnd);
+        [DllImport("User32.dll")]
+        public static extern void ReleaseDC(IntPtr hwnd, IntPtr dc);
+
     }
 }

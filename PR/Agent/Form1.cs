@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Agent.Properties;
 using Common;
 using Microsoft.VisualBasic;
 using Newtonsoft.Json;
@@ -32,7 +33,7 @@ namespace Agent
             var result = Interaction.InputBox("Enter project name");
             if (string.IsNullOrEmpty(result)) return;
 
-            _currentProject = new Project()
+            _currentProject = new Project
             {
                 Path = ProjectDirectory,
                 Name = result,
@@ -55,7 +56,7 @@ namespace Agent
             openFileDialog.ShowDialog();
             if (openFileDialog.FileName != "")
             {
-                _currentProject = ProjectStore(openFileDialog.InitialDirectory).LoadProject(openFileDialog.FileName);
+                _currentProject = SaveLoad.LoadProject(Path.Combine(openFileDialog.InitialDirectory, openFileDialog.FileName));
                 labelCurrentPrj.Text = _currentProject.Name;
                 buttonAddBoard.Enabled = true;
                 buttonBoards.Enabled = true;
@@ -66,7 +67,7 @@ namespace Agent
 
         private void SaveProject()
         {
-            ProjectStore(_currentProject.Path).SaveProject(_currentProject);
+            SaveLoad.SaveProject(_currentProject);
         }
 
         private static string ProjectDirectory => Path.Combine(Directory.GetCurrentDirectory(), ProjectsDir);
@@ -95,21 +96,13 @@ namespace Agent
                     return;
                 }
 
-                var boardNameFromBounds = BoardNameFromBounds(bounds, result);
-                var boardsDir = Path.Combine(_currentProject.Path, BoardsDir);
-                var boardPath = Path.Combine(boardsDir, boardNameFromBounds);
-                if (!Directory.Exists(boardsDir))
-                {
-                    Directory.CreateDirectory(boardsDir);
-                }
-
-                bmp.Save(boardPath);
-
                 var board = new Board
                 {
-                    Name = boardPath,
+                    Name = result,
                     Rect = bounds
                 };
+
+                bmp.Save(SaveLoad.GetBoardPath(_currentProject, board));
 
                 _currentProject.Boards.Add(board);
 
@@ -121,19 +114,15 @@ namespace Agent
             _capture = false;
         }
 
-        private string BoardNameFromBounds(Rectangle bounds, string name)
-        {
-            return $"board{bounds.Width}X{bounds.Height} {name}.png";
-        }
-
-        private static SaveLoad ProjectStore(string path) => new SaveLoad(path);
-
         private void Form1_Load(object sender, EventArgs e)
         {
             Deactivate += Capture;
             buttonAddBoard.Enabled = false;
             buttonBoards.Enabled = false;
             tabPlay.Enabled = false;
+
+            numericSavedImagesPerBoard.Value = Settings.Default.SavedImages;
+            numericInterval.Value = Settings.Default.UpdateInterval;
         }
 
         private void buttonBoards_Click(object sender, EventArgs e)
@@ -165,6 +154,14 @@ namespace Agent
         private void numericInterval_ValueChanged(object sender, EventArgs e)
         {
             timerGame.Interval = (int) numericInterval.Value;
+            Settings.Default.UpdateInterval = (int) numericInterval.Value;
+            Settings.Default.Save();
+        }
+
+        private void numericSavedImagesPerBoard_ValueChanged(object sender, EventArgs e)
+        {
+            Settings.Default.SavedImages = (int)numericSavedImagesPerBoard.Value;
+            Settings.Default.Save();
         }
     }
 }

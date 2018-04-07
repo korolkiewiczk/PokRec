@@ -39,15 +39,15 @@
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.pageDesign = new System.Windows.Forms.TabPage();
             this.tabPlay = new System.Windows.Forms.TabPage();
-            this.buttonStart = new System.Windows.Forms.Button();
-            this.buttonStop = new System.Windows.Forms.Button();
-            this.buttonShowGame = new System.Windows.Forms.Button();
-            this.numericInterval = new System.Windows.Forms.NumericUpDown();
             this.label1 = new System.Windows.Forms.Label();
-            this.timerGame = new System.Windows.Forms.Timer(this.components);
+            this.numericInterval = new System.Windows.Forms.NumericUpDown();
+            this.buttonShowGame = new System.Windows.Forms.Button();
+            this.buttonStop = new System.Windows.Forms.Button();
+            this.buttonStart = new System.Windows.Forms.Button();
             this.tabSettings = new System.Windows.Forms.TabPage();
-            this.numericSavedImagesPerBoard = new System.Windows.Forms.NumericUpDown();
             this.label2 = new System.Windows.Forms.Label();
+            this.numericSavedImagesPerBoard = new System.Windows.Forms.NumericUpDown();
+            this.timerGame = new System.Windows.Forms.Timer(this.components);
             this.tabControl1.SuspendLayout();
             this.pageDesign.SuspendLayout();
             this.tabPlay.SuspendLayout();
@@ -167,34 +167,14 @@
             this.tabPlay.TabIndex = 1;
             this.tabPlay.Text = "Play";
             // 
-            // buttonStart
+            // label1
             // 
-            this.buttonStart.Location = new System.Drawing.Point(4, 11);
-            this.buttonStart.Name = "buttonStart";
-            this.buttonStart.Size = new System.Drawing.Size(140, 40);
-            this.buttonStart.TabIndex = 1;
-            this.buttonStart.Text = "Start";
-            this.buttonStart.UseVisualStyleBackColor = true;
-            this.buttonStart.Click += new System.EventHandler(this.buttonStart_Click);
-            // 
-            // buttonStop
-            // 
-            this.buttonStop.Location = new System.Drawing.Point(3, 161);
-            this.buttonStop.Name = "buttonStop";
-            this.buttonStop.Size = new System.Drawing.Size(140, 40);
-            this.buttonStop.TabIndex = 2;
-            this.buttonStop.Text = "Stop";
-            this.buttonStop.UseVisualStyleBackColor = true;
-            this.buttonStop.Click += new System.EventHandler(this.buttonStop_Click);
-            // 
-            // buttonShowGame
-            // 
-            this.buttonShowGame.Location = new System.Drawing.Point(4, 57);
-            this.buttonShowGame.Name = "buttonShowGame";
-            this.buttonShowGame.Size = new System.Drawing.Size(140, 40);
-            this.buttonShowGame.TabIndex = 3;
-            this.buttonShowGame.Text = "Show game";
-            this.buttonShowGame.UseVisualStyleBackColor = true;
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(129, 137);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(20, 13);
+            this.label1.TabIndex = 5;
+            this.label1.Text = "ms";
             // 
             // numericInterval
             // 
@@ -224,18 +204,34 @@
             0});
             this.numericInterval.ValueChanged += new System.EventHandler(this.numericInterval_ValueChanged);
             // 
-            // label1
+            // buttonShowGame
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(129, 137);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(20, 13);
-            this.label1.TabIndex = 5;
-            this.label1.Text = "ms";
+            this.buttonShowGame.Location = new System.Drawing.Point(4, 55);
+            this.buttonShowGame.Name = "buttonShowGame";
+            this.buttonShowGame.Size = new System.Drawing.Size(140, 40);
+            this.buttonShowGame.TabIndex = 3;
+            this.buttonShowGame.Text = "Show game";
+            this.buttonShowGame.UseVisualStyleBackColor = true;
             // 
-            // timerGame
+            // buttonStop
             // 
-            this.timerGame.Tick += new System.EventHandler(this.timerGame_Tick);
+            this.buttonStop.Location = new System.Drawing.Point(3, 161);
+            this.buttonStop.Name = "buttonStop";
+            this.buttonStop.Size = new System.Drawing.Size(140, 40);
+            this.buttonStop.TabIndex = 2;
+            this.buttonStop.Text = "Stop";
+            this.buttonStop.UseVisualStyleBackColor = true;
+            this.buttonStop.Click += new System.EventHandler(this.buttonStop_Click);
+            // 
+            // buttonStart
+            // 
+            this.buttonStart.Location = new System.Drawing.Point(4, 11);
+            this.buttonStart.Name = "buttonStart";
+            this.buttonStart.Size = new System.Drawing.Size(140, 40);
+            this.buttonStart.TabIndex = 1;
+            this.buttonStart.Text = "Start";
+            this.buttonStart.UseVisualStyleBackColor = true;
+            this.buttonStart.Click += new System.EventHandler(this.buttonStart_Click);
             // 
             // tabSettings
             // 
@@ -248,11 +244,20 @@
             this.tabSettings.TabIndex = 2;
             this.tabSettings.Text = "Settings";
             // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(5, 13);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(122, 13);
+            this.label2.TabIndex = 1;
+            this.label2.Text = "Saved images per board";
+            // 
             // numericSavedImagesPerBoard
             // 
             this.numericSavedImagesPerBoard.Location = new System.Drawing.Point(8, 29);
             this.numericSavedImagesPerBoard.Maximum = new decimal(new int[] {
-            500,
+            1000,
             0,
             0,
             0});
@@ -265,19 +270,15 @@
             this.numericSavedImagesPerBoard.Size = new System.Drawing.Size(58, 20);
             this.numericSavedImagesPerBoard.TabIndex = 0;
             this.numericSavedImagesPerBoard.Value = new decimal(new int[] {
-            100,
+            500,
             0,
             0,
             0});
+            this.numericSavedImagesPerBoard.ValueChanged += new System.EventHandler(this.numericSavedImagesPerBoard_ValueChanged);
             // 
-            // label2
+            // timerGame
             // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(5, 13);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(122, 13);
-            this.label2.TabIndex = 1;
-            this.label2.Text = "Saved images per board";
+            this.timerGame.Tick += new System.EventHandler(this.timerGame_Tick);
             // 
             // Form1
             // 

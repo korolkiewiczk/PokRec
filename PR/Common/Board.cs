@@ -9,7 +9,9 @@ namespace Common
 
         public override string ToString()
         {
-            return Rect.ToString();
+            return Id;
         }
+
+        public string Id => $"{Rect.Width}X{Rect.Height}_{Name}";
     }
 }

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.IO;
 using Newtonsoft.Json;
 
 namespace Common
@@ -11,29 +6,34 @@ namespace Common
     public class SaveLoad
     {
         public const string ProjExtension = ".proj";
-        private readonly string _path;
+        public const string BoardsDir = "boards";
 
-        public SaveLoad(string path)
+        public static void SaveProject(Project prj)
         {
-            _path = path;
-            if (!Directory.Exists(_path))
-            {
-                Directory.CreateDirectory(_path);
-            }
-        }
-
-        public void SaveProject(Project prj)
-        {
-            string path = Path.Combine(_path, prj.Name + ProjExtension);
+            CreateDirIfNotExists(prj.Path);
+            string path = Path.Combine(prj.Path, prj.Name + ProjExtension);
             File.WriteAllText(path, JsonConvert.SerializeObject(prj));
         }
 
-        public Project LoadProject(string fileName)
+        public static Project LoadProject(string filePath)
         {
-            if (!Path.HasExtension(fileName)) fileName += ProjExtension;
-            string path = Path.Combine(_path, fileName);
-            return JsonConvert.DeserializeObject<Project>(File.ReadAllText(path));
+            if (!Path.HasExtension(filePath)) filePath += ProjExtension;
+            return JsonConvert.DeserializeObject<Project>(File.ReadAllText(filePath));
         }
-    
+
+        public static string GetBoardPath(Project prj, Board board)
+        {
+            string path = Path.Combine(prj.Path, prj.Name, BoardsDir, board.Id);
+            CreateDirIfNotExists(path);
+            return Path.Combine(path, "board.png");
+        }
+
+        private static void CreateDirIfNotExists(string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+        }
     }
 }
