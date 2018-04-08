@@ -48,6 +48,7 @@
             this.label2 = new System.Windows.Forms.Label();
             this.numericSavedImagesPerBoard = new System.Windows.Forms.NumericUpDown();
             this.timerGame = new System.Windows.Forms.Timer(this.components);
+            this.buttonTakeShot = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.pageDesign.SuspendLayout();
             this.tabPlay.SuspendLayout();
@@ -155,6 +156,7 @@
             // tabPlay
             // 
             this.tabPlay.BackColor = System.Drawing.Color.Transparent;
+            this.tabPlay.Controls.Add(this.buttonTakeShot);
             this.tabPlay.Controls.Add(this.label1);
             this.tabPlay.Controls.Add(this.numericInterval);
             this.tabPlay.Controls.Add(this.buttonShowGame);
@@ -179,18 +181,18 @@
             // numericInterval
             // 
             this.numericInterval.Increment = new decimal(new int[] {
-            10,
+            100,
             0,
             0,
             0});
-            this.numericInterval.Location = new System.Drawing.Point(76, 135);
+            this.numericInterval.Location = new System.Drawing.Point(76, 133);
             this.numericInterval.Maximum = new decimal(new int[] {
-            1000,
+            4000,
             0,
             0,
             0});
             this.numericInterval.Minimum = new decimal(new int[] {
-            10,
+            100,
             0,
             0,
             0});
@@ -198,7 +200,7 @@
             this.numericInterval.Size = new System.Drawing.Size(47, 20);
             this.numericInterval.TabIndex = 4;
             this.numericInterval.Value = new decimal(new int[] {
-            100,
+            1000,
             0,
             0,
             0});
@@ -270,7 +272,7 @@
             this.numericSavedImagesPerBoard.Size = new System.Drawing.Size(58, 20);
             this.numericSavedImagesPerBoard.TabIndex = 0;
             this.numericSavedImagesPerBoard.Value = new decimal(new int[] {
-            500,
+            100,
             0,
             0,
             0});
@@ -279,6 +281,16 @@
             // timerGame
             // 
             this.timerGame.Tick += new System.EventHandler(this.timerGame_Tick);
+            // 
+            // buttonTakeShot
+            // 
+            this.buttonTakeShot.Location = new System.Drawing.Point(4, 132);
+            this.buttonTakeShot.Name = "buttonTakeShot";
+            this.buttonTakeShot.Size = new System.Drawing.Size(63, 23);
+            this.buttonTakeShot.TabIndex = 6;
+            this.buttonTakeShot.Text = "Take shot";
+            this.buttonTakeShot.UseVisualStyleBackColor = true;
+            this.buttonTakeShot.Click += new System.EventHandler(this.buttonTakeShot_Click);
             // 
             // Form1
             // 
@@ -328,6 +340,7 @@
         private System.Windows.Forms.TabPage tabSettings;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.NumericUpDown numericSavedImagesPerBoard;
+        private System.Windows.Forms.Button buttonTakeShot;
     }
 }
 

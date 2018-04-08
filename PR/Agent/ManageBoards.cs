@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Common;
@@ -24,6 +25,12 @@ namespace Agent
         private void ManageBoards_Load(object sender, EventArgs e)
         {
             _project = SaveLoad.LoadProject(Path.Combine(_projectDirectory, _name));
+            if (!_project.Boards.Any())
+            {
+                MessageBox.Show("First add at least one board");
+                Close();
+                return;
+            }
             RefreshListbox();
         }
 
@@ -37,7 +44,6 @@ namespace Agent
 
         private void btnShow_Click(object sender, EventArgs e)
         {
-
             IntPtr desktopPtr = GetDC(IntPtr.Zero);
             Graphics g = Graphics.FromHdc(desktopPtr);
 
@@ -76,17 +82,38 @@ namespace Agent
             MarkSelectedBoard();
         }
 
-        private Board SelectedBoard => listBox1.SelectedItem as Board;
+        private Board SelectedBoard => (Board) (listBox1.SelectedItem as Board ?? listBox1.Items[0]);
 
         private void btnSave_Click(object sender, EventArgs e)
         {
             SaveLoad.SaveProject(_project);
         }
 
+        private void listBox1_DragDrop(object sender, DragEventArgs e)
+        {
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+            foreach (string file in files)
+            {
+                Process.Start("MarkItDown.exe", $@"""{file}""");
+            }
+        }
+
+        private void listBox1_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effect = DragDropEffects.Copy;
+            }
+        }
+
+        private void btnOpenFolder_Click(object sender, EventArgs e)
+        {
+            Process.Start(Path.GetDirectoryName(SaveLoad.GetBoardPath(_project, SelectedBoard)));
+        }
+
         [DllImport("User32.dll")]
         public static extern IntPtr GetDC(IntPtr hwnd);
         [DllImport("User32.dll")]
         public static extern void ReleaseDC(IntPtr hwnd, IntPtr dc);
-
     }
 }

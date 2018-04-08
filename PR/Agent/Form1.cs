@@ -119,6 +119,9 @@ namespace Agent
             Deactivate += Capture;
             buttonAddBoard.Enabled = false;
             buttonBoards.Enabled = false;
+
+            buttonStop.Enabled = false;
+
             tabPlay.Enabled = false;
 
             numericSavedImagesPerBoard.Value = Settings.Default.SavedImages;
@@ -137,24 +140,48 @@ namespace Agent
 
         private void buttonStart_Click(object sender, EventArgs e)
         {
-            timerGame.Interval = (int) numericInterval.Value;
+            timerGame.Interval = (int)numericInterval.Value;
             timerGame.Start();
+            textBoxMessage.Text = "Capturing";
+            buttonStart.Enabled = false;
+            buttonStop.Enabled = true;
         }
 
         private void buttonStop_Click(object sender, EventArgs e)
         {
             timerGame.Stop();
+            buttonStart.Enabled = true;
+            buttonStop.Enabled = false;
         }
 
         private void timerGame_Tick(object sender, EventArgs e)
         {
+            TakeShot();
+
             textBoxMessage.Text += ".";
+        }
+
+        private void TakeShot()
+        {
+            foreach (var board in _currentProject.Boards)
+            {
+                using (var bmp = ScreenShot.Capture(board.Rect))
+                {
+                    if (bmp == null) continue;
+
+                    board.Generated = (int)((board.Generated + 1) % numericSavedImagesPerBoard.Value);
+
+                    bmp.Save(SaveLoad.GetBoardPathIter(_currentProject, board));
+
+                    SaveProject();
+                }
+            }
         }
 
         private void numericInterval_ValueChanged(object sender, EventArgs e)
         {
-            timerGame.Interval = (int) numericInterval.Value;
-            Settings.Default.UpdateInterval = (int) numericInterval.Value;
+            timerGame.Interval = (int)numericInterval.Value;
+            Settings.Default.UpdateInterval = (int)numericInterval.Value;
             Settings.Default.Save();
         }
 
@@ -162,6 +189,11 @@ namespace Agent
         {
             Settings.Default.SavedImages = (int)numericSavedImagesPerBoard.Value;
             Settings.Default.Save();
+        }
+
+        private void buttonTakeShot_Click(object sender, EventArgs e)
+        {
+            TakeShot();
         }
     }
 }
