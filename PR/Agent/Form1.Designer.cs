@@ -214,6 +214,7 @@
             this.buttonShowGame.TabIndex = 3;
             this.buttonShowGame.Text = "Show game";
             this.buttonShowGame.UseVisualStyleBackColor = true;
+            this.buttonShowGame.Click += new System.EventHandler(this.buttonShowGame_Click);
             // 
             // buttonStop
             // 

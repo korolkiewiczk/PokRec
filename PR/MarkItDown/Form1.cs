@@ -138,7 +138,11 @@ namespace MarkItDown
         private void Form1_Load(object sender, EventArgs e)
         {
             string[] args = Environment.GetCommandLineArgs();
-            _myImg = Image.FromFile(args.Length>1? args[1] : @"recon\board\board4.png");
+            _myImg = Image.FromFile(args.Length > 1 ? args[1] : @"recon\board\board4.png");
+
+            Width = _myImg.Width;
+            Height = _myImg.Height + 40;
+
             DoubleBuffered = true;
             Text = RootFolder;
 

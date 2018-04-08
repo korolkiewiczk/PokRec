@@ -23,6 +23,8 @@ namespace Agent
         private Project _currentProject;
         private bool _capture;
 
+        private ICollection<IBoardObserver> _boardObservers;
+
         public Form1()
         {
             InitializeComponent();
@@ -68,6 +70,14 @@ namespace Agent
         private void SaveProject()
         {
             SaveLoad.SaveProject(_currentProject);
+
+            if (_boardObservers != null)
+            {
+                foreach (var boardObserver in _boardObservers)
+                {
+                    boardObserver.BoardUpdated();
+                }
+            }
         }
 
         private static string ProjectDirectory => Path.Combine(Directory.GetCurrentDirectory(), ProjectsDir);
@@ -194,6 +204,17 @@ namespace Agent
         private void buttonTakeShot_Click(object sender, EventArgs e)
         {
             TakeShot();
+        }
+
+        private void buttonShowGame_Click(object sender, EventArgs e)
+        {
+            _boardObservers = new List<IBoardObserver>();
+            foreach (var board in _currentProject.Boards)
+            {
+                var game = new Game(board);
+                _boardObservers.Add(game);
+                game.Show();
+            }
         }
     }
 }
