@@ -89,20 +89,20 @@ namespace Agent
             SaveLoad.SaveProject(_project);
         }
 
+        private void listBox1_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effect = DragDropEffects.Copy;
+            }
+        }
+
         private void listBox1_DragDrop(object sender, DragEventArgs e)
         {
             string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
             foreach (string file in files)
             {
                 Process.Start("MarkItDown.exe", $@"""{file}""");
-            }
-        }
-
-        private void listBox1_DragEnter(object sender, DragEventArgs e)
-        {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
-            {
-                e.Effect = DragDropEffects.Copy;
             }
         }
 

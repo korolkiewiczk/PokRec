@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿using System;
+using System.Windows.Forms;
 using Common;
 
 namespace Agent
@@ -20,7 +21,7 @@ namespace Agent
 
         public void BoardUpdated()
         {
-            
+            Text = DateTime.Now.ToString() + " "+_board.Generated;
         }
     }
 }
