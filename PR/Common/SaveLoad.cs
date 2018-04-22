@@ -12,13 +12,13 @@ namespace Common
         {
             CreateDirIfNotExists(prj.Path);
             string path = Path.Combine(prj.Path, prj.Name + ProjExtension);
-            File.WriteAllText(path, JsonConvert.SerializeObject(prj));
+            prj.Save(path);
         }
 
         public static Project LoadProject(string filePath)
         {
             if (!Path.HasExtension(filePath)) filePath += ProjExtension;
-            return JsonConvert.DeserializeObject<Project>(File.ReadAllText(filePath));
+            return Project.Load(filePath);
         }
 
         public static string GetBoardPath(Project prj, Board board)
