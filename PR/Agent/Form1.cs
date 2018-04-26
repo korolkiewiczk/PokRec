@@ -205,7 +205,7 @@ namespace Agent
             _boardObservers = new Dictionary<Board, IBoardObserver>();
             foreach (var board in _currentProject.Boards)
             {
-                var game = new Game(board);
+                var game = new Game(_currentProject, board);
                 _boardObservers[board] = game;
                 game.Show();
             }

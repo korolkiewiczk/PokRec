@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImgRecognitionEmGu", "ImgRecognitionEmGu\ImgRecognitionEmGu.csproj", "{228F2988-EADB-454D-B4F7-5E51893EAFD2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PT", "PT\PT.csproj", "{35ECCB8D-8DF1-4D7F-B639-7CD7373F72A4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{228F2988-EADB-454D-B4F7-5E51893EAFD2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{228F2988-EADB-454D-B4F7-5E51893EAFD2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{228F2988-EADB-454D-B4F7-5E51893EAFD2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35ECCB8D-8DF1-4D7F-B639-7CD7373F72A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35ECCB8D-8DF1-4D7F-B639-7CD7373F72A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35ECCB8D-8DF1-4D7F-B639-7CD7373F72A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35ECCB8D-8DF1-4D7F-B639-7CD7373F72A4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

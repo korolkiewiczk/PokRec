@@ -1,6 +1,6 @@
 ﻿namespace MarkItDown
 {
-    public class Common
+    public static class Common
     {
         public const string CaptureImg = "scrcapture.png";
         public const string TempImg = "Test.png";

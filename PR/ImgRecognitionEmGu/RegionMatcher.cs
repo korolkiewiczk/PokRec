@@ -12,6 +12,9 @@ namespace ImgRecognitionEmGu
 {
     public class RegionMatcher
     {
+        private static readonly log4net.ILog log =
+            log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         // Custom class to store image scores
         class WeightedImages : IComparable<WeightedImages>
         {
@@ -53,6 +56,9 @@ namespace ImgRecognitionEmGu
             GenerateRegionImage();
 
             ProcessFolder(_classPath, RegionFilename);
+
+            log.Info(string.Join(";",
+                imgList.Select(x => Path.GetFileNameWithoutExtension(x.ImagePath) + " " + x.Score)));
 
             var result = imgList.OrderByDescending(x => x.Score)
                 .Where(x => x.Score > _threshold)
