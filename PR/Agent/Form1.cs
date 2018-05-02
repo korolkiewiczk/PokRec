@@ -111,6 +111,8 @@ namespace Agent
                 SaveProject();
 
                 textBoxMessage.Text = $"Captured window - {title}";
+
+                ScreenShot.MarkWindow(bounds);
             }
 
             _capture = false;

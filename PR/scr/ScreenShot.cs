@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Drawing;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using Common;
@@ -17,9 +16,9 @@ namespace scr
 
         public static string GetTitleOfForegroundWindow()
         {
-            IntPtr handle = GetForegroundWindow();
+            IntPtr handle = Interop.GetForegroundWindow();
             StringBuilder sb = new StringBuilder(1000);
-            GetWindowText(handle, sb, 1000);
+            Interop.GetWindowText(handle, sb, 1000);
             return sb.ToString();
         }
 
@@ -31,10 +30,7 @@ namespace scr
             }
             else
             {
-                var foregroundWindowsHandle = GetForegroundWindow();
-                var rect = new Rect();
-                GetWindowRect(foregroundWindowsHandle, ref rect);
-                bounds = new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
+                bounds = CaptureWindowRect();
             }
 
             title = GetTitleOfForegroundWindow();
@@ -59,13 +55,28 @@ namespace scr
             return result;
         }
 
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
+        public static Rectangle CaptureWindowRect()
+        {
+            Point point;
+            Interop.GetCursorPos(out point);
+            var foregroundWindowsHandle = Interop.WindowFromPoint(point);
+            var rect = new Rect();
+            Interop.GetWindowRect(foregroundWindowsHandle, ref rect);
+            return new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
+        }
 
-        [DllImport("user32.dll")]
-        private static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+        public static void MarkWindow(Rectangle rect)
+        {
+            IntPtr desktopPtr = Interop.GetDC(IntPtr.Zero);
+            Graphics g = Graphics.FromHdc(desktopPtr);
 
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetWindowRect(IntPtr hWnd, ref Rect rect);
+            const int width = 4;
+
+            g.DrawRectangle(new Pen(Color.Red, width),
+                new Rectangle(rect.X - width, rect.Y - width, rect.Width + 2 * width, rect.Height + 2 * width));
+
+            g.Dispose();
+            Interop.ReleaseDC(IntPtr.Zero, desktopPtr);
+        }
     }
 }

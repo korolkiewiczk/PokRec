@@ -35,15 +35,16 @@
             this.btnRefresh = new System.Windows.Forms.Button();
             this.btnSave = new System.Windows.Forms.Button();
             this.btnOpenFolder = new System.Windows.Forms.Button();
+            this.btnWinPos = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnDelete
             // 
             this.btnDelete.Location = new System.Drawing.Point(252, 100);
             this.btnDelete.Name = "btnDelete";
-            this.btnDelete.Size = new System.Drawing.Size(36, 23);
+            this.btnDelete.Size = new System.Drawing.Size(93, 23);
             this.btnDelete.TabIndex = 1;
-            this.btnDelete.Text = "D";
+            this.btnDelete.Text = "Delete";
             this.btnDelete.UseVisualStyleBackColor = true;
             this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
             // 
@@ -51,9 +52,9 @@
             // 
             this.btnEdit.Location = new System.Drawing.Point(252, 71);
             this.btnEdit.Name = "btnEdit";
-            this.btnEdit.Size = new System.Drawing.Size(36, 23);
+            this.btnEdit.Size = new System.Drawing.Size(93, 23);
             this.btnEdit.TabIndex = 2;
-            this.btnEdit.Text = "E";
+            this.btnEdit.Text = "Edit";
             this.btnEdit.UseVisualStyleBackColor = true;
             this.btnEdit.Click += new System.EventHandler(this.btnEdit_Click);
             // 
@@ -63,7 +64,7 @@
             this.listBox1.FormattingEnabled = true;
             this.listBox1.Location = new System.Drawing.Point(13, 13);
             this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(233, 186);
+            this.listBox1.Size = new System.Drawing.Size(233, 212);
             this.listBox1.TabIndex = 3;
             this.listBox1.DragDrop += new System.Windows.Forms.DragEventHandler(this.listBox1_DragDrop);
             this.listBox1.DragEnter += new System.Windows.Forms.DragEventHandler(this.listBox1_DragEnter);
@@ -72,9 +73,9 @@
             // 
             this.btnShow.Location = new System.Drawing.Point(252, 13);
             this.btnShow.Name = "btnShow";
-            this.btnShow.Size = new System.Drawing.Size(36, 23);
+            this.btnShow.Size = new System.Drawing.Size(93, 23);
             this.btnShow.TabIndex = 4;
-            this.btnShow.Text = "S";
+            this.btnShow.Text = "Show";
             this.btnShow.UseVisualStyleBackColor = true;
             this.btnShow.Click += new System.EventHandler(this.btnShow_Click);
             // 
@@ -82,19 +83,19 @@
             // 
             this.btnRefresh.Location = new System.Drawing.Point(252, 42);
             this.btnRefresh.Name = "btnRefresh";
-            this.btnRefresh.Size = new System.Drawing.Size(36, 23);
+            this.btnRefresh.Size = new System.Drawing.Size(93, 23);
             this.btnRefresh.TabIndex = 5;
-            this.btnRefresh.Text = "R";
+            this.btnRefresh.Text = "Refresh";
             this.btnRefresh.UseVisualStyleBackColor = true;
             this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
             // 
             // btnSave
             // 
-            this.btnSave.Location = new System.Drawing.Point(252, 176);
+            this.btnSave.Location = new System.Drawing.Point(252, 202);
             this.btnSave.Name = "btnSave";
-            this.btnSave.Size = new System.Drawing.Size(36, 23);
+            this.btnSave.Size = new System.Drawing.Size(93, 23);
             this.btnSave.TabIndex = 6;
-            this.btnSave.Text = "SV";
+            this.btnSave.Text = "Save";
             this.btnSave.UseVisualStyleBackColor = true;
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             // 
@@ -102,17 +103,28 @@
             // 
             this.btnOpenFolder.Location = new System.Drawing.Point(252, 129);
             this.btnOpenFolder.Name = "btnOpenFolder";
-            this.btnOpenFolder.Size = new System.Drawing.Size(36, 23);
+            this.btnOpenFolder.Size = new System.Drawing.Size(93, 23);
             this.btnOpenFolder.TabIndex = 7;
-            this.btnOpenFolder.Text = "O";
+            this.btnOpenFolder.Text = "Open folder";
             this.btnOpenFolder.UseVisualStyleBackColor = true;
             this.btnOpenFolder.Click += new System.EventHandler(this.btnOpenFolder_Click);
+            // 
+            // btnWinPos
+            // 
+            this.btnWinPos.Location = new System.Drawing.Point(252, 158);
+            this.btnWinPos.Name = "btnWinPos";
+            this.btnWinPos.Size = new System.Drawing.Size(93, 23);
+            this.btnWinPos.TabIndex = 8;
+            this.btnWinPos.Text = "Change position";
+            this.btnWinPos.UseVisualStyleBackColor = true;
+            this.btnWinPos.Click += new System.EventHandler(this.btnWinPos_Click);
             // 
             // ManageBoards
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(295, 216);
+            this.ClientSize = new System.Drawing.Size(357, 242);
+            this.Controls.Add(this.btnWinPos);
             this.Controls.Add(this.btnOpenFolder);
             this.Controls.Add(this.btnSave);
             this.Controls.Add(this.btnRefresh);
@@ -136,5 +148,6 @@
         private System.Windows.Forms.Button btnRefresh;
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Button btnOpenFolder;
+        private System.Windows.Forms.Button btnWinPos;
     }
 }
