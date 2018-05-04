@@ -6,6 +6,8 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Common;
+using Microsoft.VisualBasic;
+using scr;
 
 namespace Agent
 {
@@ -32,10 +34,13 @@ namespace Agent
                 return;
             }
             RefreshListbox();
+
+            Deactivate += Capture;
         }
 
         private void RefreshListbox()
         {
+            listBox1.Items.Clear();
             foreach (var board in _project.Boards)
             {
                 listBox1.Items.Add(board);
@@ -44,21 +49,15 @@ namespace Agent
 
         private void btnShow_Click(object sender, EventArgs e)
         {
-            IntPtr desktopPtr = GetDC(IntPtr.Zero);
-            Graphics g = Graphics.FromHdc(desktopPtr);
+            var rect = SelectedBoard.Rect;
 
-            const int width = 4;
-            var r = SelectedBoard.Rect;
-            g.DrawRectangle(new Pen(Color.Red, width), new Rectangle(r.X - width, r.Y - width, r.Width + 2 * width, r.Height + 2 * width));
-
-            g.Dispose();
-            ReleaseDC(IntPtr.Zero, desktopPtr);
+            ScreenShot.MarkWindow(rect);
         }
 
         private void btnDelete_Click(object sender, EventArgs e)
         {
             _project.Boards.Remove(SelectedBoard);
-            listBox1.Items.Clear();
+            
             RefreshListbox();
         }
 
@@ -76,13 +75,13 @@ namespace Agent
         {
             using (var bmp = scr.ScreenShot.Capture(SelectedBoard.Rect))
             {
-                bmp.Save(SaveLoad.GetBoardPath(_project,SelectedBoard));
+                bmp.Save(SaveLoad.GetBoardPath(_project, SelectedBoard));
             }
 
             MarkSelectedBoard();
         }
 
-        private Board SelectedBoard => (Board) (listBox1.SelectedItem as Board ?? listBox1.Items[0]);
+        private Board SelectedBoard => (Board)(listBox1.SelectedItem as Board ?? listBox1.Items[0]);
 
         private void btnSave_Click(object sender, EventArgs e)
         {
@@ -111,9 +110,38 @@ namespace Agent
             Process.Start(Path.GetDirectoryName(SaveLoad.GetBoardPath(_project, SelectedBoard)));
         }
 
-        [DllImport("User32.dll")]
-        public static extern IntPtr GetDC(IntPtr hwnd);
-        [DllImport("User32.dll")]
-        public static extern void ReleaseDC(IntPtr hwnd, IntPtr dc);
+        private bool _capture;
+        private void btnWinPos_Click(object sender, EventArgs e)
+        {
+            _capture = true;
+        }
+
+        private void Capture(object sender, EventArgs args)
+        {
+            if (!_capture) return;
+
+            var bounds = ScreenShot.CaptureWindowRect();
+
+            if (bounds.Width != SelectedBoard.Rect.Width || bounds.Height != SelectedBoard.Rect.Height)
+            {
+                if (MessageBox.Show(string.Format(
+                            "You are changing size of rectangle from {0} to {1}. Are you sure to continue?",
+                            SelectedBoard.Rect.Size, bounds.Size), "Warning",
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Warning)
+                    == DialogResult.No)
+                {
+                    _capture = false;
+                    return;
+                }
+            }
+
+            ScreenShot.MarkWindow(bounds);
+
+            SelectedBoard.Rect = bounds;
+
+            _capture = false;
+
+            RefreshListbox();
+        }
     }
 }
