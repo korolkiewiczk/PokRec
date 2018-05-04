@@ -1,24 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Common.RegionMatchers
+﻿namespace Common.RegionMatchers
 {
-    public class Flop : IRegionMatcher<string> //todo card
+    public class Flop : CardsMatcher
     {
-        private Rectangle _rectangle;
-
-        public Flop(Board board)
+        public Flop(Board board) : base(board)
         {
-            _rectangle = RegionLoader.LoadRegion("", board, "flop");
         }
 
-        public string Match()
+        public override RegionSpec GetRegionSpec()
         {
-            return "Ah";
+            var spec = base.GetRegionSpec();
+            spec.Num = 3;
+            return spec;
         }
     }
 }

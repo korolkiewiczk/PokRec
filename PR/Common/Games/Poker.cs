@@ -3,32 +3,27 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Common.RegionMatchers;
+using PT.Algorithm;
+using PT.Algorithm.Model;
+using PT.Poker.Model;
+using PT.Poker.Resolving;
 
 namespace Common.Games
 {
     public class Poker : GameBase
     {
-        private const string SpecDir = "specs";
-        private readonly Project _prj;
         private readonly Action<string> _processor;
         private Flop _flop;
-        
-        public Dictionary<int, List<GameResult>> GameResults=new Dictionary<int, List<GameResult>>();
 
-        public Poker(Project prj, Board board, Action<string> processor) : base(board)
+        public readonly Dictionary<int, List<GameResult>> GameResults = new Dictionary<int, List<GameResult>>();
+
+        public Poker(Project prj, Board board, Action<string> processor) : base(prj, board)
         {
-            _prj = prj;
             _processor = processor;
+
             InitializeMatchers();
-            
-            if (!Directory.Exists(SpecDir))
-            {
-                Directory.CreateDirectory(SpecDir);
-            }
         }
 
         private void InitializeMatchers()
@@ -38,75 +33,70 @@ namespace Common.Games
 
         public void Process()
         {
-            var outFilePath = $"{SpecDir}/out{_board.Generated}.txt";
-            ImgReconSpec spec = new ImgReconSpec
-            {
-                //ImgPath = SaveLoad.GetBoardPath(_prj, _board), //todo iter
-                ImgPath = SaveLoad.GetBoardPathIter(_prj, _board),
-                RegionPath = RegionLoader.GetRegionPath("", _board),
-                OutFilePath = outFilePath,
-                RegionSpecs = new List<ImgReconSpec.RegionSpec>()
-            };
+            var outFilePath = ImgReconOutput.OutFilePath(_prj, _board);
 
-            var cardsClassPath = Path.Combine($"{_board.Rect.Width}X{_board.Rect.Height}", "classes", "cards");
+            var spec = CreateImgReconSpec(_prj, _board, outFilePath);
 
-            spec.RegionSpecs.Add(new ImgReconSpec.RegionSpec
-            {
-                ClassesPath = cardsClassPath,
-                Name = "flop",
-                Num = 3,
-                Threshold = -1
-            });
+            ProcessSpec(spec);
 
-            var specFileName = $"{SpecDir}/spec{_board.Generated}.txt";
-            spec.Save(specFileName);
-
-            _processor(specFileName);
-
-            var sleepTime = 100;
-            int iter = 10000 / sleepTime;
-            int generated = _board.Generated;
             Task.Run(() =>
             {
-                while (!File.Exists(outFilePath) && --iter > 0)
-                {
-                    Thread.Sleep(sleepTime);
-                }
+                WaitForFile(outFilePath);
 
                 if (File.Exists(outFilePath))
                 {
-                    var gameResults = new List<GameResult>();
-                    var output = ImgReconOutput.Load(outFilePath);
-                    int i = 0;
-                    foreach (var specResult in output.SpecResults)
-                    {
-                        gameResults.Add(new GameResult(RegionLoader.LoadRegion("", _board, spec.RegionSpecs[i].Name),
-                            string.Join(",", specResult.Values)));
-                    }
-                    GameResults[generated] = gameResults;
+                    GameResults[_board.Generated] = CollectResults(outFilePath, _board, spec);
                 }
             });
         }
 
-
-        protected override void Analize()
+        public void ShowMatch(int boardNum, Environment e)
         {
-            var flopMatch = _flop.Match();
-            if (flopMatch == "As")
+            var gameResults = GameResults[boardNum];
+            var flopCards = _flop.Match(gameResults.First(x => x.Name == nameof(Flop)));
+            var playerCardLayout =
+                new CardLayout(new List<Card>
+                {
+                    new Card(CardColor.Clubs, CardType.A),
+                    new Card(CardColor.Diamonds, CardType.A)
+                }.Union(flopCards));
+
+            var result = ComputeMonteCarloResult(playerCardLayout.Cards.ToList(), 2);
+            e.Graphics.DrawString(string.Format("{0}% - {1}% - {2}%", result.Better * 100, result.Exact * 100,
+                    result.Smaller * 100)
+                , new Font(FontFamily.GenericMonospace, 11, FontStyle.Regular), new SolidBrush(Color.Black), 10, 10);
+        }
+
+        private static MonteCarloResult ComputeMonteCarloResult(List<Card> cards, int numOfPlayers)
+        {
+            CardSet cardSet = new CardSet();
+            RandomSetDefinition arg = new RandomSetDefinition
             {
-            }
-        }
-    }
+                MyLayout = new CardLayout(cards.Take(2).ToArray()),
+                // ReSharper disable once PossibleInvalidOperationException
+                NumOfPlayers = numOfPlayers,
+                Board = cards.Skip(2).Take(5).ToArray()
+            };
+            MonteCarlo<CardSet, RandomSetDefinition> monteCarlo =
+                new MonteCarlo<CardSet, RandomSetDefinition>(cardSet, 10000, arg);
 
-    public class GameResult
-    {
-        public GameResult(Rectangle resultRect, string resultText)
+            MonteCarloResult result = monteCarlo.Solve();
+            return result;
+        }
+
+        private void ProcessSpec(ImgReconSpec spec)
         {
-            ResultRect = resultRect;
-            ResultText = resultText;
+            var specFileName = ImgReconSpec.SpecFileName(_prj, _board);
+            spec.Save(specFileName);
+            _processor(specFileName);
         }
 
-        public Rectangle ResultRect { get; }
-        public string ResultText { get; }
+        private ImgReconSpec CreateImgReconSpec(Project project, Board board, string outFilePath)
+        {
+            ImgReconSpec spec = ImgReconSpec.CreateImgReconSpec(project, board, outFilePath);
+
+            spec.RegionSpecs.Add(_flop.GetRegionSpec());
+            return spec;
+        }
     }
 }

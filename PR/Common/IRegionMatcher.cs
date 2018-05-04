@@ -8,6 +8,7 @@ namespace Common
 {
     public interface IRegionMatcher<out T>
     {
-        T Match();
+        RegionSpec GetRegionSpec();
+        T Match(GameResult result);
     }
 }

@@ -33,6 +33,7 @@ namespace ImgRecognitionEmGu
 
                     output.SpecResults.Add(new ImgReconOutput.Recon
                     {
+                        Name = regionSpec.Name,
                         Values = regionMatcher.Process()
                     });
                 }

@@ -1,17 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.IO;
-using System.Linq;
+using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Agent.Properties;
 using Common;
+using Common.RegionMatchers;
 using Microsoft.VisualBasic;
-using Newtonsoft.Json;
+using PT.Poker.Model;
 using scr;
 
 namespace Agent
@@ -19,7 +17,6 @@ namespace Agent
     public partial class Form1 : Form
     {
         private const string ProjectsDir = "projects";
-        private const string BoardsDir = "boards";
         private Project _currentProject;
         private bool _capture;
 
@@ -128,6 +125,35 @@ namespace Agent
 
             numericSavedImagesPerBoard.Value = Settings.Default.SavedImages;
             numericInterval.Value = Settings.Default.UpdateInterval;
+
+            GenerateMarkItDownFiles();
+        }
+
+        private void GenerateMarkItDownFiles()
+        {
+            const string classesTxt = "classes.txt";
+            const string regionsTxt = "regions.txt";
+            if (File.Exists(classesTxt) && File.Exists(regionsTxt))
+            {
+                return;
+            }
+            
+            StringBuilder classesContent=new StringBuilder();
+            foreach (var cardType in Enum.GetValues(typeof(CardType)))
+            {
+                foreach (var cardColor in Enum.GetValues(typeof(CardColor)))
+                {
+                    classesContent.AppendLine($"cards\\{cardType}{char.ToLower(cardColor.ToString()[0])}");
+                }                    
+            }
+            
+            File.WriteAllText(classesTxt,classesContent.ToString());
+
+            string[] regionsContent = {
+                nameof(Flop)
+            };
+
+            File.WriteAllText(regionsTxt, string.Join("\r\n", regionsContent));
         }
 
         private void buttonBoards_Click(object sender, EventArgs e)

@@ -4,15 +4,16 @@ using System.Drawing;
 using System.Windows.Forms;
 using Common;
 using Common.Games;
+using Environment = Common.Environment;
 
 namespace Agent
 {
     public partial class Game : Form, IBoardObserver
     {
-        Bitmap Backbuffer;
+        private Bitmap _backbuffer;
 
         private readonly Board _board;
-        private Poker _pokerGame;
+        private readonly Poker _pokerGame;
 
         public Game()
         {
@@ -28,7 +29,7 @@ namespace Agent
             timer.Interval = 50;
             timer.Tick += TimerTick;
             timer.Enabled = true;
-            
+
             SetStyle(
                 ControlStyles.UserPaint |
                 ControlStyles.AllPaintingInWmPaint |
@@ -53,21 +54,22 @@ namespace Agent
 
         private void Draw()
         {
-            if (Backbuffer != null)
+            if (_backbuffer != null)
             {
-                using (var g = Graphics.FromImage(Backbuffer))
+                using (var g = Graphics.FromImage(_backbuffer))
                 {
                     if (_pokerGame.GameResults.ContainsKey(_board.Generated))
                     {
+                        g.Clear(BackColor);
                         var results = _pokerGame.GameResults[_board.Generated];
 
                         foreach (var gameResult in results)
                         {
-                            var rect = MapRect(gameResult.ResultRect);
-                            g.DrawRectangle(new Pen(Color.Black), rect );
-                            g.DrawString(gameResult.ResultText, new Font(FontFamily.GenericMonospace, 10), Brushes.Black,
-                                rect .X, rect .Y);
+                            gameResult.Presenter.Present(gameResult,
+                                new Environment(g, new Rectangle(0, 0, Width, Height), _board));
                         }
+                        
+                        _pokerGame.ShowMatch(_board.Generated, new Environment(g, new Rectangle(0, 0, Width, Height), _board));
                     }
                 }
 
@@ -77,29 +79,20 @@ namespace Agent
 
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
-            if (Backbuffer != null)
+            if (_backbuffer != null)
             {
-                e.Graphics.DrawImageUnscaled(Backbuffer, Point.Empty);
+                e.Graphics.DrawImageUnscaled(_backbuffer, Point.Empty);
             }
         }
 
         private void Form1_CreateBackBuffer(object sender, EventArgs e)
         {
-            if (Backbuffer != null)
+            if (_backbuffer != null)
             {
-                Backbuffer.Dispose();
+                _backbuffer.Dispose();
             }
 
-            Backbuffer = new Bitmap(ClientSize.Width, ClientSize.Height);
-        }
-
-        private Rectangle MapRect(Rectangle originalRect)
-        {
-            double xRatio = (double)Width / _board.Rect.Width;
-            double yRatio = (double)Height/ _board.Rect.Height;
-
-            return new Rectangle((int) (xRatio * originalRect.X), (int) (yRatio * originalRect.Y),
-                (int) (xRatio * originalRect.Width), (int) (yRatio * originalRect.Height));
+            _backbuffer = new Bitmap(ClientSize.Width, ClientSize.Height);
         }
     }
 }

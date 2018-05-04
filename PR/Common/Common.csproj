@@ -52,22 +52,34 @@
   <ItemGroup>
     <Compile Include="Board.cs" />
     <Compile Include="Boards.cs" />
+    <Compile Include="Classes.cs" />
+    <Compile Include="Environment.cs" />
     <Compile Include="GameBase.cs" />
+    <Compile Include="GameResult.cs" />
     <Compile Include="Games\Poker.cs" />
     <Compile Include="ImgReconOutput.cs" />
     <Compile Include="ImgReconSpec.cs" />
     <Compile Include="IRegionMatcher.cs" />
+    <Compile Include="IResultPresenter.cs" />
     <Compile Include="JsonObject.cs" />
+    <Compile Include="Presenters\CardPresenter.cs" />
     <Compile Include="Project.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rect.cs" />
-    <Compile Include="Region.cs" />
     <Compile Include="RegionLoader.cs" />
+    <Compile Include="RegionMatchers\CardsMatcher.cs" />
     <Compile Include="RegionMatchers\Flop.cs" />
+    <Compile Include="RegionSpec.cs" />
     <Compile Include="SaveLoad.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PT\PT.csproj">
+      <Project>{35ECCB8D-8DF1-4D7F-B639-7CD7373F72A4}</Project>
+      <Name>PT</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
