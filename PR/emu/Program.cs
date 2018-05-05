@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using Common;
 
-namespace ImgRecognitionEmGu
+namespace emu
 {
     class Program
     {
@@ -38,7 +38,7 @@ namespace ImgRecognitionEmGu
                     });
                 }
 
-                output.Save(spec.OutFilePath);
+                output.Save(spec.OutFilePath);               
             }
             catch (Exception ex)
             {

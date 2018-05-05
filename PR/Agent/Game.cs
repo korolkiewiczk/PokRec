@@ -70,6 +70,8 @@ namespace Agent
                         }
                         
                         _pokerGame.ShowMatch(_board.Generated, new Environment(g, new Rectangle(0, 0, Width, Height), _board));
+
+                        _pokerGame.GameResults.Remove(_board.Generated);
                     }
                 }
 

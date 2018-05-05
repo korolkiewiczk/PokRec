@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Windows.Forms;
-using Emgu.CV;
-using Emgu.CV.CvEnum;
-using Emgu.CV.Util;
+using AForge.Imaging;
+using Image = System.Drawing.Image;
 
-namespace ImgRecognitionEmGu
+namespace emu
 {
     public class RegionMatcher
     {
@@ -54,11 +54,15 @@ namespace ImgRecognitionEmGu
         public List<string> Process()
         {
             GenerateRegionImage();
-
+            Stopwatch sw=new Stopwatch();
+            
+            sw.Start();
             ProcessFolder(_classPath, RegionFilename);
+            sw.Stop();
 
             log.Info(string.Join(";",
-                imgList.Select(x => Path.GetFileNameWithoutExtension(x.ImagePath) + " " + x.Score)));
+                         imgList.Select(x => Path.GetFileNameWithoutExtension(x.ImagePath) + " " + x.Score)) + " in " +
+                     sw.ElapsedMilliseconds);
 
             var result = imgList.OrderByDescending(x => x.Score)
                 .Where(x => x.Score > _threshold)
@@ -76,64 +80,40 @@ namespace ImgRecognitionEmGu
             }
         }
 
-        public void Draw()
-        {
-            //string imgPath = imgList.Max().ImagePath;
-            foreach (var imgPath in Directory.GetFiles(_classPath))
-            {
-                long score;
-                long matchTime;
-
-                using (Mat modelImage = CvInvoke.Imread(imgPath, ImreadModes.Color))
-                using (Mat observedImage = CvInvoke.Imread(RegionFilename, ImreadModes.Color))
-                {
-                    var result = DrawMatches.Draw(modelImage, observedImage, out matchTime, out score);
-                    var iv = new emImageViewer(result, score);
-                    iv.Show();
-                }
-            }
-        }
-
         private void ProcessFolder(string classesFolder, string mainImage)
         {
-            using (var observedImage = CvInvoke.Imread(mainImage, ImreadModes.Color))
-            {
-                foreach (var classImage in Directory.GetFiles(classesFolder))
-                    ProcessImage(mainImage, classImage, observedImage);
-            }
+            foreach (var classImage in Directory.GetFiles(classesFolder))
+                ProcessImage(mainImage, classImage);
         }
 
         /// <summary>
         /// Process single image: calculate score then add the occurence to imgList List<WeightedImage>
         /// </summary>
-        private void ProcessImage(string mainImage, string classImage, Mat observedImage)
+        private void ProcessImage(string mainImage, string classImage)
         {
             if (classImage == mainImage) return;
 
-            try
+            // The class also can be used to get similarity level between two image of the same size, which can be useful to get information about how different/similar are images:
+            // Create template matching algorithm's instance
+
+            // Use zero similarity to make sure algorithm will provide anything
+            ExhaustiveTemplateMatching tm = new ExhaustiveTemplateMatching(0);
+
+            // Compare two images
+            var m = Image.FromFile(mainImage);
+            var c = Image.FromFile(classImage);
+            TemplateMatch[] matchings = tm.ProcessImage(
+                new Bitmap(m).Clone(new Rectangle(0, 0, m.Width, m.Height), PixelFormat.Format24bppRgb),
+                new Bitmap(c).Clone(new Rectangle(0, 0, c.Width, c.Height), PixelFormat.Format24bppRgb));
+
+            // Check similarity level
+            if (matchings[0].Similarity > 0.5)
             {
-                long score;
-                long matchTime;
-                using (Mat modelImage = CvInvoke.Imread(classImage, ImreadModes.Color))
+                imgList.Add(new WeightedImages
                 {
-                    Mat homography;
-                    VectorOfKeyPoint modelKeyPoints;
-                    VectorOfKeyPoint observedKeyPoints;
-
-                    using (var matches = new VectorOfVectorOfDMatch())
-                    {
-                        Mat mask;
-                        DrawMatches.FindMatch(modelImage, observedImage, out matchTime, out modelKeyPoints,
-                            out observedKeyPoints, matches,
-                            out mask, out homography, out score);
-                    }
-
-                    imgList.Add(new WeightedImages() {ImagePath = classImage, Score = score});
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString());
+                    ImagePath = classImage,
+                    Score = (long) (matchings[0].Similarity * 100)
+                });
             }
         }
 

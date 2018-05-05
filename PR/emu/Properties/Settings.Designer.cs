@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace ImgRecognitionEmGu.Properties
+namespace emu.Properties
 {
 
 

@@ -35,6 +35,11 @@ namespace Common.Games
         {
             var outFilePath = ImgReconOutput.OutFilePath(_prj, _board);
 
+            if (File.Exists(outFilePath))
+            {
+                File.Delete(outFilePath);
+            }
+
             var spec = CreateImgReconSpec(_prj, _board, outFilePath);
 
             ProcessSpec(spec);

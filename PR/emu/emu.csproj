@@ -7,7 +7,7 @@
     <ProjectGuid>{228F2988-EADB-454D-B4F7-5E51893EAFD2}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ImgRecognitionEmGu</RootNamespace>
+    <RootNamespace>emu</RootNamespace>
     <AssemblyName>emu</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -33,11 +33,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Emgu.CV.UI">
-      <HintPath>emgucv\Emgu.CV.UI.dll</HintPath>
-    </Reference>
-    <Reference Include="Emgu.CV.World">
-      <HintPath>emgucv\Emgu.CV.World.dll</HintPath>
+    <Reference Include="AForge.Imaging, Version=2.2.5.0, Culture=neutral, PublicKeyToken=ba8ddea9676ca48b">
+      <HintPath>aforge\AForge.Imaging.dll</HintPath>
     </Reference>
     <Reference Include="log4net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a">
       <HintPath>..\packages\log4net.2.0.8\lib\net45-full\log4net.dll</HintPath>
@@ -55,20 +52,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DrawMatches.cs" />
-    <Compile Include="emImageViewer.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="emImageViewer.Designer.cs">
-      <DependentUpon>emImageViewer.cs</DependentUpon>
-    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RegionMatcher.cs" />
     <Compile Include="SpecReader.cs" />
-    <EmbeddedResource Include="emImageViewer.resx">
-      <DependentUpon>emImageViewer.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

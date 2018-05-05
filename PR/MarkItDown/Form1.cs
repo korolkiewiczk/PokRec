@@ -141,7 +141,7 @@ namespace MarkItDown
             _myImg = Image.FromFile(args.Length > 1 ? args[1] : @"recon\board\board4.png");
 
             Width = _myImg.Width;
-            Height = _myImg.Height + 40;
+            Height = _myImg.Height + 80;
 
             DoubleBuffered = true;
             Text = RootFolder;

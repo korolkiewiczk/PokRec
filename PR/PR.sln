@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "scr", "scr\scr.csproj", "{6
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{77F9D67B-ADAD-48E7-89C5-79DDC70B7D62}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImgRecognitionEmGu", "ImgRecognitionEmGu\ImgRecognitionEmGu.csproj", "{228F2988-EADB-454D-B4F7-5E51893EAFD2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "emu", "emu\emu.csproj", "{228F2988-EADB-454D-B4F7-5E51893EAFD2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PT", "PT\PT.csproj", "{35ECCB8D-8DF1-4D7F-B639-7CD7373F72A4}"
 EndProject

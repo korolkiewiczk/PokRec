@@ -114,9 +114,9 @@
       <Project>{77f9d67b-adad-48e7-89c5-79ddc70b7d62}</Project>
       <Name>Common</Name>
     </ProjectReference>
-    <ProjectReference Include="..\ImgRecognitionEmGu\ImgRecognitionEmGu.csproj">
+    <ProjectReference Include="..\emu\emu.csproj">
       <Project>{228f2988-eadb-454d-b4f7-5e51893eafd2}</Project>
-      <Name>ImgRecognitionEmGu</Name>
+      <Name>emu</Name>
     </ProjectReference>
     <ProjectReference Include="..\MarkItDown\MarkItDown.csproj">
       <Project>{1bb55c30-5cdf-4fb1-a6c7-184b6abf0e63}</Project>
