@@ -15,7 +15,7 @@ namespace MarkItDown
             InitializeComponent();
         }
 
-        private bool _mouseDown = false;
+        private bool _mouseDown;
         private Point _mouseDownPoint = Point.Empty;
         private Point _mousePoint = Point.Empty;
         private Image _myImg;
@@ -106,10 +106,7 @@ namespace MarkItDown
                 Math.Abs(_mouseDownPoint.Y - _mousePoint.Y));
         }
 
-        private string RootFolder
-        {
-            get { return _myImg.Width + "X" + _myImg.Height; }
-        }
+        private string RootFolder => _myImg.Width + "X" + _myImg.Height;
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
@@ -146,7 +143,7 @@ namespace MarkItDown
             DoubleBuffered = true;
             Text = RootFolder;
 
-            this.KeyPress += (s, ke) =>
+            KeyPress += (s, ke) =>
             {
                 if (ke.KeyChar == 's')
                 {
@@ -154,7 +151,7 @@ namespace MarkItDown
                 }
             };
 
-            this.LostFocus += (s, ev) => Capture(false);
+            LostFocus += (s, ev) => Capture(false);
         }
 
         private void Capture(bool set)

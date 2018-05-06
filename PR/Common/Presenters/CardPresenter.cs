@@ -1,8 +1,10 @@
-﻿using System.Drawing;
+﻿using System.Collections.Generic;
+using System.Drawing;
+using PT.Poker.Model;
 
 namespace Common.Presenters
 {
-    public class CardPresenter : IResultPresenter
+    public class CardPresenter : IResultPresenter<List<Card>>
     {
         public void Present(GameResult result, Environment e)
         {
@@ -10,6 +12,16 @@ namespace Common.Presenters
 
             e.Graphics.DrawRectangle(new Pen(Color.Black), rect);
             e.Graphics.DrawString(string.Join(",", result.Results),
+                new Font(FontFamily.GenericMonospace, 8), Brushes.Black,
+                rect.X, rect.Y);
+        }
+
+        public void Present(List<Card> result, GameResult gameResult, Environment e)
+        {
+            var rect = MapRect(gameResult.ItemRectangle, e);
+
+            e.Graphics.DrawRectangle(new Pen(Color.Black), rect);
+            e.Graphics.DrawString(string.Join(",", gameResult.Results),
                 new Font(FontFamily.GenericMonospace, 8), Brushes.Black,
                 rect.X, rect.Y);
         }

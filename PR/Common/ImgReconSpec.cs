@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.IO;
-using Newtonsoft.Json;
 
 namespace Common
 {
@@ -17,8 +15,8 @@ namespace Common
         {
             return new ImgReconSpec
             {
-                ImgPath = SaveLoad.GetBoardPath(project, board), //todo iter
-                //ImgPath = SaveLoad.GetBoardPathIter(project, board),
+                //ImgPath = SaveLoad.GetBoardPath(project, board), //todo iter
+                ImgPath = SaveLoad.GetBoardPathIter(project, board),
                 RegionPath = RegionLoader.GetRegionPath(board),
                 OutFilePath = outFilePath,
                 RegionSpecs = new List<RegionSpec>()
@@ -32,7 +30,7 @@ namespace Common
 
         public static string SpecFileName(Project prj, Board board)
         {
-            return $"{SpecDirectory(prj, board)}\\spec{board.Generated}.txt";
+            return $"{SpecDirectory(prj, board)}\\spec{board.Computed}.txt";
         }
     }
 }

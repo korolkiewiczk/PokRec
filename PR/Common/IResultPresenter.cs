@@ -2,8 +2,8 @@
 
 namespace Common
 {
-    public interface IResultPresenter
+    public interface IResultPresenter<T>
     {
-        void Present(GameResult result, Environment e);
+        void Present(T result, GameResult gameResult, Environment e);
     }
 }

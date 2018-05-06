@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Common
+﻿namespace Common
 {
-    public interface IRegionMatcher<out T>
+    public interface IRegionMatcher<T>
     {
         RegionSpec GetRegionSpec();
         T Match(GameResult result);
+        IResultPresenter<T> GetPresenter();
     }
 }

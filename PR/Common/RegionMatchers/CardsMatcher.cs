@@ -22,8 +22,7 @@ namespace Common.RegionMatchers
                 ClassesPath = ClassPath,
                 Name = GetType().Name,
                 Num = 1,
-                Threshold = -1,
-                GetPresenter = () => new CardPresenter()
+                Threshold = 60,
             };
         }
 
@@ -52,6 +51,11 @@ namespace Common.RegionMatchers
 
                 return new Card(cardColor, cardType);
             }).ToList();
+        }
+
+        public IResultPresenter<List<Card>> GetPresenter()
+        {
+            return new CardPresenter();
         }
 
         private string ClassPath => Classes.ClassPath(_board, "cards");

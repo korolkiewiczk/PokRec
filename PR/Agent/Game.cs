@@ -14,6 +14,7 @@ namespace Agent
 
         private readonly Board _board;
         private readonly Poker _pokerGame;
+        private bool _closed;
 
         public Game()
         {
@@ -26,7 +27,7 @@ namespace Agent
             _pokerGame = new Poker(prj, board, x => Process.Start("emu.exe", x));
             Text = board.ToString();
             Timer timer = new Timer();
-            timer.Interval = 50;
+            timer.Interval = 100;
             timer.Tick += TimerTick;
             timer.Enabled = true;
 
@@ -38,13 +39,20 @@ namespace Agent
             ResizeEnd += Form1_CreateBackBuffer;
             Load += Form1_CreateBackBuffer;
             Paint += Form1_Paint;
+
+            Closed += (s, e) => _closed = true;
         }
 
         public void BoardUpdated()
         {
+            if (_closed)
+            {
+                return;
+            }
+
             _pokerGame.Process();
 
-            Text = DateTime.Now.ToString() + " " + _board.Generated;
+            Text = $@"{DateTime.Now} {_board.Generated} {_board.Computed}";
         }
 
         private void TimerTick(object sender, EventArgs e)
@@ -54,25 +62,13 @@ namespace Agent
 
         private void Draw()
         {
-            if (_backbuffer != null)
+            if (_backbuffer != null && _pokerGame.HasComputed())
             {
                 using (var g = Graphics.FromImage(_backbuffer))
                 {
-                    if (_pokerGame.GameResults.ContainsKey(_board.Generated))
-                    {
-                        g.Clear(BackColor);
-                        var results = _pokerGame.GameResults[_board.Generated];
+                    g.Clear(BackColor);
 
-                        foreach (var gameResult in results)
-                        {
-                            gameResult.Presenter.Present(gameResult,
-                                new Environment(g, new Rectangle(0, 0, Width, Height), _board));
-                        }
-                        
-                        _pokerGame.ShowMatch(_board.Generated, new Environment(g, new Rectangle(0, 0, Width, Height), _board));
-
-                        _pokerGame.GameResults.Remove(_board.Generated);
-                    }
+                    _pokerGame.Show(new Environment(g, new Rectangle(0, 0, Width, Height), _board));
                 }
 
                 Invalidate();

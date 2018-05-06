@@ -16,7 +16,7 @@ namespace emu
             log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         // Custom class to store image scores
-        class WeightedImages : IComparable<WeightedImages>
+        private class WeightedImages : IComparable<WeightedImages>
         {
             public string ImagePath { get; set; }
             public long Score { get; set; }
@@ -31,7 +31,7 @@ namespace emu
         }
 
         // A List<> which contains processed images scores
-        List<WeightedImages> imgList = new List<WeightedImages>();
+        private readonly List<WeightedImages> _imgList = new List<WeightedImages>();
 
         private readonly string _regionPath;
         private readonly string _regionName;
@@ -61,10 +61,10 @@ namespace emu
             sw.Stop();
 
             log.Info(string.Join(";",
-                         imgList.Select(x => Path.GetFileNameWithoutExtension(x.ImagePath) + " " + x.Score)) + " in " +
+                         _imgList.Select(x => Path.GetFileNameWithoutExtension(x.ImagePath) + " " + x.Score)) + " in " +
                      sw.ElapsedMilliseconds);
 
-            var result = imgList.OrderByDescending(x => x.Score)
+            var result = _imgList.OrderByDescending(x => x.Score)
                 .Where(x => x.Score > _threshold)
                 .Take(_take)
                 .Select(x => Path.GetFileNameWithoutExtension(x.ImagePath))
@@ -72,7 +72,7 @@ namespace emu
 
             if (!result.Any())
             {
-                return new List<string> {"-"};
+                return new List<string>();
             }
             else
             {
@@ -93,28 +93,24 @@ namespace emu
         {
             if (classImage == mainImage) return;
 
-            // The class also can be used to get similarity level between two image of the same size, which can be useful to get information about how different/similar are images:
-            // Create template matching algorithm's instance
-
-            // Use zero similarity to make sure algorithm will provide anything
-            ExhaustiveTemplateMatching tm = new ExhaustiveTemplateMatching(0);
+            float similarityThreshold = 0.0f;
+            
+            ExhaustiveTemplateMatching tm = new ExhaustiveTemplateMatching(similarityThreshold);
 
             // Compare two images
             var m = Image.FromFile(mainImage);
             var c = Image.FromFile(classImage);
             TemplateMatch[] matchings = tm.ProcessImage(
-                new Bitmap(m).Clone(new Rectangle(0, 0, m.Width, m.Height), PixelFormat.Format24bppRgb),
-                new Bitmap(c).Clone(new Rectangle(0, 0, c.Width, c.Height), PixelFormat.Format24bppRgb));
+                new Bitmap(m).Clone(new Rectangle(0, 0, m.Width, m.Height), PixelFormat.Format8bppIndexed),
+                new Bitmap(c).Clone(new Rectangle(0, 0, c.Width, c.Height), PixelFormat.Format8bppIndexed));
 
-            // Check similarity level
-            if (matchings[0].Similarity > 0.5)
+            if (matchings.Length == 0) return;
+
+            _imgList.Add(new WeightedImages
             {
-                imgList.Add(new WeightedImages
-                {
-                    ImagePath = classImage,
-                    Score = (long) (matchings[0].Similarity * 100)
-                });
-            }
+                ImagePath = classImage,
+                Score = (long) (matchings[0].Similarity * 100)
+            });
         }
 
         private void GenerateRegionImage()

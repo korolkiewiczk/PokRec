@@ -8,6 +8,7 @@ namespace Common
         public string Name { get; set; }
         public Rectangle Rect { get; set; }
         public int Generated { get; set; }
+        public int Computed { get; set; }
 
         public override string ToString()
         {
@@ -16,5 +17,15 @@ namespace Common
 
         [JsonIgnore]
         public string Id => $"{Rect.Width}X{Rect.Height}_{Name}";
+
+        public void IncrementGenerated(int max)
+        {
+            Generated = (Generated + 1) % max;
+        }
+        
+        public void Consume()
+        {
+            Computed = Generated;
+        }
     }
 }

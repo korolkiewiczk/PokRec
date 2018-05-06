@@ -55,7 +55,8 @@ namespace Agent
             openFileDialog.ShowDialog();
             if (openFileDialog.FileName != "")
             {
-                _currentProject = SaveLoad.LoadProject(Path.Combine(openFileDialog.InitialDirectory, openFileDialog.FileName));
+                _currentProject =
+                    SaveLoad.LoadProject(Path.Combine(openFileDialog.InitialDirectory, openFileDialog.FileName));
                 labelCurrentPrj.Text = _currentProject.Name;
                 buttonAddBoard.Enabled = true;
                 buttonBoards.Enabled = true;
@@ -139,20 +140,24 @@ namespace Agent
             {
                 return;
             }
-            
-            StringBuilder classesContent=new StringBuilder();
+
+            StringBuilder classesContent = new StringBuilder();
             foreach (var cardType in Enum.GetValues(typeof(CardType)))
             {
                 foreach (var cardColor in Enum.GetValues(typeof(CardColor)))
                 {
                     classesContent.AppendLine($"cards\\{cardType}{char.ToLower(cardColor.ToString()[0])}");
-                }                    
+                }
             }
-            
-            File.WriteAllText(classesTxt,classesContent.ToString());
 
-            string[] regionsContent = {
-                nameof(Flop)
+            File.WriteAllText(classesTxt, classesContent.ToString());
+
+            string[] regionsContent =
+            {
+                nameof(Flop),
+                nameof(Turn),
+                nameof(River),
+                nameof(PlayerCards)
             };
 
             File.WriteAllText(regionsTxt, string.Join("\r\n", regionsContent));
@@ -170,7 +175,7 @@ namespace Agent
 
         private void buttonStart_Click(object sender, EventArgs e)
         {
-            timerGame.Interval = (int)numericInterval.Value;
+            timerGame.Interval = (int) numericInterval.Value;
             timerGame.Start();
             textBoxMessage.Text = "Capturing";
             buttonStart.Enabled = false;
@@ -199,7 +204,7 @@ namespace Agent
                 {
                     if (bmp == null) continue;
 
-                    board.Generated = (int)((board.Generated + 1) % numericSavedImagesPerBoard.Value);
+                    board.IncrementGenerated((int) numericSavedImagesPerBoard.Value);
 
                     bmp.Save(SaveLoad.GetBoardPathIter(_currentProject, board));
 
@@ -212,14 +217,14 @@ namespace Agent
 
         private void numericInterval_ValueChanged(object sender, EventArgs e)
         {
-            timerGame.Interval = (int)numericInterval.Value;
-            Settings.Default.UpdateInterval = (int)numericInterval.Value;
+            timerGame.Interval = (int) numericInterval.Value;
+            Settings.Default.UpdateInterval = (int) numericInterval.Value;
             Settings.Default.Save();
         }
 
         private void numericSavedImagesPerBoard_ValueChanged(object sender, EventArgs e)
         {
-            Settings.Default.SavedImages = (int)numericSavedImagesPerBoard.Value;
+            Settings.Default.SavedImages = (int) numericSavedImagesPerBoard.Value;
             Settings.Default.Save();
         }
 

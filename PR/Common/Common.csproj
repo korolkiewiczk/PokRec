@@ -69,6 +69,9 @@
     <Compile Include="RegionLoader.cs" />
     <Compile Include="RegionMatchers\CardsMatcher.cs" />
     <Compile Include="RegionMatchers\Flop.cs" />
+    <Compile Include="RegionMatchers\PlayerCards.cs" />
+    <Compile Include="RegionMatchers\River.cs" />
+    <Compile Include="RegionMatchers\Turn.cs" />
     <Compile Include="RegionSpec.cs" />
     <Compile Include="SaveLoad.cs" />
   </ItemGroup>

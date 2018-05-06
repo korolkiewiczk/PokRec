@@ -12,8 +12,5 @@ namespace Common
         public int Num { get; set; }
 
         public int Threshold { get; set; }
-        
-        [JsonIgnore]
-        public Func<IResultPresenter> GetPresenter { get; set; } 
     }
 }

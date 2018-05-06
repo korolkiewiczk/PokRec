@@ -14,7 +14,7 @@ namespace Common
 
         public static string OutFilePath(Project prj, Board board)
         {
-            return $"{ImgReconSpec.SpecDirectory(prj, board)}\\out{board.Generated}.txt";
+            return $"{ImgReconSpec.SpecDirectory(prj, board)}\\out{board.Computed}.txt";
         }
     }
 }
