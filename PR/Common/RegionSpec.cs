@@ -1,7 +1,4 @@
-﻿using System;
-using Newtonsoft.Json;
-
-namespace Common
+﻿namespace Common
 {
     public class RegionSpec
     {

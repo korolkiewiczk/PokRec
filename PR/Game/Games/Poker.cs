@@ -1,17 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Dynamic;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
-using Common.RegionMatchers;
+using Common;
+using Game.RegionMatchers;
 using PT.Algorithm;
 using PT.Algorithm.Model;
 using PT.Poker.Model;
-using PT.Poker.Resolving;
 
-namespace Common.Games
+namespace Game.Games
 {
     public class Poker : GameBase
     {

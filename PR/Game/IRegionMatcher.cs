@@ -1,4 +1,6 @@
-﻿namespace Common
+﻿using Common;
+
+namespace Game
 {
     public interface IRegionMatcher<T>
     {

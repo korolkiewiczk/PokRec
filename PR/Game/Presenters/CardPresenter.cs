@@ -2,7 +2,7 @@
 using System.Drawing;
 using PT.Poker.Model;
 
-namespace Common.Presenters
+namespace Game.Presenters
 {
     public class CardPresenter : IResultPresenter<List<Card>>
     {

@@ -1,6 +1,7 @@
 ﻿using System.Drawing;
+using Common;
 
-namespace Common
+namespace Game
 {
     public class Environment
     {

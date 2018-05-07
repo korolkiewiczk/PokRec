@@ -1,15 +1,17 @@
-﻿namespace Common.RegionMatchers
+﻿using Common;
+
+namespace Game.RegionMatchers
 {
-    public class River : CardsMatcher
+    public class PlayerCards : CardsMatcher
     {
-        public River(Board board) : base(board)
+        public PlayerCards(Board board) : base(board)
         {
         }
         
         public override RegionSpec GetRegionSpec()
         {
             var spec = base.GetRegionSpec();
-            spec.Num = 1;
+            spec.Num = 2;
             return spec;
         }
     }

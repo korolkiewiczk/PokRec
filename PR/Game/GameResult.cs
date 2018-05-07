@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
 
-namespace Common
+namespace Game
 {
     public class GameResult
     {

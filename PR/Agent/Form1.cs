@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
 using Agent.Properties;
 using Common;
-using Common.RegionMatchers;
+using Game.RegionMatchers;
 using Microsoft.VisualBasic;
 using PT.Poker.Model;
 using scr;

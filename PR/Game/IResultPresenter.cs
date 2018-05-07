@@ -1,6 +1,4 @@
-﻿using System.Drawing;
-
-namespace Common
+﻿namespace Game
 {
     public interface IResultPresenter<T>
     {

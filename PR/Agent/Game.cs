@@ -3,8 +3,8 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 using Common;
-using Common.Games;
-using Environment = Common.Environment;
+using Game.Games;
+using Environment = Game.Environment;
 
 namespace Agent
 {

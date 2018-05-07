@@ -4,15 +4,13 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{77F9D67B-ADAD-48E7-89C5-79DDC70B7D62}</ProjectGuid>
+    <ProjectGuid>{9632F066-104D-4803-BBE0-954D454DA7C1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Common</RootNamespace>
-    <AssemblyName>Common</AssemblyName>
+    <RootNamespace>Game</RootNamespace>
+    <AssemblyName>Game</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -32,30 +30,34 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Board.cs" />
-    <Compile Include="Boards.cs" />
-    <Compile Include="Classes.cs" />
-    <Compile Include="ImgReconOutput.cs" />
-    <Compile Include="ImgReconSpec.cs" />
-    <Compile Include="JsonObject.cs" />
-    <Compile Include="Project.cs" />
+    <Compile Include="Environment.cs" />
+    <Compile Include="GameBase.cs" />
+    <Compile Include="GameResult.cs" />
+    <Compile Include="Games\Poker.cs" />
+    <Compile Include="IRegionMatcher.cs" />
+    <Compile Include="IResultPresenter.cs" />
+    <Compile Include="Presenters\CardPresenter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Rect.cs" />
-    <Compile Include="RegionLoader.cs" />
-    <Compile Include="RegionSpec.cs" />
-    <Compile Include="SaveLoad.cs" />
+    <Compile Include="RegionMatchers\CardsMatcher.cs" />
+    <Compile Include="RegionMatchers\Flop.cs" />
+    <Compile Include="RegionMatchers\PlayerCards.cs" />
+    <Compile Include="RegionMatchers\River.cs" />
+    <Compile Include="RegionMatchers\Turn.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{77f9d67b-adad-48e7-89c5-79ddc70b7d62}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PT\PT.csproj">
+      <Project>{35eccb8d-8df1-4d7f-b639-7cd7373f72a4}</Project>
+      <Name>PT</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Common.Presenters;
+using Common;
+using Game.Presenters;
 using PT.Poker.Model;
 
-namespace Common.RegionMatchers
+namespace Game.RegionMatchers
 {
     public abstract class CardsMatcher : IRegionMatcher<List<Card>>
     {

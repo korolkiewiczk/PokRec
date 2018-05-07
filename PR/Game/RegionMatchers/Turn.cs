@@ -1,15 +1,17 @@
-﻿namespace Common.RegionMatchers
+﻿using Common;
+
+namespace Game.RegionMatchers
 {
-    public class Flop : CardsMatcher
+    public class Turn : CardsMatcher
     {
-        public Flop(Board board) : base(board)
+        public Turn(Board board) : base(board)
         {
         }
 
         public override RegionSpec GetRegionSpec()
         {
             var spec = base.GetRegionSpec();
-            spec.Num = 3;
+            spec.Num = 1;
             return spec;
         }
     }

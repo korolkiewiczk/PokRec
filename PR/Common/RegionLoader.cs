@@ -1,10 +1,9 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 using System.IO;
 
 namespace Common
 {
-    class RegionLoader
+    public class RegionLoader
     {
         public static string GetRegionPath(Board board)
         {
