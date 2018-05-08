@@ -58,7 +58,7 @@ namespace Game
                 {
                     CleanupSpecs();
 
-                    GameResults[Board.Computed] = CollectResults(outFilePath, Board, spec);
+                    GameResults[Board.Computed] = CollectResults(Project, outFilePath, Board, spec);
                     PrevOutputFilePath = outFilePath;
                 }
             });
@@ -91,7 +91,8 @@ namespace Game
             }
         }
 
-        private static List<ReconResult> CollectResults(string outFilePath, Board board, ImgReconSpec spec)
+        private static List<ReconResult> CollectResults(Project project, string outFilePath, Board board,
+            ImgReconSpec spec)
         {
             var gameResults = new List<ReconResult>();
             var output = ImgReconOutput.Load(outFilePath);
@@ -100,7 +101,7 @@ namespace Game
             {
                 gameResults.Add(new ReconResult(
                     specResult.Name, 
-                    RegionLoader.LoadRegion(board, spec.RegionSpecs[i].Name),
+                    RegionLoader.LoadRegion(project, board, spec.RegionSpecs[i].Name),
                     specResult.Values)
                 );    
                 i++;

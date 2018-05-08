@@ -87,8 +87,17 @@ namespace Agent
             {
                 if (bmp == null) return;
 
-                var result = Interaction.InputBox("Enter board name");
-                if (string.IsNullOrEmpty(result))
+                var boardName = Interaction.InputBox("Enter board name");
+                if (string.IsNullOrEmpty(boardName))
+                {
+                    _capture = false;
+                    textBoxMessage.Text = "Not captured. Try again.";
+                    return;
+                }
+                
+                var numPlayers = Interaction.InputBox("Enter number of players (i.e. 2,6,9,10)");
+                int players;
+                if (string.IsNullOrEmpty(numPlayers) || !int.TryParse(numPlayers, out players))
                 {
                     _capture = false;
                     textBoxMessage.Text = "Not captured. Try again.";
@@ -97,8 +106,12 @@ namespace Agent
 
                 var board = new Board
                 {
-                    Name = result,
-                    Rect = bounds
+                    Name = boardName,
+                    Rect = bounds,
+                    Settings = new List<KeyValuePair<string, string>>
+                    {
+                        new KeyValuePair<string, string>("players", players.ToString())
+                    }
                 };
 
                 bmp.Save(SaveLoad.GetBoardPath(_currentProject, board));
@@ -160,14 +173,14 @@ namespace Agent
                 nameof(River),
                 nameof(PlayerCards)
             };
-            
+
             var regionContents = new StringBuilder(string.Join("\r\n", regionsContent)).AppendLine();
-            
+
             for (int i = 0; i < 10; i++)
             {
-                regionContents.AppendLine($"Position{i+1}");
+                regionContents.AppendLine($"Position{i + 1}");
             }
-            
+
             File.WriteAllText(regionsTxt, regionContents.ToString());
         }
 

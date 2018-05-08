@@ -65,7 +65,7 @@ namespace Agent
 
         private void MarkSelectedBoard()
         {
-            Process.Start("MarkItDown.exe", $@"""{SaveLoad.GetBoardPath(_project, SelectedBoard)}""");
+            Process.Start("MarkItDown.exe", $@"""{SaveLoad.GetBoardPath(_project, SelectedBoard)}"" ""{RegionLoader.GetRegionPath(_project,SelectedBoard)}""");
         }
 
         private void btnRefresh_Click(object sender, EventArgs e)

@@ -27,10 +27,7 @@ namespace MarkItDown
             BuildRegionsButtons();
         }
         
-        private string RegionsDir
-        {
-            get { return _rootFolder + "\\" + RegionsFolder; }
-        }
+        private string RegionsDir => _rootFolder + "\\";
 
         private void BuildRegionsButtons()
         {

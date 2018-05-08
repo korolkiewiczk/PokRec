@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="Environment.cs" />
     <Compile Include="GameBase.cs" />
+    <Compile Include="Games\PokerBoardSettingsParser.cs" />
     <Compile Include="Presenters\PositionPresenter.cs" />
     <Compile Include="Presenters\Util.cs" />
     <Compile Include="ReconResult.cs" />

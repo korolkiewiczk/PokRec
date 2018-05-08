@@ -19,7 +19,7 @@ namespace Common
             {
                 //ImgPath = SaveLoad.GetBoardPath(project, board), //todo iter
                 ImgPath = SaveLoad.GetBoardPathIter(project, board),
-                RegionPath = RegionLoader.GetRegionPath(board),
+                RegionPath = RegionLoader.GetRegionPath(project, board),
                 OutFilePath = outFilePath,
                 RegionSpecs = new List<RegionSpec>(),
                 LastOutputPath = prevOutputFilePath

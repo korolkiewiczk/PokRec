@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Drawing;
-using System.IO;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Windows.Forms;
 using scr;
 
@@ -19,6 +16,11 @@ namespace MarkItDown
         private Point _mouseDownPoint = Point.Empty;
         private Point _mousePoint = Point.Empty;
         private Image _myImg;
+
+        private string _baseClassesPath;
+        private string _baseRegionsPath;
+        
+        private bool _scrModeOn;
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
@@ -77,7 +79,7 @@ namespace MarkItDown
 
                 bm.Save(Common.TempImg);
                 bm.Dispose();
-                using (var selector = new ClassSelector(RootFolder))
+                using (var selector = new ClassSelector(ClassesRootFolder))
                 {
                     selector.ShowDialog();
                 }
@@ -90,7 +92,7 @@ namespace MarkItDown
                 g.Dispose();
                 bm.Save(Common.TempImg);
                 bm.Dispose();
-                using (var selector = new RegionSelector(RootFolder, window))
+                using (var selector = new RegionSelector(RegionsRootFolder, window))
                 {
                     selector.ShowDialog();
                 }
@@ -106,7 +108,8 @@ namespace MarkItDown
                 Math.Abs(_mouseDownPoint.Y - _mousePoint.Y));
         }
 
-        private string RootFolder => _myImg.Width + "X" + _myImg.Height;
+        private string ClassesRootFolder => _baseClassesPath?? $"{_myImg.Width}X{_myImg.Height}";
+        private string RegionsRootFolder => _baseRegionsPath?? $"{_myImg.Width}X{_myImg.Height}";
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
@@ -130,18 +133,27 @@ namespace MarkItDown
             }
         }
 
-        private bool _scrModeOn = false;
-
         private void Form1_Load(object sender, EventArgs e)
         {
             string[] args = Environment.GetCommandLineArgs();
-            _myImg = Image.FromFile(args.Length > 1 ? args[1] : @"recon\board\board4.png");
+            _myImg = Image.FromFile(args.Length > 1 ? args[1] : Common.CaptureImg);
+            
+            if (args.Length == 3)
+            {
+                _baseRegionsPath = args[2];
+            }
+            
+            if (args.Length == 4)
+            {
+                _baseRegionsPath = args[2];
+                _baseClassesPath = args[3];
+            }
 
             Width = _myImg.Width;
             Height = _myImg.Height + 80;
 
             DoubleBuffered = true;
-            Text = RootFolder;
+            Text = ClassesRootFolder;
 
             KeyPress += (s, ke) =>
             {
@@ -179,7 +191,7 @@ namespace MarkItDown
                 }
 
                 _myImg = Image.FromFile(Common.CaptureImg);
-                Text = $"{RootFolder} - {title}";
+                Text = $"{ClassesRootFolder} - {title}";
             }
         }
     }

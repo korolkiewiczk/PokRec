@@ -3,17 +3,16 @@ using System.IO;
 
 namespace Common
 {
-    public class RegionLoader
+    public static class RegionLoader
     {
-        public static string GetRegionPath(Board board)
+        public static string GetRegionPath(Project project, Board board)
         {
-            return Path.Combine($"{board.Rect.Width}X{board.Rect.Height}", "regions");
+            return Path.Combine($"{project.Path}\\{project.Name}\\regions\\{board.Id}");
         }
         
-        public static Rectangle LoadRegion(Board board, string name)
+        public static Rectangle LoadRegion(Project project, Board board, string name)
         {
-            string path = Path.Combine($"{board.Rect.Width}X{board.Rect.Height}", "regions",
-                name + ".txt");
+            string path = Path.Combine(GetRegionPath(project, board), name + ".txt");
             var converted = new RectangleConverter().ConvertFromString(File.ReadAllText(path));
             return (Rectangle)converted;
         }

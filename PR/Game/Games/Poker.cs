@@ -30,7 +30,9 @@ namespace Game.Games
             _turn = new Turn(Board);
             _river = new River(Board);
             _playerCards = new PlayerCards(Board);
-            _position = new Position(Board, 9);
+
+            var settings = new PokerBoardSettingsParser(Board);
+            _position = new Position(Board, settings.Players);
         }
 
         public override void Show(Environment e)
