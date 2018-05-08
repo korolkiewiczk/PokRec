@@ -10,8 +10,10 @@ namespace Common
         public string RegionPath { get; set; }
         public List<RegionSpec> RegionSpecs { get; set; }
         public string OutFilePath { get; set; }
+        public string LastOutputPath { get; set; }
 
-        public static ImgReconSpec CreateImgReconSpec(Project project, Board board, string outFilePath)
+        public static ImgReconSpec CreateImgReconSpec(Project project, Board board, string outFilePath,
+            string prevOutputFilePath)
         {
             return new ImgReconSpec
             {
@@ -19,7 +21,8 @@ namespace Common
                 ImgPath = SaveLoad.GetBoardPathIter(project, board),
                 RegionPath = RegionLoader.GetRegionPath(board),
                 OutFilePath = outFilePath,
-                RegionSpecs = new List<RegionSpec>()
+                RegionSpecs = new List<RegionSpec>(),
+                LastOutputPath = prevOutputFilePath
             };
         }
 

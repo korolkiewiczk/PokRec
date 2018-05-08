@@ -12,6 +12,8 @@ namespace Common
 
         public static T Load(string path)
         {
+            if (!File.Exists(path)) return default(T);
+            
             return JsonConvert.DeserializeObject<T>(File.ReadAllText(path));
         }
     }

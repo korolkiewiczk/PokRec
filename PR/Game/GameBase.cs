@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Common;
@@ -10,44 +11,42 @@ namespace Game
     public abstract class GameBase
     {
         protected readonly Board Board;
-        private readonly Project _prj;
+        protected readonly Project Project;
         private readonly Action<string> _processor;
         protected readonly Dictionary<int, List<GameResult>> GameResults = new Dictionary<int, List<GameResult>>();
+        protected string PrevOutputFilePath;
 
-        protected GameBase(Project prj, Board board, Action<string> processor)
+        protected GameBase(Project project, Board board, Action<string> processor)
         {
-            _prj = prj;
+            Project = project;
             Board = board;
             _processor = processor;
 
-            if (!Directory.Exists(ImgReconSpec.SpecDirectory(_prj, Board)))
+            if (!Directory.Exists(ImgReconSpec.SpecDirectory(Project, Board)))
             {
-                Directory.CreateDirectory(ImgReconSpec.SpecDirectory(_prj, Board));
+                Directory.CreateDirectory(ImgReconSpec.SpecDirectory(Project, Board));
             }
             else
             {
-                foreach (var file in Directory.GetFiles(ImgReconSpec.SpecDirectory(_prj, Board),"spec*"))
-                {
-                    File.Delete(file);
-                }
+                CleanupSpecs();
             }
         }
 
         public void Process()
         {
-            if (File.Exists(ImgReconSpec.SpecFileName(_prj, Board)))
+            if (File.Exists(ImgReconSpec.SpecFileName(Project, Board)))
             {
                 return;
             }
 
-            var outFilePath = ImgReconOutput.OutFilePath(_prj, Board);
+            var outFilePath = ImgReconOutput.OutFilePath(Project, Board);
 
             if (File.Exists(outFilePath))
             {
                 File.Delete(outFilePath);
             }
 
-            var spec = CreateImgReconSpec(_prj, Board, outFilePath);
+            var spec = CreateImgReconSpec(outFilePath);
 
             ProcessSpec(spec);
 
@@ -57,10 +56,20 @@ namespace Game
 
                 if (File.Exists(outFilePath))
                 {
-                    File.Delete(ImgReconSpec.SpecFileName(_prj, Board));
+                    CleanupSpecs();
+
                     GameResults[Board.Computed] = CollectResults(outFilePath, Board, spec);
+                    PrevOutputFilePath = outFilePath;
                 }
             });
+        }
+
+        private void CleanupSpecs()
+        {
+            foreach (var specFile in Directory.GetFiles(ImgReconSpec.SpecDirectory(Project, Board), "spec*"))
+            {
+                File.Delete(specFile);
+            }
         }
 
         public abstract void Show(Environment e);
@@ -70,7 +79,7 @@ namespace Game
             return GameResults.ContainsKey(Board.Computed);
         }
 
-        protected abstract ImgReconSpec CreateImgReconSpec(Project project, Board board, string outFilePath);
+        protected abstract ImgReconSpec CreateImgReconSpec(string outFilePath);
 
         private static void WaitForFile(string filePath)
         {
@@ -102,9 +111,20 @@ namespace Game
         
         private void ProcessSpec(ImgReconSpec spec)
         {
-            var specFileName = ImgReconSpec.SpecFileName(_prj, Board);
+            var specFileName = ImgReconSpec.SpecFileName(Project, Board);
             spec.Save(specFileName);
             _processor(specFileName);
+        }
+
+        protected void ConsumeResult()
+        {
+            GameResults.Clear();
+            Board.Consume();
+        }
+
+        protected GameResult GetResult(string name)
+        {
+            return GameResults[Board.Computed].First(x => x.Name == name);
         }
     }
 }

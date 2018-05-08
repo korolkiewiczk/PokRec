@@ -17,7 +17,7 @@ namespace Game.Games
         private River _river;
         private PlayerCards _playerCards;
 
-        public Poker(Project prj, Board board, Action<string> processor) : base(prj, board, processor)
+        public Poker(Project project, Board board, Action<string> processor) : base(project, board, processor)
         {
             InitializeMatchers();
         }
@@ -47,7 +47,7 @@ namespace Game.Games
             _turn.GetPresenter().Present(turnCards, turnResult, e);
             _river.GetPresenter().Present(riverCards, riverResult, e);
 
-            //if (playerCards.Any())
+            if (playerCards.Any())
             {
                 var result = ComputeMonteCarloResult(playerCards, flopCards.Union(turnCards).Union(riverCards).ToList(),
                     2);
@@ -64,26 +64,15 @@ namespace Game.Games
             ConsumeResult();
         }
 
-        private GameResult GetResult(string name)
+        protected override ImgReconSpec CreateImgReconSpec(string outFilePath)
         {
-            return GameResults[Board.Computed].First(x => x.Name == name);
-        }
-
-        protected override ImgReconSpec CreateImgReconSpec(Project project, Board board, string outFilePath)
-        {
-            ImgReconSpec spec = ImgReconSpec.CreateImgReconSpec(project, board, outFilePath);
+            ImgReconSpec spec = ImgReconSpec.CreateImgReconSpec(Project, Board, outFilePath, PrevOutputFilePath);
 
             spec.RegionSpecs.Add(_flop.GetRegionSpec());
             spec.RegionSpecs.Add(_turn.GetRegionSpec());
             spec.RegionSpecs.Add(_river.GetRegionSpec());
             spec.RegionSpecs.Add(_playerCards.GetRegionSpec());
             return spec;
-        }
-
-        private void ConsumeResult()
-        {
-            GameResults.Remove(Board.Computed);
-            Board.Consume();
         }
 
         private static MonteCarloResult ComputeMonteCarloResult(List<Card> myCards, List<Card> boardCards,

@@ -9,5 +9,7 @@
         public int Num { get; set; }
 
         public int Threshold { get; set; }
+        
+        public int AbandonThreshold { get; set; }
     }
 }

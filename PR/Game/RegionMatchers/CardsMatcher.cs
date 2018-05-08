@@ -24,6 +24,7 @@ namespace Game.RegionMatchers
                 Name = GetType().Name,
                 Num = 1,
                 Threshold = 60,
+                AbandonThreshold = 50
             };
         }
 

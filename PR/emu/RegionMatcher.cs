@@ -39,9 +39,11 @@ namespace emu
         private readonly string _classPath;
         private readonly int _take;
         private readonly int _threshold;
+        private readonly int _abandonThreshold;
+        private readonly List<string> _toCheckFirst;
 
         public RegionMatcher(string regionPath, string regionName, Image mainImage, string classPath, int take,
-            int threshold)
+            int threshold, int abandonThreshold, List<string> toCheckFirst)
         {
             _regionPath = regionPath;
             _regionName = regionName;
@@ -49,15 +51,17 @@ namespace emu
             _classPath = classPath;
             _take = take;
             _threshold = threshold;
+            _abandonThreshold = abandonThreshold;
+            _toCheckFirst = toCheckFirst;
         }
 
         public List<string> Process()
         {
             GenerateRegionImage();
-            Stopwatch sw=new Stopwatch();
-            
+            Stopwatch sw = new Stopwatch();
+
             sw.Start();
-            ProcessFolder(_classPath, RegionFilename);
+            ProcessFolder();
             sw.Stop();
 
             log.Info(string.Join(";",
@@ -80,21 +84,41 @@ namespace emu
             }
         }
 
-        private void ProcessFolder(string classesFolder, string mainImage)
+        private void ProcessFolder()
         {
-            foreach (var classImage in Directory.GetFiles(classesFolder))
-                ProcessImage(mainImage, classImage);
+            bool checkFurther = true;
+            if (_toCheckFirst != null && _toCheckFirst.Any())
+            {
+                foreach (var classImage in _toCheckFirst.Select(x => Path.Combine(_classPath, x)))
+                {
+                    if (!ProcessImage(RegionFilename, classImage + ".png")) break;
+                }
+
+                if (_imgList.All(x => x.Score == 100))
+                {
+                    checkFurther = false;
+                }
+            }
+
+            if (checkFurther)
+            {
+                _imgList.Clear();
+                foreach (var classImage in Directory.GetFiles(_classPath))
+                {
+                    if (!ProcessImage(RegionFilename, classImage)) break;
+                }
+            }
         }
 
         /// <summary>
         /// Process single image: calculate score then add the occurence to imgList List<WeightedImage>
         /// </summary>
-        private void ProcessImage(string mainImage, string classImage)
+        private bool ProcessImage(string mainImage, string classImage)
         {
-            if (classImage == mainImage) return;
+            if (classImage == mainImage) return true;
 
-            float similarityThreshold = 0.0f;
-            
+            float similarityThreshold = (float) _abandonThreshold / 100;
+
             ExhaustiveTemplateMatching tm = new ExhaustiveTemplateMatching(similarityThreshold);
 
             // Compare two images
@@ -104,13 +128,15 @@ namespace emu
                 new Bitmap(m).Clone(new Rectangle(0, 0, m.Width, m.Height), PixelFormat.Format8bppIndexed),
                 new Bitmap(c).Clone(new Rectangle(0, 0, c.Width, c.Height), PixelFormat.Format8bppIndexed));
 
-            if (matchings.Length == 0) return;
+            if (matchings.Length == 0) return false;
 
             _imgList.Add(new WeightedImages
             {
                 ImagePath = classImage,
                 Score = (long) (matchings[0].Similarity * 100)
             });
+
+            return true;
         }
 
         private void GenerateRegionImage()
