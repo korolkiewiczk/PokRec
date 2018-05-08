@@ -47,7 +47,7 @@ namespace PT.Poker.Model
 
         public override string ToString()
         {
-#if DEBUG
+#if !DEBUG
             return string.Join(" ", Cards).Replace("♠","S").Replace("♣","C").Replace("♥","H").Replace("♦","D");
 #else
             return string.Join(" ", _cards);

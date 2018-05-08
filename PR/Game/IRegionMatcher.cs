@@ -5,7 +5,7 @@ namespace Game
     public interface IRegionMatcher<T>
     {
         RegionSpec GetRegionSpec();
-        T Match(GameResult result);
+        T Match(ReconResult result);
         IResultPresenter<T> GetPresenter();
     }
 }

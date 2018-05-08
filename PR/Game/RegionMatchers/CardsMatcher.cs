@@ -28,7 +28,7 @@ namespace Game.RegionMatchers
             };
         }
 
-        public List<Card> Match(GameResult result)
+        public List<Card> Match(ReconResult result)
         {
             return result.Results.Select(x =>
             {

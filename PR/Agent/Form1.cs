@@ -149,6 +149,8 @@ namespace Agent
                 }
             }
 
+            classesContent.AppendLine("position\\btn");
+
             File.WriteAllText(classesTxt, classesContent.ToString());
 
             string[] regionsContent =
@@ -158,8 +160,15 @@ namespace Agent
                 nameof(River),
                 nameof(PlayerCards)
             };
-
-            File.WriteAllText(regionsTxt, string.Join("\r\n", regionsContent));
+            
+            var regionContents = new StringBuilder(string.Join("\r\n", regionsContent)).AppendLine();
+            
+            for (int i = 0; i < 10; i++)
+            {
+                regionContents.AppendLine($"Position{i+1}");
+            }
+            
+            File.WriteAllText(regionsTxt, regionContents.ToString());
         }
 
         private void buttonBoards_Click(object sender, EventArgs e)

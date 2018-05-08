@@ -42,10 +42,14 @@
   <ItemGroup>
     <Compile Include="Environment.cs" />
     <Compile Include="GameBase.cs" />
-    <Compile Include="GameResult.cs" />
+    <Compile Include="Presenters\PositionPresenter.cs" />
+    <Compile Include="Presenters\Util.cs" />
+    <Compile Include="ReconResult.cs" />
     <Compile Include="Games\Poker.cs" />
+    <Compile Include="IMultiRegionMatcher.cs" />
     <Compile Include="IRegionMatcher.cs" />
     <Compile Include="IResultPresenter.cs" />
+    <Compile Include="MultiRegionMatchers\Position.cs" />
     <Compile Include="Presenters\CardPresenter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RegionMatchers\CardsMatcher.cs" />

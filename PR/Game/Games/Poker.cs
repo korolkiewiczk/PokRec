@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using Common;
+using Game.MultiRegionMatchers;
 using Game.RegionMatchers;
 using PT.Algorithm;
 using PT.Algorithm.Model;
@@ -16,6 +17,7 @@ namespace Game.Games
         private Turn _turn;
         private River _river;
         private PlayerCards _playerCards;
+        private Position _position;
 
         public Poker(Project project, Board board, Action<string> processor) : base(project, board, processor)
         {
@@ -28,6 +30,7 @@ namespace Game.Games
             _turn = new Turn(Board);
             _river = new River(Board);
             _playerCards = new PlayerCards(Board);
+            _position = new Position(Board, 9);
         }
 
         public override void Show(Environment e)
@@ -36,16 +39,24 @@ namespace Game.Games
             var flopResult = GetResult(nameof(Flop));
             var turnResult = GetResult(nameof(Turn));
             var riverResult = GetResult(nameof(River));
+            var positionResults = GetResultsPrefixed(nameof(Position)).ToList();
 
             var playerCards = _playerCards.Match(playerResult);
             var flopCards = _flop.Match(flopResult);
             var turnCards = _turn.Match(turnResult);
             var riverCards = _river.Match(riverResult);
+            var position = _position.Match(positionResults);
 
             _playerCards.GetPresenter().Present(playerCards, playerResult, e);
             _flop.GetPresenter().Present(flopCards, flopResult, e);
             _turn.GetPresenter().Present(turnCards, turnResult, e);
             _river.GetPresenter().Present(riverCards, riverResult, e);
+
+            var positionPresenter = _position.GetPresenter();
+            foreach (var positionResult in positionResults)
+            {
+                positionPresenter.Present(position, positionResult, e);
+            }
 
             if (playerCards.Any())
             {
@@ -56,7 +67,7 @@ namespace Game.Games
                     new CardLayout(playerCards
                         .Union(flopCards).Union(turnCards).Union(riverCards));
                 e.Graphics.DrawString(
-                    $"{playerCardLayout}: {result.Better * 100}% - {result.Exact * 100}% - {result.Smaller * 100}%"
+                    $"{position + 1} {playerCardLayout}: {result.Better * 100}% - {result.Exact * 100}% - {result.Smaller * 100}%"
                     , new Font(FontFamily.GenericMonospace, 11, FontStyle.Regular), new SolidBrush(Color.Black), 10,
                     10);
             }
@@ -72,6 +83,9 @@ namespace Game.Games
             spec.RegionSpecs.Add(_turn.GetRegionSpec());
             spec.RegionSpecs.Add(_river.GetRegionSpec());
             spec.RegionSpecs.Add(_playerCards.GetRegionSpec());
+
+            spec.RegionSpecs.AddRange(_position.GetRegionSpecs());
+
             return spec;
         }
 

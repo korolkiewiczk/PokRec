@@ -13,7 +13,7 @@ namespace Game
         protected readonly Board Board;
         protected readonly Project Project;
         private readonly Action<string> _processor;
-        protected readonly Dictionary<int, List<GameResult>> GameResults = new Dictionary<int, List<GameResult>>();
+        protected readonly Dictionary<int, List<ReconResult>> GameResults = new Dictionary<int, List<ReconResult>>();
         protected string PrevOutputFilePath;
 
         protected GameBase(Project project, Board board, Action<string> processor)
@@ -91,14 +91,14 @@ namespace Game
             }
         }
 
-        private static List<GameResult> CollectResults(string outFilePath, Board board, ImgReconSpec spec)
+        private static List<ReconResult> CollectResults(string outFilePath, Board board, ImgReconSpec spec)
         {
-            var gameResults = new List<GameResult>();
+            var gameResults = new List<ReconResult>();
             var output = ImgReconOutput.Load(outFilePath);
             int i = 0;
             foreach (var specResult in output.SpecResults)
             {
-                gameResults.Add(new GameResult(
+                gameResults.Add(new ReconResult(
                     specResult.Name, 
                     RegionLoader.LoadRegion(board, spec.RegionSpecs[i].Name),
                     specResult.Values)
@@ -122,9 +122,14 @@ namespace Game
             Board.Consume();
         }
 
-        protected GameResult GetResult(string name)
+        protected ReconResult GetResult(string name)
         {
             return GameResults[Board.Computed].First(x => x.Name == name);
+        }
+        
+        protected IEnumerable<ReconResult> GetResultsPrefixed(string name)
+        {
+            return GameResults[Board.Computed].Where(x => x.Name.StartsWith(name));
         }
     }
 }

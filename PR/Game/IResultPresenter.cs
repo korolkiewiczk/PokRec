@@ -2,6 +2,6 @@
 {
     public interface IResultPresenter<T>
     {
-        void Present(T result, GameResult gameResult, Environment e);
+        void Present(T result, ReconResult reconResult, Environment e);
     }
 }

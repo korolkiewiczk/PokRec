@@ -3,9 +3,9 @@ using System.Drawing;
 
 namespace Game
 {
-    public class GameResult
+    public class ReconResult
     {
-        public GameResult(string name, Rectangle itemRectangle, List<string> results)
+        public ReconResult(string name, Rectangle itemRectangle, List<string> results)
         {
             ItemRectangle = itemRectangle;
             Name = name;
