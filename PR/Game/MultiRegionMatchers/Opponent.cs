@@ -4,9 +4,9 @@ using Game.Presenters;
 
 namespace Game.MultiRegionMatchers
 {
-    public class Position : MultiPosMatcher
+    public class Opponent : MultiPosMatcher
     {
-        public Position(Board board, int seats) : base(board, seats)
+        public Opponent(Board board, int seats) : base(board, seats)
         {
         }
 
@@ -22,8 +22,8 @@ namespace Game.MultiRegionMatchers
             {
                 specs.Add(new RegionSpec
                 {
-                    ClassesPath = Classes.ClassPath(Board, "position"),
-                    Name = $"{nameof(Position)}{i + 1}",
+                    ClassesPath = Classes.ClassPath(Board, "opponent"),
+                    Name = $"{nameof(Opponent)}{i + 1}",
                     Num = 1,
                     Threshold = 95,
                     AbandonThreshold = 70

@@ -1,11 +1,12 @@
 ﻿using System.Drawing;
 using System.Linq;
+using Game.MultiRegionMatchers;
 
 namespace Game.Presenters
 {
-    public class PositionPresenter : IResultPresenter<int>
+    public class PositionPresenter : IResultPresenter<Place>
     {
-        public void Present(int result, ReconResult reconResult, Environment e)
+        public void Present(Place result, ReconResult reconResult, Environment e)
         {
             if (reconResult.Results.Any())
             {

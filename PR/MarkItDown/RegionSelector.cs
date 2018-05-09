@@ -34,7 +34,7 @@ namespace MarkItDown
             int x = BtnStart, y = _pictureBox.Size.Height + BtnStart;
             var btnSize = BtnPadding * BtnPerLine + BtnStart * 2;
 
-            var countItemsSize = _regions.Count;
+            var countItemsSize = _regions.Count / BtnPerLine + 2;
             var btnLineSize = countItemsSize * BtnPadding + y;
 
             Size = new Size(Math.Max(btnSize, _pictureBox.Size.Width), btnLineSize);
@@ -53,6 +53,10 @@ namespace MarkItDown
                 b.Size = new Size(BtnSize, BtnSize);
                 b.Location = new Point(x, y);
                 b.Tag = region;
+                if (region.Length >= 9)
+                {
+                    b.Font = new Font(b.Font.FontFamily, b.Font.Size - 2);
+                }
                 b.Click += (sender, e) =>
                 {
                     var tag = ((Button) sender).Tag as string;

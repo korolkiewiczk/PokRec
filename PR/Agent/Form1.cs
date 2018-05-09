@@ -6,6 +6,8 @@ using System.Text;
 using System.Windows.Forms;
 using Agent.Properties;
 using Common;
+using Game.Games;
+using Game.MultiRegionMatchers;
 using Game.RegionMatchers;
 using Microsoft.VisualBasic;
 using PT.Poker.Model;
@@ -110,7 +112,7 @@ namespace Agent
                     Rect = bounds,
                     Settings = new List<KeyValuePair<string, string>>
                     {
-                        new KeyValuePair<string, string>("players", players.ToString())
+                        new KeyValuePair<string, string>(nameof(PokerBoardSettingsParser.Players), players.ToString())
                     }
                 };
 
@@ -163,6 +165,7 @@ namespace Agent
             }
 
             classesContent.AppendLine("position\\btn");
+            classesContent.AppendLine("opponent\\cards");
 
             File.WriteAllText(classesTxt, classesContent.ToString());
 
@@ -178,7 +181,12 @@ namespace Agent
 
             for (int i = 0; i < 10; i++)
             {
-                regionContents.AppendLine($"Position{i + 1}");
+                regionContents.AppendLine($"{nameof(Position)}{i + 1}");
+            }
+            
+            for (int i = 0; i < 10; i++)
+            {
+                regionContents.AppendLine($"{nameof(Opponent)}{i + 1}");
             }
 
             File.WriteAllText(regionsTxt, regionContents.ToString());

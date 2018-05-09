@@ -69,7 +69,7 @@ namespace Game.Games
                     new CardLayout(playerCards
                         .Union(flopCards).Union(turnCards).Union(riverCards));
                 e.Graphics.DrawString(
-                    $"{position + 1} {playerCardLayout}: {result.Better * 100}% - {result.Exact * 100}% - {result.Smaller * 100}%"
+                    $"{position.Count + 1} {playerCardLayout}: {result.Better * 100}% - {result.Exact * 100}% - {result.Smaller * 100}%"
                     , new Font(FontFamily.GenericMonospace, 11, FontStyle.Regular), new SolidBrush(Color.Black), 10,
                     10);
             }
