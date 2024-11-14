@@ -32,7 +32,7 @@ namespace Agent
             }
             RefreshListbox();
 
-            Deactivate += Capture;
+            Deactivate += CaptureWindowPosition;
         }
 
         private void RefreshListbox()
@@ -113,7 +113,7 @@ namespace Agent
             _capture = true;
         }
 
-        private void Capture(object sender, EventArgs args)
+        private void CaptureWindowPosition(object sender, EventArgs args)
         {
             if (!_capture) return;
 

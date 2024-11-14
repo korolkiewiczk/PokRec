@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using AForge.Imaging;
+using Emgu.CV;
+using Emgu.CV.CvEnum;
+using Emgu.CV.Structure;
 using Image = System.Drawing.Image;
 
 namespace emu
@@ -19,7 +20,7 @@ namespace emu
         private class WeightedImages : IComparable<WeightedImages>
         {
             public string ImagePath { get; set; }
-            public long Score { get; set; }
+            public double Score { get; set; } // Changed to double for precision
 
             public int CompareTo(WeightedImages other)
             {
@@ -74,14 +75,7 @@ namespace emu
                 .Select(x => Path.GetFileNameWithoutExtension(x.ImagePath))
                 .ToList();
 
-            if (!result.Any())
-            {
-                return new List<string>();
-            }
-            else
-            {
-                return result;
-            }
+            return result.Any() ? result : new List<string>();
         }
 
         private void ProcessFolder()
@@ -111,30 +105,41 @@ namespace emu
         }
 
         /// <summary>
-        /// Process single image: calculate score then add the occurence to imgList List<WeightedImage>
+        /// Process single image: calculate score then add the occurrence to imgList List<WeightedImage>
         /// </summary>
-        private bool ProcessImage(string mainImage, string classImage)
+        private bool ProcessImage(string mainImagePath, string classImagePath)
         {
-            if (classImage == mainImage) return true;
+            if (classImagePath == mainImagePath) return true;
 
-            float similarityThreshold = (float) _abandonThreshold / 100;
+            double similarityThreshold = (double)_abandonThreshold / 100;
 
-            ExhaustiveTemplateMatching tm = new ExhaustiveTemplateMatching(similarityThreshold);
-
-            // Compare two images
-            var m = Image.FromFile(mainImage);
-            var c = Image.FromFile(classImage);
-            TemplateMatch[] matchings = tm.ProcessImage(
-                new Bitmap(m).Clone(new Rectangle(0, 0, m.Width, m.Height), PixelFormat.Format8bppIndexed),
-                new Bitmap(c).Clone(new Rectangle(0, 0, c.Width, c.Height), PixelFormat.Format8bppIndexed));
-
-            if (matchings.Length == 0) return false;
-
-            _imgList.Add(new WeightedImages
+            // Load images using Emgu CV
+            using (var m = new Image<Gray, byte>(mainImagePath))
+            using (var c = new Image<Gray, byte>(classImagePath))
             {
-                ImagePath = classImage,
-                Score = (long) (matchings[0].Similarity * 100)
-            });
+                // Ensure template size is smaller than source image
+                if (c.Width > m.Width || c.Height > m.Height)
+                    return true; // Or handle accordingly
+
+                // Use template matching
+                var result = m.MatchTemplate(c, TemplateMatchingType.CcoeffNormed);
+
+                // Find the best match position
+                double[] minValues, maxValues;
+                Point[] minLocations, maxLocations;
+                result.MinMax(out minValues, out maxValues, out minLocations, out maxLocations);
+
+                // The maximum value corresponds to the best match
+                double similarity = maxValues[0];
+
+                if (similarity * 100 < _abandonThreshold) return false;
+
+                _imgList.Add(new WeightedImages
+                {
+                    ImagePath = classImagePath,
+                    Score = similarity * 100 // Convert to percentage
+                });
+            }
 
             return true;
         }
@@ -142,7 +147,7 @@ namespace emu
         private void GenerateRegionImage()
         {
             Rectangle rectangle =
-                (Rectangle) new RectangleConverter().ConvertFromString(
+                (Rectangle)new RectangleConverter().ConvertFromString(
                     File.ReadAllText(Path.Combine(_regionPath, _regionName) + ".txt"));
 
             using (Bitmap bm = new Bitmap(rectangle.Width, rectangle.Height))

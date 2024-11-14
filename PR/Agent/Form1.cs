@@ -79,7 +79,7 @@ namespace Agent
             _capture = true;
         }
 
-        private void Capture(object sender, EventArgs args)
+        private void CaptureWindow(object sender, EventArgs args)
         {
             if (!_capture) return;
 
@@ -132,7 +132,7 @@ namespace Agent
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            Deactivate += Capture;
+            Deactivate += CaptureWindow;
             buttonAddBoard.Enabled = false;
             buttonBoards.Enabled = false;
 
@@ -146,7 +146,7 @@ namespace Agent
             GenerateMarkItDownFiles();
         }
 
-        private void GenerateMarkItDownFiles()
+        private static void GenerateMarkItDownFiles()
         {
             const string classesTxt = "classes.txt";
             const string regionsTxt = "regions.txt";

@@ -1,78 +1,17 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{9632F066-104D-4803-BBE0-954D454DA7C1}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>Game</RootNamespace>
     <AssemblyName>Game</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Drawing" />
+    <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\PT\PT.csproj" />
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="Environment.cs" />
-    <Compile Include="GameBase.cs" />
-    <Compile Include="Games\PokerBoardSettingsParser.cs" />
-    <Compile Include="MultiRegionMatchers\MultiPosMatcher.cs" />
-    <Compile Include="MultiRegionMatchers\Opponent.cs" />
-    <Compile Include="MultiRegionMatchers\Place.cs" />
-    <Compile Include="Presenters\PositionPresenter.cs" />
-    <Compile Include="Presenters\Util.cs" />
-    <Compile Include="ReconResult.cs" />
-    <Compile Include="Games\Poker.cs" />
-    <Compile Include="IMultiRegionMatcher.cs" />
-    <Compile Include="IRegionMatcher.cs" />
-    <Compile Include="IResultPresenter.cs" />
-    <Compile Include="MultiRegionMatchers\Position.cs" />
-    <Compile Include="Presenters\CardPresenter.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RegionMatchers\CardsMatcher.cs" />
-    <Compile Include="RegionMatchers\Flop.cs" />
-    <Compile Include="RegionMatchers\PlayerCards.cs" />
-    <Compile Include="RegionMatchers\River.cs" />
-    <Compile Include="RegionMatchers\Turn.cs" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{77f9d67b-adad-48e7-89c5-79ddc70b7d62}</Project>
-      <Name>Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\PT\PT.csproj">
-      <Project>{35eccb8d-8df1-4d7f-b639-7cd7373f72a4}</Project>
-      <Name>PT</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

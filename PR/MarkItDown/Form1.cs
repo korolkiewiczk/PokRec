@@ -159,14 +159,14 @@ namespace MarkItDown
             {
                 if (ke.KeyChar == 's')
                 {
-                    Capture(true);
+                    SetCaptureMode(true);
                 }
             };
 
-            LostFocus += (s, ev) => Capture(false);
+            LostFocus += (s, ev) => SetCaptureMode(false);
         }
 
-        private void Capture(bool set)
+        private void SetCaptureMode(bool set)
         {
             if (_scrModeOn == set) return;
 
