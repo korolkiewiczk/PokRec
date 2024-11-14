@@ -9,7 +9,7 @@ namespace PT.Poker.Model
         private readonly CardColor _cardColor;
         private readonly int _weight;
 
-        public static readonly int WeightLevel1 = (1 << 13);
+        public static readonly int WeightLevel1 = 1 << 13;
         public static readonly int WeightLevel2 = (1 << 13)*4;
 
         public CardType CardType
