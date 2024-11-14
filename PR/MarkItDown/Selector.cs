@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using System.Windows.Forms;
+using Common;
 
 namespace MarkItDown
 {
@@ -14,7 +15,7 @@ namespace MarkItDown
         protected void CreatePictureBox()
         {
             _pictureBox = new PictureBox();
-            var image = Image.FromFile(Common.TempImg);
+            var image = Image.FromFile(Paths.TempImg);
 
             _pictureBox.Image = image;
 

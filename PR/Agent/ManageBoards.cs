@@ -70,7 +70,7 @@ namespace Agent
 
         private void btnRefresh_Click(object sender, EventArgs e)
         {
-            using (var bmp = scr.ScreenShot.Capture(SelectedBoard.Rect))
+            using (var bmp = ScreenShot.Capture(SelectedBoard.Rect))
             {
                 bmp.Save(SaveLoad.GetBoardPath(_project, SelectedBoard));
             }
@@ -104,7 +104,15 @@ namespace Agent
 
         private void btnOpenFolder_Click(object sender, EventArgs e)
         {
-            Process.Start(Path.GetDirectoryName(SaveLoad.GetBoardPath(_project, SelectedBoard)));
+            string folderPath = Path.GetDirectoryName(SaveLoad.GetBoardPath(_project, SelectedBoard));
+            if (Directory.Exists(folderPath))
+            {
+                Process.Start("explorer.exe", $"\"{folderPath}\"");
+            }
+            else
+            {
+                MessageBox.Show("Folder does not exist.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private bool _capture;

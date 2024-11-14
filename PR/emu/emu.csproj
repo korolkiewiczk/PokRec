@@ -6,6 +6,7 @@
     <RootNamespace>emu</RootNamespace>
     <AssemblyName>emu</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <ItemGroup>

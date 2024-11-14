@@ -5,6 +5,7 @@
     <RootNamespace>scr</RootNamespace>
     <AssemblyName>scr</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <ItemGroup>

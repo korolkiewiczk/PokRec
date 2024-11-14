@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using Common;
 
@@ -13,6 +14,9 @@ namespace emu
 
         static void Main(params string[] args)
         {
+            var logRepository = log4net.LogManager.GetRepository(System.Reflection.Assembly.GetEntryAssembly());
+    log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("emulog.config"));
+
             try
             {
                 var specFilePath = args[0];
@@ -21,7 +25,7 @@ namespace emu
                 
                 if (spec == null) return;
 
-                var mainImg = Bitmap.FromFile(spec.ImgPath);
+                var mainImg = Image.FromFile(spec.ImgPath);
 
                 ImgReconOutput output = new ImgReconOutput();
 

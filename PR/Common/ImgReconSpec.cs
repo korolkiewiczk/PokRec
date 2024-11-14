@@ -33,7 +33,7 @@ namespace Common
 
         public static string SpecFileName(Project prj, Board board)
         {
-            return $"{SpecDirectory(prj, board)}\\spec{board.Computed}.txt";
+            return $"{SpecDirectory(prj, board)}\\spec{board.Computed}.json";
         }
     }
 }

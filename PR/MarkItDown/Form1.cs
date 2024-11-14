@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 using scr;
+using Common;
 
 namespace MarkItDown
 {
@@ -77,7 +78,7 @@ namespace MarkItDown
             {
                 Bitmap bm = GetFormImageWithoutBorders(this, window);
 
-                bm.Save(Common.TempImg);
+                bm.Save(Paths.TempImg);
                 bm.Dispose();
                 using (var selector = new ClassSelector(ClassesRootFolder))
                 {
@@ -90,7 +91,7 @@ namespace MarkItDown
                 var g = Graphics.FromImage(bm);
                 g.DrawRectangle(new Pen(Color.Red) { Width = 4 }, window);
                 g.Dispose();
-                bm.Save(Common.TempImg);
+                bm.Save(Paths.TempImg);
                 bm.Dispose();
                 using (var selector = new RegionSelector(RegionsRootFolder, window))
                 {
@@ -136,7 +137,7 @@ namespace MarkItDown
         private void Form1_Load(object sender, EventArgs e)
         {
             string[] args = Environment.GetCommandLineArgs();
-            _myImg = Image.FromFile(args.Length > 1 ? args[1] : Common.CaptureImg);
+            _myImg = Image.FromFile(args.Length > 1 ? args[1] : Paths.CaptureImg);
             
             if (args.Length == 3)
             {
@@ -186,11 +187,11 @@ namespace MarkItDown
                         Text = "Not captured";
                         return;
                     }
-                    bmp.Save(Common.CaptureImg);
+                    bmp.Save(Paths.CaptureImg);
                     _myImg.Dispose();
                 }
 
-                _myImg = Image.FromFile(Common.CaptureImg);
+                _myImg = Image.FromFile(Paths.CaptureImg);
                 Text = $"{ClassesRootFolder} - {title}";
             }
         }

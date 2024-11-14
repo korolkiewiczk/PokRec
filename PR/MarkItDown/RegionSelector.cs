@@ -22,7 +22,7 @@ namespace MarkItDown
 
             CreatePictureBox();
 
-            _regions = File.ReadAllLines(Common.Regions).ToList();
+            _regions = File.ReadAllLines(Common.Paths.Regions).ToList();
 
             BuildRegionsButtons();
         }
@@ -39,7 +39,7 @@ namespace MarkItDown
 
             Size = new Size(Math.Max(btnSize, _pictureBox.Size.Width), btnLineSize);
 
-            var tempImgExtension = Path.GetExtension(Common.TempImg);
+            var tempImgExtension = Path.GetExtension(Common.Paths.TempImg);
             int lineCount = 0;
 
             foreach (var region in _regions)
@@ -66,7 +66,7 @@ namespace MarkItDown
                         Directory.CreateDirectory(regionDir);
                     }
 
-                    File.Copy(Common.TempImg, RegionsDir + tag + tempImgExtension, true);
+                    File.Copy(Common.Paths.TempImg, RegionsDir + tag + tempImgExtension, true);
                     
                     File.WriteAllText(RegionsDir + tag + ".txt", new RectangleConverter().ConvertToString(_originRect));
 

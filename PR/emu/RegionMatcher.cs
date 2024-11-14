@@ -58,24 +58,32 @@ namespace emu
 
         public List<string> Process()
         {
-            GenerateRegionImage();
-            Stopwatch sw = new Stopwatch();
+            try
+            {
+                GenerateRegionImage();
+                Stopwatch sw = new Stopwatch();
 
-            sw.Start();
-            ProcessFolder();
-            sw.Stop();
+                sw.Start();
+                ProcessFolder();
+                sw.Stop();
 
-            log.Info(string.Join(";",
-                         _imgList.Select(x => Path.GetFileNameWithoutExtension(x.ImagePath) + " " + x.Score)) + " in " +
-                     sw.ElapsedMilliseconds);
+                log.Info(string.Join(";",
+                            _imgList.Select(x => Path.GetFileNameWithoutExtension(x.ImagePath) + " " + x.Score)) + " in " +
+                        sw.ElapsedMilliseconds);
 
-            var result = _imgList.OrderByDescending(x => x.Score)
-                .Where(x => x.Score > _threshold)
-                .Take(_take)
-                .Select(x => Path.GetFileNameWithoutExtension(x.ImagePath))
-                .ToList();
+                var result = _imgList.OrderByDescending(x => x.Score)
+                    .Where(x => x.Score > _threshold)
+                    .Take(_take)
+                    .Select(x => Path.GetFileNameWithoutExtension(x.ImagePath))
+                    .ToList();
 
-            return result.Any() ? result : new List<string>();
+                    return result.Any() ? result : new List<string>();
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                return new List<string>();
+            }
         }
 
         private void ProcessFolder()
@@ -148,7 +156,7 @@ namespace emu
         {
             Rectangle rectangle =
                 (Rectangle)new RectangleConverter().ConvertFromString(
-                    File.ReadAllText(Path.Combine(_regionPath, _regionName) + ".txt"));
+                    File.ReadAllText($"{Path.Combine(_regionPath, _regionName)}.txt"));
 
             using (Bitmap bm = new Bitmap(rectangle.Width, rectangle.Height))
             {

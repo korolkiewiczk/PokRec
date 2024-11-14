@@ -1,6 +1,6 @@
-﻿namespace MarkItDown
+﻿namespace Common
 {
-    public static class Common
+    public static class Paths
     {
         public const string CaptureImg = "scrcapture.png";
         public const string TempImg = "capturetemp.png";

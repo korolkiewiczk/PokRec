@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using Common;
 
 namespace MarkItDown
 {
@@ -42,7 +43,7 @@ namespace MarkItDown
 
             Size = new Size(Math.Max(btnSize, _pictureBox.Size.Width), btnLineSize);
 
-            var tempImgExtension = Path.GetExtension(Common.TempImg);
+            var tempImgExtension = Path.GetExtension(Paths.TempImg);
             int lineCount = 0;
             foreach (var @class in _classes)
             {
@@ -69,7 +70,7 @@ namespace MarkItDown
                             Directory.CreateDirectory(classPath);
                         }
 
-                        File.Copy(Common.TempImg, ClassesDir + tag + tempImgExtension, true);
+                        File.Copy(Paths.TempImg, ClassesDir + tag + tempImgExtension, true);
 
                         Close();
                     };
@@ -97,7 +98,7 @@ namespace MarkItDown
 
         private static Dictionary<string, List<string>> BuildClasses()
         {
-            var lines = File.ReadAllLines(Common.Classes);
+            var lines = File.ReadAllLines(Paths.Classes);
             Dictionary<string, List<string>> classes = new Dictionary<string, List<string>>();
             foreach (var line in lines)
             {

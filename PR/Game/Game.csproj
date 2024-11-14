@@ -4,6 +4,7 @@
     <RootNamespace>Game</RootNamespace>
     <AssemblyName>Game</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <ItemGroup>

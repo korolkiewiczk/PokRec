@@ -7,7 +7,7 @@ namespace Common
     {
         public void Save(string path)
         {
-            File.WriteAllText(path, JsonConvert.SerializeObject(this));
+            File.WriteAllText(path, JsonConvert.SerializeObject(this, Formatting.Indented));
         }
 
         public static T Load(string path)

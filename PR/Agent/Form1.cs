@@ -148,8 +148,8 @@ namespace Agent
 
         private static void GenerateMarkItDownFiles()
         {
-            const string classesTxt = "classes.txt";
-            const string regionsTxt = "regions.txt";
+            const string classesTxt = Paths.Classes;
+            const string regionsTxt = Paths.Regions;
             if (File.Exists(classesTxt) && File.Exists(regionsTxt))
             {
                 return;
