@@ -36,6 +36,7 @@
             this.btnSave = new System.Windows.Forms.Button();
             this.btnOpenFolder = new System.Windows.Forms.Button();
             this.btnWinPos = new System.Windows.Forms.Button();
+            this.btnSetSize = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnDelete
@@ -64,7 +65,7 @@
             this.listBox1.FormattingEnabled = true;
             this.listBox1.Location = new System.Drawing.Point(13, 13);
             this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(233, 212);
+            this.listBox1.Size = new System.Drawing.Size(233, 238);
             this.listBox1.TabIndex = 3;
             this.listBox1.DragDrop += new System.Windows.Forms.DragEventHandler(this.listBox1_DragDrop);
             this.listBox1.DragEnter += new System.Windows.Forms.DragEventHandler(this.listBox1_DragEnter);
@@ -91,7 +92,7 @@
             // 
             // btnSave
             // 
-            this.btnSave.Location = new System.Drawing.Point(252, 202);
+            this.btnSave.Location = new System.Drawing.Point(252, 225);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(93, 23);
             this.btnSave.TabIndex = 6;
@@ -115,15 +116,26 @@
             this.btnWinPos.Name = "btnWinPos";
             this.btnWinPos.Size = new System.Drawing.Size(93, 23);
             this.btnWinPos.TabIndex = 8;
-            this.btnWinPos.Text = "Change position";
+            this.btnWinPos.Text = "New position";
             this.btnWinPos.UseVisualStyleBackColor = true;
             this.btnWinPos.Click += new System.EventHandler(this.btnWinPos_Click);
+            //
+            // btnSetSize   
+            // 
+            this.btnSetSize.Location = new System.Drawing.Point(252, 187);
+            this.btnSetSize.Name = "btnSetSize";
+            this.btnSetSize.Size = new System.Drawing.Size(93, 23);
+            this.btnSetSize.TabIndex = 9;
+            this.btnSetSize.Text = "Fix window";
+            this.btnSetSize.UseVisualStyleBackColor = true;
+            this.btnSetSize.Click += new System.EventHandler(this.btnSetSize_Click);
             // 
             // ManageBoards
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(357, 242);
+            this.ClientSize = new System.Drawing.Size(357, 268);
+            this.Controls.Add(this.btnSetSize);
             this.Controls.Add(this.btnWinPos);
             this.Controls.Add(this.btnOpenFolder);
             this.Controls.Add(this.btnSave);
@@ -137,7 +149,7 @@
             this.Text = "ManageBoards";
             this.Load += new System.EventHandler(this.ManageBoards_Load);
             this.ResumeLayout(false);
-
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ManageBoards_FormClosing);
         }
 
         #endregion
@@ -149,5 +161,6 @@
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Button btnOpenFolder;
         private System.Windows.Forms.Button btnWinPos;
+        private System.Windows.Forms.Button btnSetSize;
     }
 }

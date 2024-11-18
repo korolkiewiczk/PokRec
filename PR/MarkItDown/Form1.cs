@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using scr;
 using Common;
+using System.IO;
 
 namespace MarkItDown
 {
@@ -137,7 +138,14 @@ namespace MarkItDown
         private void Form1_Load(object sender, EventArgs e)
         {
             string[] args = Environment.GetCommandLineArgs();
-            _myImg = Image.FromFile(args.Length > 1 ? args[1] : Paths.CaptureImg);
+            string imgPath = args.Length > 1 ? args[1] : Paths.CaptureImg;
+            if (!File.Exists(imgPath))
+            {
+                MessageBox.Show($"Image file not found: {imgPath}. Please use Refresh button to capture new image", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Close();
+                return;
+            }
+            _myImg = Image.FromFile(imgPath);
             
             if (args.Length == 3)
             {

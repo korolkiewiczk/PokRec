@@ -83,6 +83,7 @@ namespace Agent
         private void btnSave_Click(object sender, EventArgs e)
         {
             SaveLoad.SaveProject(_project);
+            MessageBox.Show("Saved");
         }
 
         private void listBox1_DragEnter(object sender, DragEventArgs e)
@@ -116,18 +117,31 @@ namespace Agent
         }
 
         private bool _capture;
+        private bool _capturePosition;
         private void btnWinPos_Click(object sender, EventArgs e)
         {
             _capture = true;
         }
 
+        private void btnSetSize_Click(object sender, EventArgs e)
+        {
+            _capturePosition = true;
+        }
+
         private void CaptureWindowPosition(object sender, EventArgs args)
         {
+            if (_capturePosition)
+            {
+                ScreenShot.MoveAndResizeWindow(SelectedBoard.Rect.Location, SelectedBoard.Rect.Size);
+                _capturePosition = false;
+                return;
+            }
             if (!_capture) return;
+            _capture = false;
 
             var bounds = ScreenShot.CaptureWindowRect();
 
-            if (bounds.Width != SelectedBoard.Rect.Width || bounds.Height != SelectedBoard.Rect.Height)
+            if (bounds.Width != SelectedBoard.Rect.Width || bounds.Height != SelectedBoard.Rect.Height || bounds.Location != SelectedBoard.Rect.Location)
             {
                 if (MessageBox.Show(string.Format(
                             "You are changing size of rectangle from {0} to {1}. Are you sure to continue?",
@@ -135,7 +149,6 @@ namespace Agent
                         MessageBoxButtons.YesNo, MessageBoxIcon.Warning)
                     == DialogResult.No)
                 {
-                    _capture = false;
                     return;
                 }
             }
@@ -144,9 +157,21 @@ namespace Agent
 
             SelectedBoard.Rect = bounds;
 
-            _capture = false;
-
             RefreshListbox();
+        }
+
+        private void ManageBoards_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (!_project.HasNoChanges())
+            {
+                if (MessageBox.Show("You have unsaved changes. Are you sure to close?", "Warning", 
+                MessageBoxButtons.YesNo, MessageBoxIcon.Warning)
+                    == DialogResult.No)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+            }
         }
     }
 }

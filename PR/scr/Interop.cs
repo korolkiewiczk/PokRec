@@ -8,6 +8,8 @@ namespace scr
 {
     public class Interop
     {
+        public static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE = new IntPtr(-3);
+
         [DllImport("user32.dll")]
         public static extern IntPtr GetForegroundWindow();
 
@@ -29,5 +31,22 @@ namespace scr
 
         [DllImport("User32.dll")]
         public static extern void ReleaseDC(IntPtr hwnd, IntPtr dc);
+
+        [DllImport("user32.dll")]
+        public static extern uint GetDpiForWindow(IntPtr hwnd);
+
+        [DllImport("user32.dll")]
+        public static extern bool SetProcessDpiAwarenessContext(IntPtr dpiAwarenessContext);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool SetWindowPos(
+            IntPtr hWnd,
+            IntPtr hWndInsertAfter,
+            int X,
+            int Y,
+            int cx,
+            int cy,
+            uint uFlags
+        );
     }
 }
