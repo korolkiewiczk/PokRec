@@ -36,11 +36,10 @@ namespace emu.lib
         private readonly string _classPath;
         private readonly int _take;
         private readonly int _threshold;
-        private readonly int _abandonThreshold;
         private readonly List<string> _toCheckFirst;
 
         public RegionMatcher(string regionPath, string regionName, Image mainImage, string classPath, int take,
-            int threshold, int abandonThreshold, List<string> toCheckFirst)
+            int threshold, List<string> toCheckFirst)
         {
             _regionPath = regionPath;
             _regionName = regionName;
@@ -48,7 +47,6 @@ namespace emu.lib
             _classPath = classPath;
             _take = take;
             _threshold = threshold;
-            _abandonThreshold = abandonThreshold;
             _toCheckFirst = toCheckFirst;
         }
 
@@ -133,7 +131,7 @@ namespace emu.lib
                 double similarity = maxValues[0];
 
                 // Only add to list if above abandon threshold, but don't stop processing
-                if (similarity * 100 >= _abandonThreshold)
+                if (similarity * 100 >= _threshold)
                 {
                     _imgList.Add(new WeightedImages
                     {

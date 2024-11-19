@@ -40,7 +40,7 @@ namespace emu
                     log.Info(regionSpec.Name);
                     var regionMatcher = new RegionMatcher(spec.RegionPath, regionSpec.Name,
                         mainImg,
-                        regionSpec.ClassesPath, regionSpec.Num, regionSpec.Threshold, regionSpec.AbandonThreshold,
+                        regionSpec.ClassesPath, regionSpec.Num, regionSpec.Threshold,
                         prevOutput != null
                             ? prevOutput.SpecResults.FirstOrDefault(x => x.Name == regionSpec.Name).Values
                             : null);

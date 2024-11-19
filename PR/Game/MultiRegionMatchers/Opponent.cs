@@ -25,8 +25,7 @@ namespace Game.MultiRegionMatchers
                     ClassesPath = Classes.ClassPath(Board, "opponent"),
                     Name = $"{nameof(Opponent)}{i + 1}",
                     Num = 1,
-                    Threshold = 70,
-                    AbandonThreshold = 50
+                    Threshold = 70
                 });
             }
 

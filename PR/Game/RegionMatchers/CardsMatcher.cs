@@ -23,8 +23,7 @@ namespace Game.RegionMatchers
                 ClassesPath = ClassPath,
                 Name = GetType().Name,
                 Num = 1,
-                Threshold = 60,
-                AbandonThreshold = 50
+                Threshold = 60
             };
         }
 
