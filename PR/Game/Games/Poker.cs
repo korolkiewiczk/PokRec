@@ -76,13 +76,33 @@ namespace Game.Games
                 var result = ComputeMonteCarloResult(playerCards, flopCards.Union(turnCards).Union(riverCards).ToList(),
                     countPlayers);
 
-                var playerCardLayout =
-                    new CardLayout(playerCards
-                        .Union(flopCards).Union(turnCards).Union(riverCards));
-                e.Graphics.DrawString(
-                    $"Players = {countPlayers} Layout = {playerCardLayout}: B {result.Better * 100:F1}% - E {result.Exact * 100:F1}% - S {result.Smaller * 100:F1}%"
-                    , new Font(FontFamily.GenericMonospace, 10, FontStyle.Regular), new SolidBrush(Color.Black), 10,
-                    10);
+                var playerCardsStr = string.Join(" ", playerCards.Select(c => c.ToString()));
+                var flopCardsStr = string.Join(" ", flopCards.Select(c => c.ToString())); 
+                var turnCardsStr = string.Join(" ", turnCards.Select(c => c.ToString()));
+                var riverCardsStr = string.Join(" ", riverCards.Select(c => c.ToString()));
+
+                var font = new Font(FontFamily.GenericMonospace, 10, FontStyle.Regular);
+                var x = 10;
+                var y = 10;
+
+                var prefix = $"Players = {countPlayers} Layout = ";
+                e.Graphics.DrawString(prefix, font, new SolidBrush(Color.Black), x, y);
+                x += (int)e.Graphics.MeasureString(prefix, font).Width;
+
+                e.Graphics.DrawString(playerCardsStr, font, new SolidBrush(Color.Black), x, y);
+                x += (int)e.Graphics.MeasureString(playerCardsStr + " ", font).Width;
+
+                e.Graphics.DrawString(flopCardsStr, font, new SolidBrush(Color.FromArgb(205, 127, 50)), x, y); // Bronze
+                x += (int)e.Graphics.MeasureString(flopCardsStr + " ", font).Width;
+
+                e.Graphics.DrawString(turnCardsStr, font, new SolidBrush(Color.Orange), x, y);
+                x += (int)e.Graphics.MeasureString(turnCardsStr + " ", font).Width;
+
+                e.Graphics.DrawString(riverCardsStr, font, new SolidBrush(Color.Violet), x, y);
+                x += (int)e.Graphics.MeasureString(riverCardsStr + " ", font).Width;
+
+                e.Graphics.DrawString($": B {result.Better * 100:F1}% - E {result.Exact * 100:F1}% - S {result.Smaller * 100:F1}%",
+                    font, new SolidBrush(Color.Black), x, y);
             }
 
             ConsumeResult();
