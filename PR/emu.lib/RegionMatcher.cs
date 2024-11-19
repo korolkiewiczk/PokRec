@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
-using System.IO;
-using System.Linq;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
 using Image = System.Drawing.Image;
 
-namespace emu
+namespace emu.lib
 {
     public class RegionMatcher
     {
@@ -67,9 +63,7 @@ namespace emu
                 ProcessFolder();
                 sw.Stop();
 
-                log.Info(string.Join(";",
-                            _imgList.Select(x => Path.GetFileNameWithoutExtension(x.ImagePath) + " " + x.Score)) + " in " +
-                        sw.ElapsedMilliseconds);
+                log.Info($"{string.Join(";", _imgList.Select(x => $"{Path.GetFileNameWithoutExtension(x.ImagePath)} {x.Score}"))} in {sw.ElapsedMilliseconds} ms");
 
                 var result = _imgList.OrderByDescending(x => x.Score)
                     .Where(x => x.Score > _threshold)
@@ -82,7 +76,7 @@ namespace emu
             catch (Exception ex)
             {
                 log.Error(ex);
-                return new List<string>();
+                return [];
             }
         }
 
@@ -158,7 +152,7 @@ namespace emu
                 (Rectangle)new RectangleConverter().ConvertFromString(
                     File.ReadAllText($"{Path.Combine(_regionPath, _regionName)}.txt"));
 
-            using (Bitmap bm = new Bitmap(rectangle.Width, rectangle.Height))
+            using (Bitmap bm = new(rectangle.Width, rectangle.Height))
             {
                 using (var mainGraphics = Graphics.FromImage(bm))
                 {

@@ -24,6 +24,8 @@ namespace MarkItDown
             this.Controls.Add(_pictureBox);
 
             Text = image.Size.ToString();
+
+            
         }
         
         protected override void Dispose(bool disposing)

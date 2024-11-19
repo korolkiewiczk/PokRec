@@ -17,8 +17,8 @@ namespace Common
         {
             return new ImgReconSpec
             {
-                ImgPath = SaveLoad.GetBoardPath(project, board), //todo iter
-                //ImgPath = SaveLoad.GetBoardPathIter(project, board),
+                //ImgPath = SaveLoad.GetBoardPath(project, board), //todo iter
+                ImgPath = SaveLoad.GetBoardPathIter(project, board),
                 RegionPath = RegionLoader.GetRegionPath(project, board),
                 OutFilePath = outFilePath,
                 RegionSpecs = new List<RegionSpec>(),

@@ -10,10 +10,12 @@ namespace MarkItDown
     public class RegionSelector : Selector
     {
         private const int BtnPerLine = 16;
-        private const string RegionsFolder = "regions\\";
         private readonly string _rootFolder;
         private readonly Rectangle _originRect;
         private readonly List<string> _regions;
+
+        private bool _showRegions;
+        private Dictionary<string, Rectangle> _parsedRegions;
 
         public RegionSelector(string rootFolder, Rectangle originRect)
         {
@@ -25,8 +27,35 @@ namespace MarkItDown
             _regions = File.ReadAllLines(Common.Paths.Regions).ToList();
 
             BuildRegionsButtons();
+
+            _pictureBox.Paint += PictureBox_Paint;
         }
-        
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.S)
+            {
+                _showRegions = !_showRegions;
+
+                if (_showRegions && _parsedRegions == null)
+                {
+                    _parsedRegions = new Dictionary<string, Rectangle>();
+                    foreach (var region in _regions)
+                    {
+                        var rect = LoadRegion(region);
+                        if (rect != Rectangle.Empty)
+                        {
+                            _parsedRegions.Add(region, rect);
+                        }
+                    }
+                }
+
+                _pictureBox.Invalidate();
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
         private string RegionsDir => _rootFolder + "\\";
 
         private void BuildRegionsButtons()
@@ -59,7 +88,7 @@ namespace MarkItDown
                 }
                 b.Click += (sender, e) =>
                 {
-                    var tag = ((Button) sender).Tag as string;
+                    var tag = ((Button)sender).Tag as string;
                     var regionDir = RegionsDir;
                     if (!Directory.Exists(regionDir))
                     {
@@ -67,8 +96,8 @@ namespace MarkItDown
                     }
 
                     File.Copy(Common.Paths.TempImg, RegionsDir + tag + tempImgExtension, true);
-                    
-                    File.WriteAllText(RegionsDir + tag + ".txt", new RectangleConverter().ConvertToString(_originRect));
+
+                    SaveRegion(tag);
 
                     Close();
                 };
@@ -81,6 +110,49 @@ namespace MarkItDown
                     x = BtnStart;
                     y += BtnPadding;
                     lineCount = 0;
+                }
+            }
+
+            AutoScroll = true;
+            AutoScrollMinSize = new Size(Math.Max(btnSize, _pictureBox.Size.Width), btnLineSize);
+        }
+
+        private void SaveRegion(string tag)
+        {
+            File.WriteAllText(RegionsDir + tag + ".txt", new RectangleConverter().ConvertToString(_originRect));
+        }
+
+        private Rectangle LoadRegion(string tag)
+        {
+            try
+            {
+                var rectStr = File.ReadAllText(RegionsDir + tag + ".txt");
+                var rect = (Rectangle)new RectangleConverter().ConvertFromString(rectStr);
+                return rect;
+            }
+            catch
+            {
+                return Rectangle.Empty;
+            }
+        }
+
+        private void PictureBox_Paint(object sender, PaintEventArgs e)
+        {
+            if (_showRegions && _parsedRegions != null)
+            {
+                Color color = Color.Magenta;
+                using (var brush = new SolidBrush(color))
+                using (var pen = new Pen(brush, 3f))
+                {
+                    foreach (var rect in _parsedRegions)
+                    {
+                        e.Graphics.DrawRectangle(pen, rect.Value);
+                        using (var font = new Font("Arial", 6, FontStyle.Regular, GraphicsUnit.Point))
+                        {
+                            e.Graphics.DrawString(rect.Key, font, brush, rect.Value.Location);
+                        }
+
+                    }
                 }
             }
         }

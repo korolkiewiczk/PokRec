@@ -16,6 +16,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PT", "PT\PT.csproj", "{35EC
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Game", "Game\Game.csproj", "{9632F066-104D-4803-BBE0-954D454DA7C1}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "emu.lib", "emu.lib\emu.lib.csproj", "{B8E0A326-0B1D-4ACC-BE77-20386E3ADA0C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -50,6 +52,10 @@ Global
 		{9632F066-104D-4803-BBE0-954D454DA7C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9632F066-104D-4803-BBE0-954D454DA7C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9632F066-104D-4803-BBE0-954D454DA7C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8E0A326-0B1D-4ACC-BE77-20386E3ADA0C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8E0A326-0B1D-4ACC-BE77-20386E3ADA0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8E0A326-0B1D-4ACC-BE77-20386E3ADA0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8E0A326-0B1D-4ACC-BE77-20386E3ADA0C}.Release|Any CPU.Build.0 = Release|Any CPU	
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -7,15 +7,15 @@
     <AssemblyName>emu</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Description>Emgu Media Utility</Description>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Emgu.CV" Version="4.8.1.5350" />
-    <PackageReference Include="Emgu.CV.runtime.windows" Version="4.8.1.5350" />
     <PackageReference Include="log4net" Version="2.0.15" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\emu.lib\emu.lib.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
 

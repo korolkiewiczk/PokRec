@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using scr;
 using Common;
 using System.IO;
+using emu.lib;
 
 namespace MarkItDown
 {
@@ -21,7 +22,7 @@ namespace MarkItDown
 
         private string _baseClassesPath;
         private string _baseRegionsPath;
-        
+
         private bool _scrModeOn;
 
         protected override void OnMouseDown(MouseEventArgs e)
@@ -31,7 +32,7 @@ namespace MarkItDown
             _mousePoint = _mouseDownPoint = e.Location;
         }
 
-        private Bitmap GetControlImage(Control ctl)
+        private static Bitmap GetControlImage(Control ctl)
         {
             Bitmap bm = new Bitmap(ctl.Width, ctl.Height);
             ctl.DrawToBitmap(bm,
@@ -39,7 +40,7 @@ namespace MarkItDown
             return bm;
         }
 
-        private Bitmap GetFormImageWithoutBorders(Form frm, Rectangle rect)
+        private static Bitmap GetFormImageWithoutBorders(Form frm, Rectangle rect)
         {
             // Get the form's whole image.
             using (Bitmap whole_form = GetControlImage(frm))
@@ -72,13 +73,17 @@ namespace MarkItDown
             _mouseDown = false;
 
             Rectangle window = GetMarkedWindow();
-
             if (window.Size.Width == 0 || window.Size.Height == 0) return;
 
             if (e.Button == MouseButtons.Left)
             {
+                // Get refined rectangle based on edge detection
                 Bitmap bm = GetFormImageWithoutBorders(this, window);
-
+                Rectangle refinedWindow = ModifierKeys.HasFlag(Keys.Shift) ? CVUtils.GetRefinedRectangle(bm, window) : window;
+                if (refinedWindow!=window)
+                {
+                    bm = GetFormImageWithoutBorders(this, refinedWindow);
+                }
                 bm.Save(Paths.TempImg);
                 bm.Dispose();
                 using (var selector = new ClassSelector(ClassesRootFolder))
@@ -88,7 +93,8 @@ namespace MarkItDown
             }
             else
             {
-                Bitmap bm = GetFormImageWithoutBorders(this, new Rectangle(0, 0, _myImg.Width, _myImg.Height));
+                var rectangle = new Rectangle(0, 0, _myImg.Width, _myImg.Height);
+                Bitmap bm = GetFormImageWithoutBorders(this, rectangle);
                 var g = Graphics.FromImage(bm);
                 g.DrawRectangle(new Pen(Color.Red) { Width = 4 }, window);
                 g.Dispose();
@@ -110,8 +116,8 @@ namespace MarkItDown
                 Math.Abs(_mouseDownPoint.Y - _mousePoint.Y));
         }
 
-        private string ClassesRootFolder => _baseClassesPath?? $"{_myImg.Width}X{_myImg.Height}";
-        private string RegionsRootFolder => _baseRegionsPath?? $"{_myImg.Width}X{_myImg.Height}";
+        private string ClassesRootFolder => _baseClassesPath ?? $"{_myImg.Width}X{_myImg.Height}";
+        private string RegionsRootFolder => _baseRegionsPath ?? $"{_myImg.Width}X{_myImg.Height}";
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
@@ -146,12 +152,12 @@ namespace MarkItDown
                 return;
             }
             _myImg = Image.FromFile(imgPath);
-            
+
             if (args.Length == 3)
             {
                 _baseRegionsPath = args[2];
             }
-            
+
             if (args.Length == 4)
             {
                 _baseRegionsPath = args[2];
@@ -178,29 +184,61 @@ namespace MarkItDown
         private void SetCaptureMode(bool set)
         {
             if (_scrModeOn == set) return;
-
             _scrModeOn = set;
-            if (_scrModeOn)
+            
+            UpdateCaptureStatus();
+            
+            if (!_scrModeOn)
             {
-                Text = "[Capturing]";
+                CaptureNewScreenshot();
             }
-            else
+        }
+
+        private void UpdateCaptureStatus()
+        {
+            Text = _scrModeOn ? "[Capturing]" : ClassesRootFolder;
+        }
+
+        private void CaptureNewScreenshot()
+        {
+            DisposeCurrentImage();
+
+            Rectangle bounds;
+            string title;
+            using (var bmp = ScreenShot.Capture(out bounds, out title))
             {
-                Rectangle bounds;
-                string title;
-                using (var bmp = ScreenShot.Capture(out bounds, out title))
+                if (bmp == null)
                 {
-                    if (bmp == null)
-                    {
-                        Text = "Not captured";
-                        return;
-                    }
-                    bmp.Save(Paths.CaptureImg);
-                    _myImg.Dispose();
+                    Text = "Not captured";
+                    return;
                 }
 
-                _myImg = Image.FromFile(Paths.CaptureImg);
+                ProcessCapturedImage(bmp, title);
+            }
+        }
+
+        private void DisposeCurrentImage()
+        {
+            if (_myImg != null)
+            {
+                _myImg.Dispose();
+                _myImg = null;
+            }
+        }
+
+        private void ProcessCapturedImage(Bitmap bmp, string title)
+        {
+            try
+            {
+                _myImg = new Bitmap(bmp);
+                _myImg.Save(Paths.CaptureImg);
                 Text = $"{ClassesRootFolder} - {title}";
+                Invalidate();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving capture: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Text = "Capture failed";
             }
         }
     }

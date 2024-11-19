@@ -2,15 +2,10 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Text;
 using System.Windows.Forms;
 using Agent.Properties;
 using Common;
 using Game.Games;
-using Game.MultiRegionMatchers;
-using Game.RegionMatchers;
-using Microsoft.VisualBasic;
-using PT.Poker.Model;
 using scr;
 
 namespace Agent
@@ -30,7 +25,7 @@ namespace Agent
 
         private void buttonNewPrj_Click(object sender, EventArgs e)
         {
-            var result = Interaction.InputBox("Enter project name");
+            var result = InputDialog.ShowInputDialog("Enter project name");
             if (string.IsNullOrEmpty(result)) return;
 
             _currentProject = new Project
@@ -82,6 +77,7 @@ namespace Agent
         private void CaptureWindow(object sender, EventArgs args)
         {
             if (!_capture) return;
+            _capture = false;
 
             Rectangle bounds;
             string title;
@@ -89,19 +85,17 @@ namespace Agent
             {
                 if (bmp == null) return;
 
-                var boardName = Interaction.InputBox("Enter board name");
+                var boardName = InputDialog.ShowInputDialog("Enter board name");
                 if (string.IsNullOrEmpty(boardName))
                 {
-                    _capture = false;
                     textBoxMessage.Text = "Not captured. Try again.";
                     return;
                 }
                 
-                var numPlayers = Interaction.InputBox("Enter number of players (i.e. 2,6,9,10)");
+                var numPlayers = InputDialog.ShowInputDialog("Enter number of players (i.e. 2,6,9,10)");
                 int players;
                 if (string.IsNullOrEmpty(numPlayers) || !int.TryParse(numPlayers, out players))
                 {
-                    _capture = false;
                     textBoxMessage.Text = "Not captured. Try again.";
                     return;
                 }
@@ -126,8 +120,6 @@ namespace Agent
 
                 ScreenShot.MarkWindow(bounds);
             }
-
-            _capture = false;
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -143,58 +135,13 @@ namespace Agent
             numericSavedImagesPerBoard.Value = Settings.Default.SavedImages;
             numericInterval.Value = Settings.Default.UpdateInterval;
 
-            GenerateMarkItDownFiles();
-        }
-
-        private static void GenerateMarkItDownFiles()
-        {
-            const string classesTxt = Paths.Classes;
-            const string regionsTxt = Paths.Regions;
-            if (File.Exists(classesTxt) && File.Exists(regionsTxt))
-            {
-                return;
-            }
-
-            StringBuilder classesContent = new StringBuilder();
-            foreach (var cardType in Enum.GetValues(typeof(CardType)))
-            {
-                foreach (var cardColor in Enum.GetValues(typeof(CardColor)))
-                {
-                    classesContent.AppendLine($"cards\\{cardType}{char.ToLower(cardColor.ToString()[0])}");
-                }
-            }
-
-            classesContent.AppendLine("position\\btn");
-            classesContent.AppendLine("opponent\\cards");
-
-            File.WriteAllText(classesTxt, classesContent.ToString());
-
-            string[] regionsContent =
-            {
-                nameof(Flop),
-                nameof(Turn),
-                nameof(River),
-                nameof(PlayerCards)
-            };
-
-            var regionContents = new StringBuilder(string.Join("\r\n", regionsContent)).AppendLine();
-
-            for (int i = 0; i < 10; i++)
-            {
-                regionContents.AppendLine($"{nameof(Position)}{i + 1}");
-            }
-            
-            for (int i = 0; i < 10; i++)
-            {
-                regionContents.AppendLine($"{nameof(Opponent)}{i + 1}");
-            }
-
-            File.WriteAllText(regionsTxt, regionContents.ToString());
+            MarkItDownFiles.GenerateMarkItDownFiles();
         }
 
         private void buttonBoards_Click(object sender, EventArgs e)
         {
             new ManageBoards(ProjectDirectory, _currentProject.Name).ShowDialog();
+            _currentProject = SaveLoad.LoadProject(Path.Combine(ProjectDirectory, _currentProject.Name));
         }
 
         private void buttonExit_Click(object sender, EventArgs e)
