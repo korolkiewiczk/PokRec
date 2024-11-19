@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using Common;
 using Game.MultiRegionMatchers;
+using Game.MultiRegionMatchers.Poker;
 using Game.RegionMatchers;
 using PT.Algorithm;
 using PT.Algorithm.Model;
@@ -20,6 +21,8 @@ namespace Game.Games
         private Position _position;
         private Opponent _opponent;
 
+        private int _numPlayers;
+
         public Poker(Project project, Board board, Action<string> processor) : base(project, board, processor)
         {
             InitializeMatchers();
@@ -35,6 +38,7 @@ namespace Game.Games
             var settings = new PokerBoardSettingsParser(Board);
             _position = new Position(Board, settings.Players);
             _opponent = new Opponent(Board, settings.Players - 1);
+            _numPlayers = settings.Players;
         }
 
         public override void Show(Environment e)
@@ -72,7 +76,7 @@ namespace Game.Games
 
             if (playerCards.Any())
             {
-                int countPlayers = opponents.Count + 1;
+                int countPlayers = opponents.Count + 1; // +1 for the player
                 var result = ComputeMonteCarloResult(playerCards, flopCards.Union(turnCards).Union(riverCards).ToList(),
                     countPlayers);
 
@@ -90,15 +94,27 @@ namespace Game.Games
                     g.DrawString(text, font, new SolidBrush(color), x, y);
                     x += (int)g.MeasureString(text + " ", font).Width;
                 }
-
-                var prefix = $"Players = {countPlayers} Layout = ";
-                DrawColoredString(prefix, Color.Black, ref x, y, e.Graphics, font);
+                
+                var lineHeight = font.GetHeight(e.Graphics);
+                // First line - Players count and Position
+                x = 10;
+                var positionText = position.GetPokerPosition(_numPlayers).ToDisplayString();
+                DrawColoredString($"Players = {countPlayers} Position = {positionText}", Color.Black, ref x, y, e.Graphics, font);
+                
+                // Second line - Layout and cards
+                y += (int)lineHeight;
+                x = 10;
+                var prefix2 = "Layout = ";
+                DrawColoredString(prefix2, Color.Black, ref x, y, e.Graphics, font);
                 DrawColoredString(playerCardsStr, Color.Black, ref x, y, e.Graphics, font);
                 DrawColoredString(flopCardsStr, Color.FromArgb(205, 127, 50), ref x, y, e.Graphics, font); // Bronze
                 DrawColoredString(turnCardsStr, Color.Orange, ref x, y, e.Graphics, font);
                 DrawColoredString(riverCardsStr, Color.Violet, ref x, y, e.Graphics, font);
 
-                e.Graphics.DrawString($": B {result.Better * 100:F1}% - E {result.Exact * 100:F1}% - S {result.Smaller * 100:F1}%",
+                // Second line
+                y += (int)lineHeight;
+                x = 10;
+                e.Graphics.DrawString($"WIN {result.Better * 100:F1}% - TIE {result.Exact * 100:F1}% - LOSE {result.Smaller * 100:F1}%",
                     font, new SolidBrush(Color.Black), x, y);
             }
 

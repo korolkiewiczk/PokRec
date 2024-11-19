@@ -12,10 +12,10 @@ namespace Game.MultiRegionMatchers
 
         public void Add(int pos) => IsSet.Add(pos);
 
-        public int Pos => IsSet.FirstOrDefault();
+        public int Pos => IsSet.FirstOrDefault() + 1;
 
         public int Count => IsSet.Count;
         
-        private HashSet<int> IsSet { get; }
+        protected HashSet<int> IsSet { get; }
     }
 }

@@ -16,6 +16,8 @@ namespace Game
         protected readonly Dictionary<int, List<ReconResult>> GameResults = new Dictionary<int, List<ReconResult>>();
         protected string PrevOutputFilePath;
 
+        protected readonly int sleepTime = 50;
+
         protected GameBase(Project project, Board board, Action<string> processor)
         {
             Project = project;
@@ -41,10 +43,7 @@ namespace Game
 
             var outFilePath = ImgReconOutput.OutFilePath(Project, Board);
 
-            if (File.Exists(outFilePath))
-            {
-                File.Delete(outFilePath);
-            }
+            DeleteFileIfExists(outFilePath);
 
             var spec = CreateImgReconSpec(outFilePath);
 
@@ -64,6 +63,22 @@ namespace Game
             });
         }
 
+        private void DeleteFileIfExists(string outFilePath)
+        {
+            if (File.Exists(outFilePath))
+            {
+                try
+                {
+                    File.Delete(outFilePath);
+                }
+                catch
+                {
+                    Thread.Sleep(sleepTime);
+                    File.Delete(outFilePath);
+                }
+            }
+        }
+
         private void CleanupSpecs()
         {
             foreach (var specFile in Directory.GetFiles(ImgReconSpec.SpecDirectory(Project, Board), "spec*"))
@@ -81,10 +96,9 @@ namespace Game
 
         protected abstract ImgReconSpec CreateImgReconSpec(string outFilePath);
 
-        private static void WaitForFile(string filePath)
+        private void WaitForFile(string filePath)
         {
-            var sleepTime = 100;
-            int iter = 10000 / sleepTime;    //todo config
+            int iter = 10000 / sleepTime;
             while (!File.Exists(filePath) && --iter > 0)
             {
                 Thread.Sleep(sleepTime);

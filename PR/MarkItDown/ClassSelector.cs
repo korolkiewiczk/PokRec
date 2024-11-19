@@ -74,9 +74,22 @@ namespace MarkItDown
 
         private int AddClassHeader(Panel panel, string className, int yPos)
         {
+            int definedCount = 0;
+            int totalCount = _classes[className].Count;
+            
+            // Count defined classes
+            foreach (var item in _classes[className])
+            {
+                string imagePath = Path.Combine(ClassesDir, className, item + Path.GetExtension(Paths.TempImg));
+                if (File.Exists(imagePath))
+                {
+                    definedCount++;
+                }
+            }
+
             var classLabel = new Label
             {
-                Text = className,
+                Text = $"{className} ({definedCount}/{totalCount})",
                 Font = new Font(Font, FontStyle.Bold),
                 Location = new Point(10, yPos),
                 AutoSize = true
