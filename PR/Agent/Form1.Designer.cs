@@ -39,16 +39,17 @@
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.pageDesign = new System.Windows.Forms.TabPage();
             this.tabPlay = new System.Windows.Forms.TabPage();
-            this.label1 = new System.Windows.Forms.Label();
+            this.labelMilliseconds = new System.Windows.Forms.Label();
             this.numericInterval = new System.Windows.Forms.NumericUpDown();
             this.buttonShowGame = new System.Windows.Forms.Button();
             this.buttonStop = new System.Windows.Forms.Button();
             this.buttonStart = new System.Windows.Forms.Button();
             this.tabSettings = new System.Windows.Forms.TabPage();
-            this.label2 = new System.Windows.Forms.Label();
+            this.labelSavedImagesPerBoard = new System.Windows.Forms.Label();
             this.numericSavedImagesPerBoard = new System.Windows.Forms.NumericUpDown();
             this.timerGame = new System.Windows.Forms.Timer(this.components);
             this.buttonTakeShot = new System.Windows.Forms.Button();
+            this.buttonFixWindow = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.pageDesign.SuspendLayout();
             this.tabPlay.SuspendLayout();
@@ -157,11 +158,12 @@
             // 
             this.tabPlay.BackColor = System.Drawing.Color.Transparent;
             this.tabPlay.Controls.Add(this.buttonTakeShot);
-            this.tabPlay.Controls.Add(this.label1);
+            this.tabPlay.Controls.Add(this.labelMilliseconds);
             this.tabPlay.Controls.Add(this.numericInterval);
             this.tabPlay.Controls.Add(this.buttonShowGame);
             this.tabPlay.Controls.Add(this.buttonStop);
             this.tabPlay.Controls.Add(this.buttonStart);
+            this.tabPlay.Controls.Add(this.buttonFixWindow);
             this.tabPlay.Location = new System.Drawing.Point(4, 22);
             this.tabPlay.Name = "tabPlay";
             this.tabPlay.Padding = new System.Windows.Forms.Padding(3);
@@ -169,14 +171,14 @@
             this.tabPlay.TabIndex = 1;
             this.tabPlay.Text = "Play";
             // 
-            // label1
+            // labelMilliseconds
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(129, 137);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(20, 13);
-            this.label1.TabIndex = 5;
-            this.label1.Text = "ms";
+            this.labelMilliseconds.AutoSize = true;
+            this.labelMilliseconds.Location = new System.Drawing.Point(129, 137);
+            this.labelMilliseconds.Name = "labelMilliseconds";
+            this.labelMilliseconds.Size = new System.Drawing.Size(20, 13);
+            this.labelMilliseconds.TabIndex = 5;
+            this.labelMilliseconds.Text = "ms";
             // 
             // numericInterval
             // 
@@ -239,7 +241,7 @@
             // tabSettings
             // 
             this.tabSettings.BackColor = System.Drawing.Color.Transparent;
-            this.tabSettings.Controls.Add(this.label2);
+            this.tabSettings.Controls.Add(this.labelSavedImagesPerBoard);
             this.tabSettings.Controls.Add(this.numericSavedImagesPerBoard);
             this.tabSettings.Location = new System.Drawing.Point(4, 22);
             this.tabSettings.Name = "tabSettings";
@@ -247,14 +249,14 @@
             this.tabSettings.TabIndex = 2;
             this.tabSettings.Text = "Settings";
             // 
-            // label2
+            // labelSavedImagesPerBoard
             // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(5, 13);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(122, 13);
-            this.label2.TabIndex = 1;
-            this.label2.Text = "Saved images per board";
+            this.labelSavedImagesPerBoard.AutoSize = true;
+            this.labelSavedImagesPerBoard.Location = new System.Drawing.Point(5, 13);
+            this.labelSavedImagesPerBoard.Name = "labelSavedImagesPerBoard";
+            this.labelSavedImagesPerBoard.Size = new System.Drawing.Size(122, 13);
+            this.labelSavedImagesPerBoard.TabIndex = 1;
+            this.labelSavedImagesPerBoard.Text = "Saved images per board";
             // 
             // numericSavedImagesPerBoard
             // 
@@ -292,6 +294,16 @@
             this.buttonTakeShot.Text = "Take shot";
             this.buttonTakeShot.UseVisualStyleBackColor = true;
             this.buttonTakeShot.Click += new System.EventHandler(this.buttonTakeShot_Click);
+            // 
+            // buttonFixWindow
+            // 
+            this.buttonFixWindow.Location = new System.Drawing.Point(4, 101);
+            this.buttonFixWindow.Name = "buttonFixWindow";
+            this.buttonFixWindow.Size = new System.Drawing.Size(140, 23);
+            this.buttonFixWindow.TabIndex = 7;
+            this.buttonFixWindow.Text = "Fix window";
+            this.buttonFixWindow.UseVisualStyleBackColor = true;
+            this.buttonFixWindow.Click += new System.EventHandler(this.buttonFixWindow_Click);
             // 
             // Form1
             // 
@@ -335,13 +347,14 @@
         private System.Windows.Forms.Button buttonShowGame;
         private System.Windows.Forms.Button buttonStop;
         private System.Windows.Forms.Button buttonStart;
-        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label labelMilliseconds;
         private System.Windows.Forms.NumericUpDown numericInterval;
         private System.Windows.Forms.Timer timerGame;
         private System.Windows.Forms.TabPage tabSettings;
-        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label labelSavedImagesPerBoard;
         private System.Windows.Forms.NumericUpDown numericSavedImagesPerBoard;
         private System.Windows.Forms.Button buttonTakeShot;
+        private System.Windows.Forms.Button buttonFixWindow;
     }
 }
 

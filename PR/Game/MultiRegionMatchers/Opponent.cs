@@ -12,7 +12,7 @@ namespace Game.MultiRegionMatchers
 
         public override IResultPresenter<Place> GetPresenter()
         {
-            return new PositionPresenter();
+            return new OpponentPresenter();
         }
 
         public override IEnumerable<RegionSpec> GetRegionSpecs()
@@ -25,8 +25,8 @@ namespace Game.MultiRegionMatchers
                     ClassesPath = Classes.ClassPath(Board, "opponent"),
                     Name = $"{nameof(Opponent)}{i + 1}",
                     Num = 1,
-                    Threshold = 95,
-                    AbandonThreshold = 70
+                    Threshold = 70,
+                    AbandonThreshold = 50
                 });
             }
 

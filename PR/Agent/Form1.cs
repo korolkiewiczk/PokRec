@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 using Agent.Properties;
 using Common;
@@ -15,6 +16,7 @@ namespace Agent
         private const string ProjectsDir = "projects";
         private Project _currentProject;
         private bool _capture;
+        private bool _capturePosition;
 
         private Dictionary<Board, IBoardObserver> _boardObservers;
 
@@ -217,6 +219,25 @@ namespace Agent
                 var game = new Game(_currentProject, board);
                 _boardObservers[board] = game;
                 game.Show();
+            }
+        }
+
+        private void buttonFixWindow_Click(object sender, EventArgs e)
+        {
+            _capturePosition = true;
+        }
+
+        protected override void OnDeactivate(EventArgs e)
+        {
+            base.OnDeactivate(e);
+            
+            if (!_capturePosition) return;
+            _capturePosition = false;
+
+            var currentBoard = _currentProject.Boards.FirstOrDefault();
+            if (currentBoard != null)
+            {
+                ScreenShot.MoveAndResizeWindow(currentBoard.Rect.Location, currentBoard.Rect.Size);
             }
         }
     }

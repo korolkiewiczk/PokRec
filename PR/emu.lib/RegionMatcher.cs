@@ -113,8 +113,6 @@ namespace emu.lib
         {
             if (classImagePath == mainImagePath) return true;
 
-            double similarityThreshold = (double)_abandonThreshold / 100;
-
             // Load images using Emgu CV
             using (var m = new Image<Gray, byte>(mainImagePath))
             using (var c = new Image<Gray, byte>(classImagePath))
@@ -134,16 +132,18 @@ namespace emu.lib
                 // The maximum value corresponds to the best match
                 double similarity = maxValues[0];
 
-                if (similarity * 100 < _abandonThreshold) return false;
-
-                _imgList.Add(new WeightedImages
+                // Only add to list if above abandon threshold, but don't stop processing
+                if (similarity * 100 >= _abandonThreshold)
                 {
-                    ImagePath = classImagePath,
-                    Score = similarity * 100 // Convert to percentage
-                });
+                    _imgList.Add(new WeightedImages
+                    {
+                        ImagePath = classImagePath,
+                        Score = similarity * 100 // Convert to percentage
+                    });
+                }
             }
 
-            return true;
+            return true;  // Always continue processing
         }
 
         private void GenerateRegionImage()

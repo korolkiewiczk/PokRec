@@ -18,6 +18,7 @@ namespace Game.Games
         private River _river;
         private PlayerCards _playerCards;
         private Position _position;
+        private Opponent _opponent;
 
         public Poker(Project project, Board board, Action<string> processor) : base(project, board, processor)
         {
@@ -33,6 +34,7 @@ namespace Game.Games
 
             var settings = new PokerBoardSettingsParser(Board);
             _position = new Position(Board, settings.Players);
+            _opponent = new Opponent(Board, settings.Players - 1);
         }
 
         public override void Show(Environment e)
@@ -42,12 +44,14 @@ namespace Game.Games
             var turnResult = GetResult(nameof(Turn));
             var riverResult = GetResult(nameof(River));
             var positionResults = GetResultsPrefixed(nameof(Position)).ToList();
+            var opponentResults = GetResultsPrefixed(nameof(Opponent)).ToList();
 
             var playerCards = _playerCards.Match(playerResult);
             var flopCards = _flop.Match(flopResult);
             var turnCards = _turn.Match(turnResult);
             var riverCards = _river.Match(riverResult);
             var position = _position.Match(positionResults);
+            var opponents = _opponent.Match(opponentResults);
 
             _playerCards.GetPresenter().Present(playerCards, playerResult, e);
             _flop.GetPresenter().Present(flopCards, flopResult, e);
@@ -60,17 +64,24 @@ namespace Game.Games
                 positionPresenter.Present(position, positionResult, e);
             }
 
+            var opponentPresenter = _opponent.GetPresenter();
+            foreach (var opponentResult in opponentResults)
+            {
+                opponentPresenter.Present(opponents, opponentResult, e);
+            }
+
             if (playerCards.Any())
             {
+                int countPlayers = opponents.Count + 1;
                 var result = ComputeMonteCarloResult(playerCards, flopCards.Union(turnCards).Union(riverCards).ToList(),
-                    2);
+                    countPlayers);
 
                 var playerCardLayout =
                     new CardLayout(playerCards
                         .Union(flopCards).Union(turnCards).Union(riverCards));
                 e.Graphics.DrawString(
-                    $"{position.Count + 1} {playerCardLayout}: {result.Better * 100}% - {result.Exact * 100}% - {result.Smaller * 100}%"
-                    , new Font(FontFamily.GenericMonospace, 11, FontStyle.Regular), new SolidBrush(Color.Black), 10,
+                    $"Players = {countPlayers} Layout = {playerCardLayout}: B {result.Better * 100:F1}% - E {result.Exact * 100:F1}% - S {result.Smaller * 100:F1}%"
+                    , new Font(FontFamily.GenericMonospace, 10, FontStyle.Regular), new SolidBrush(Color.Black), 10,
                     10);
             }
 
@@ -87,6 +98,7 @@ namespace Game.Games
             spec.RegionSpecs.Add(_playerCards.GetRegionSpec());
 
             spec.RegionSpecs.AddRange(_position.GetRegionSpecs());
+            spec.RegionSpecs.AddRange(_opponent.GetRegionSpecs());
 
             return spec;
         }
