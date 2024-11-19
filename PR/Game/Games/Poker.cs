@@ -85,21 +85,18 @@ namespace Game.Games
                 var x = 10;
                 var y = 10;
 
+                void DrawColoredString(string text, Color color, ref int x, int y, Graphics g, Font font)
+                {
+                    g.DrawString(text, font, new SolidBrush(color), x, y);
+                    x += (int)g.MeasureString(text + " ", font).Width;
+                }
+
                 var prefix = $"Players = {countPlayers} Layout = ";
-                e.Graphics.DrawString(prefix, font, new SolidBrush(Color.Black), x, y);
-                x += (int)e.Graphics.MeasureString(prefix, font).Width;
-
-                e.Graphics.DrawString(playerCardsStr, font, new SolidBrush(Color.Black), x, y);
-                x += (int)e.Graphics.MeasureString(playerCardsStr + " ", font).Width;
-
-                e.Graphics.DrawString(flopCardsStr, font, new SolidBrush(Color.FromArgb(205, 127, 50)), x, y); // Bronze
-                x += (int)e.Graphics.MeasureString(flopCardsStr + " ", font).Width;
-
-                e.Graphics.DrawString(turnCardsStr, font, new SolidBrush(Color.Orange), x, y);
-                x += (int)e.Graphics.MeasureString(turnCardsStr + " ", font).Width;
-
-                e.Graphics.DrawString(riverCardsStr, font, new SolidBrush(Color.Violet), x, y);
-                x += (int)e.Graphics.MeasureString(riverCardsStr + " ", font).Width;
+                DrawColoredString(prefix, Color.Black, ref x, y, e.Graphics, font);
+                DrawColoredString(playerCardsStr, Color.Black, ref x, y, e.Graphics, font);
+                DrawColoredString(flopCardsStr, Color.FromArgb(205, 127, 50), ref x, y, e.Graphics, font); // Bronze
+                DrawColoredString(turnCardsStr, Color.Orange, ref x, y, e.Graphics, font);
+                DrawColoredString(riverCardsStr, Color.Violet, ref x, y, e.Graphics, font);
 
                 e.Graphics.DrawString($": B {result.Better * 100:F1}% - E {result.Exact * 100:F1}% - S {result.Smaller * 100:F1}%",
                     font, new SolidBrush(Color.Black), x, y);
