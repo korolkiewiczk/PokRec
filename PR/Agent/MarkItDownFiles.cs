@@ -8,7 +8,7 @@ using Game.MultiRegionMatchers;
 
 namespace Agent;
 
-public class MarkItDownFiles
+public static class MarkItDownFiles
 {
     public static void GenerateMarkItDownFiles()
     {
@@ -24,7 +24,7 @@ public class MarkItDownFiles
         {
             foreach (var cardColor in Enum.GetValues(typeof(CardColor)))
             {
-                classesContent.AppendLine($"cards\\{cardType}{char.ToLower(cardColor.ToString()[0])}");
+                classesContent.AppendLine($"cards\\{cardType}{char.ToLower(cardColor.ToString()![0])}");
             }
         }
 
@@ -34,12 +34,12 @@ public class MarkItDownFiles
         File.WriteAllText(classesTxt, classesContent.ToString());
 
         string[] regionsContent =
-        {
-                nameof(Flop),
-                nameof(Turn),
-                nameof(River),
-                nameof(PlayerCards)
-            };
+        [
+            nameof(Flop),
+            nameof(Turn),
+            nameof(River),
+            nameof(PlayerCards)
+        ];
 
         var regionContents = new StringBuilder(string.Join("\r\n", regionsContent)).AppendLine();
 
@@ -51,6 +51,11 @@ public class MarkItDownFiles
         for (int i = 0; i < 10; i++)
         {
             regionContents.AppendLine($"{nameof(Opponent)}{i + 1}");
+        }
+
+        for (int i = 0; i < 10; i++)
+        {
+            regionContents.AppendLine($"{nameof(Stack)}{i + 1}");
         }
 
         File.WriteAllText(regionsTxt, regionContents.ToString());

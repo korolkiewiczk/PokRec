@@ -1,7 +1,7 @@
 ﻿namespace Game
 {
-    public interface IResultPresenter<T>
+    public interface IResultPresenter
     {
-        void Present(T result, ReconResult reconResult, Environment e);
+        void Present(ReconResult reconResult, Environment e);
     }
 }

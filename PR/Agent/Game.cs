@@ -24,7 +24,8 @@ namespace Agent
         public Game(Project prj, Board board) : this()
         {
             _board = board;
-            _pokerGame = new Poker(prj, board, x => Process.Start("emu.exe", x));
+            //_pokerGame = new Poker(prj, board, x => Process.Start("emu.exe", x));
+            _pokerGame = new Poker(prj, board, x => emu.lib.Processing.Process(x));
             Text = board.ToString();
             Timer timer = new Timer();
             timer.Interval = 100;

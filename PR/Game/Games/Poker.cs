@@ -4,7 +4,6 @@ using System.Drawing;
 using System.Linq;
 using Common;
 using Game.MultiRegionMatchers;
-using Game.MultiRegionMatchers.Poker;
 using Game.RegionMatchers;
 using PT.Algorithm;
 using PT.Algorithm.Model;
@@ -20,7 +19,7 @@ namespace Game.Games
         private PlayerCards _playerCards;
         private Position _position;
         private Opponent _opponent;
-
+        private Stack _stack;
         private int _numPlayers;
 
         public Poker(Project project, Board board, Action<string> processor) : base(project, board, processor)
@@ -38,6 +37,7 @@ namespace Game.Games
             var settings = new PokerBoardSettingsParser(Board);
             _position = new Position(Board, settings.Players);
             _opponent = new Opponent(Board, settings.Players - 1);
+            _stack = new Stack(settings.Players);
             _numPlayers = settings.Players;
         }
 
@@ -49,29 +49,35 @@ namespace Game.Games
             var riverResult = GetResult(nameof(River));
             var positionResults = GetResultsPrefixed(nameof(Position)).ToList();
             var opponentResults = GetResultsPrefixed(nameof(Opponent)).ToList();
-
+            var stackResults = GetResultsPrefixed(nameof(Stack)).ToList();
             var playerCards = _playerCards.Match(playerResult);
             var flopCards = _flop.Match(flopResult);
             var turnCards = _turn.Match(turnResult);
             var riverCards = _river.Match(riverResult);
             var position = _position.Match(positionResults);
             var opponents = _opponent.Match(opponentResults);
-
-            _playerCards.GetPresenter().Present(playerCards, playerResult, e);
-            _flop.GetPresenter().Present(flopCards, flopResult, e);
-            _turn.GetPresenter().Present(turnCards, turnResult, e);
-            _river.GetPresenter().Present(riverCards, riverResult, e);
+            var stack = _stack.Match(stackResults);
+            _playerCards.GetPresenter().Present(playerResult, e);
+            _flop.GetPresenter().Present(flopResult, e);
+            _turn.GetPresenter().Present(turnResult, e);
+            _river.GetPresenter().Present(riverResult, e);
 
             var positionPresenter = _position.GetPresenter();
             foreach (var positionResult in positionResults)
             {
-                positionPresenter.Present(position, positionResult, e);
+                positionPresenter.Present(positionResult, e);
             }
 
             var opponentPresenter = _opponent.GetPresenter();
             foreach (var opponentResult in opponentResults)
             {
-                opponentPresenter.Present(opponents, opponentResult, e);
+                opponentPresenter.Present(opponentResult, e);
+            }
+
+            var stackPresenter = _stack.GetPresenter();
+            foreach (var stackResult in stackResults)
+            {
+                stackPresenter.Present(stackResult, e);
             }
 
             if (playerCards.Any())
@@ -85,26 +91,24 @@ namespace Game.Games
                 var turnCardsStr = string.Join(" ", turnCards.Select(c => c.ToString()));
                 var riverCardsStr = string.Join(" ", riverCards.Select(c => c.ToString()));
 
-                var font = new Font(FontFamily.GenericMonospace, 10, FontStyle.Regular);
-                var x = 10;
-                var y = 10;
-
                 void DrawColoredString(string text, Color color, ref int x, int y, Graphics g, Font font)
                 {
                     g.DrawString(text, font, new SolidBrush(color), x, y);
                     x += (int)g.MeasureString(text + " ", font).Width;
                 }
                 
+                var font = new Font(FontFamily.GenericMonospace, 10, FontStyle.Regular);
                 var lineHeight = font.GetHeight(e.Graphics);
                 // First line - Players count and Position
-                x = 10;
+                var x = 10;
+                var y = 10;
+
                 var positionText = position.GetPokerPosition(_numPlayers).ToDisplayString();
                 DrawColoredString($"Players = {countPlayers} Position = {positionText}", Color.Black, ref x, y, e.Graphics, font);
-                
                 // Second line - Layout and cards
-                y += (int)lineHeight;
                 x = 10;
-                var prefix2 = "Layout = ";
+                y += (int)lineHeight;
+                const string prefix2 = "Layout = ";
                 DrawColoredString(prefix2, Color.Black, ref x, y, e.Graphics, font);
                 DrawColoredString(playerCardsStr, Color.Black, ref x, y, e.Graphics, font);
                 DrawColoredString(flopCardsStr, Color.FromArgb(205, 127, 50), ref x, y, e.Graphics, font); // Bronze
@@ -112,9 +116,14 @@ namespace Game.Games
                 DrawColoredString(riverCardsStr, Color.Violet, ref x, y, e.Graphics, font);
 
                 // Second line
-                y += (int)lineHeight;
                 x = 10;
+                y += (int)lineHeight;
                 e.Graphics.DrawString($"WIN {result.Better * 100:F1}% - TIE {result.Exact * 100:F1}% - LOSE {result.Smaller * 100:F1}%",
+                    font, new SolidBrush(Color.Black), x, y);
+                // Second line
+                x = 10;
+                y += (int)lineHeight;
+                e.Graphics.DrawString(string.Join(',', stack.Select((x,i)=>$"Player {i+1} has ${x}")),
                     font, new SolidBrush(Color.Black), x, y);
             }
 
@@ -132,6 +141,7 @@ namespace Game.Games
 
             spec.RegionSpecs.AddRange(_position.GetRegionSpecs());
             spec.RegionSpecs.AddRange(_opponent.GetRegionSpecs());
+            spec.RegionSpecs.AddRange(_stack.GetRegionSpecs());
 
             return spec;
         }

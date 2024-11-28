@@ -1,4 +1,4 @@
-namespace Game.MultiRegionMatchers.Poker
+namespace Game.Games
 {
     public enum PokerPosition
     {

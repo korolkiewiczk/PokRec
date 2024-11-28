@@ -2,7 +2,6 @@ using System.Drawing;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Util;
-using Emgu.CV.OCR;
 
 namespace emu.lib;
 public static class CVUtils
@@ -56,26 +55,5 @@ public static class CVUtils
 
         // Return original selection if no better fit found
         return initialSelection;
-    }
-
-    public static string GetTextFromRegion(Bitmap region, Rectangle regionRect)
-    {
-        using (var tesseract = new Tesseract())
-        {
-            // Initialize tesseract with English language
-            // You'll need to provide the path to tessdata
-            tesseract.SetVariable("user_defined_dpi", "70");
-            tesseract.Init("path_to_tessdata", "eng", OcrEngineMode.TesseractLstmCombined);
-            
-            // Convert Bitmap to Mat and extract region
-            using (Mat sourceMat = region.ToMat())
-            using (Mat regionMat = new Mat(sourceMat, regionRect))
-            {
-                tesseract.SetImage(regionMat);
-                tesseract.Recognize();
-                
-                return tesseract.GetUTF8Text().Trim();
-            }
-        }
     }
 }

@@ -6,6 +6,6 @@ namespace Game
     {
         RegionSpec GetRegionSpec();
         T Match(ReconResult result);
-        IResultPresenter<T> GetPresenter();
+        IResultPresenter GetPresenter();
     }
 }

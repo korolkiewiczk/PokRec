@@ -189,6 +189,10 @@ namespace Agent
                     SaveProject();
                 }
 
+                if (_boardObservers == null || !_boardObservers.ContainsKey(board))
+                {
+                    InitGameBoards();
+                }
                 _boardObservers?[board]?.BoardUpdated();
             }
         }
@@ -212,6 +216,11 @@ namespace Agent
         }
 
         private void buttonShowGame_Click(object sender, EventArgs e)
+        {
+            InitGameBoards();
+        }
+
+        private void InitGameBoards()
         {
             _boardObservers = new Dictionary<Board, IBoardObserver>();
             foreach (var board in _currentProject.Boards)

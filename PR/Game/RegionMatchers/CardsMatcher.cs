@@ -54,7 +54,7 @@ namespace Game.RegionMatchers
             }).ToList();
         }
 
-        public IResultPresenter<List<Card>> GetPresenter()
+        public IResultPresenter GetPresenter()
         {
             return new CardPresenter();
         }

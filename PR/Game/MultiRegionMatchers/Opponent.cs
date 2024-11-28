@@ -10,7 +10,7 @@ namespace Game.MultiRegionMatchers
         {
         }
 
-        public override IResultPresenter<Place> GetPresenter()
+        public override IResultPresenter GetPresenter()
         {
             return new OpponentPresenter();
         }

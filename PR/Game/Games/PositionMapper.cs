@@ -1,7 +1,6 @@
-using System;
-using System.Linq;
+using Game.MultiRegionMatchers;
 
-namespace Game.MultiRegionMatchers.Poker
+namespace Game.Games
 {
     public static class PositionMapper
     {

@@ -1,12 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Drawing;
-using PT.Poker.Model;
+﻿using System.Drawing;
 
 namespace Game.Presenters
 {
-    public class CardPresenter : IResultPresenter<List<Card>>
+    public class CardPresenter : IResultPresenter
     {
-        public void Present(List<Card> result, ReconResult reconResult, Environment e)
+        public void Present(ReconResult reconResult, Environment e)
         {
             var rect = Util.MapRect(reconResult.ItemRectangle, e);
 

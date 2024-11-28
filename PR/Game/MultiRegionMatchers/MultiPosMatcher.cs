@@ -30,7 +30,7 @@ namespace Game.MultiRegionMatchers
             return place;
         }
 
-        public abstract IResultPresenter<Place> GetPresenter();
+        public abstract IResultPresenter GetPresenter();
 
         public abstract IEnumerable<RegionSpec> GetRegionSpecs();
     }

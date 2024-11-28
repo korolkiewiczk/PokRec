@@ -6,7 +6,7 @@ namespace Game
     public interface IMultiRegionMatcher<T>
     {
         T Match(IEnumerable<ReconResult> results);
-        IResultPresenter<T> GetPresenter();
+        IResultPresenter GetPresenter();
         IEnumerable<RegionSpec> GetRegionSpecs();
     }
 }
