@@ -6,7 +6,7 @@ using Common;
 
 namespace scr
 {
-    public class ScreenShot
+    public static class ScreenShot
     {
         public enum ScreenCaptureMode
         {
@@ -47,10 +47,8 @@ namespace scr
 
             var result = new Bitmap(bounds.Width, bounds.Height);
 
-            using (var g = Graphics.FromImage(result))
-            {
-                g.CopyFromScreen(new Point(bounds.Left, bounds.Top), Point.Empty, bounds.Size);
-            }
+            using var g = Graphics.FromImage(result);
+            g.CopyFromScreen(new Point(bounds.Left, bounds.Top), Point.Empty, bounds.Size);
 
             return result;
         }
@@ -66,7 +64,7 @@ namespace scr
             Interop.GetWindowRect(foregroundWindowsHandle, ref rect);
             // Adjust for DPI scaling
             float scaleFactor = GetDpiScaleFactor(foregroundWindowsHandle);
-            if (scaleFactor != 1.0f)
+            if (Math.Abs(scaleFactor - 1.0f) > 0.001)
             {
                 // Adjust for DPI scaling
                 int adjustedLeft = (int)(rect.Left * scaleFactor);
@@ -91,16 +89,6 @@ namespace scr
                     rect.Right - rect.Left,
                     rect.Bottom - rect.Top
                 );
-            }
-        }
-
-
-        private static void EnsureDpiAwareness()
-        {
-            // Set the process DPI awareness to per-monitor DPI aware
-            if (!Interop.SetProcessDpiAwarenessContext(Interop.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE))
-            {
-                Console.WriteLine("Failed to set DPI awareness context.");
             }
         }
 

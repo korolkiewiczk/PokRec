@@ -14,8 +14,9 @@ namespace MarkItDown
         private readonly Rectangle _originRect;
         private readonly List<string> _regions;
 
-        private bool _showRegions;
-        private Dictionary<string, Rectangle> _parsedRegions;
+        private string RegionsDir => _rootFolder + "\\";
+
+        private readonly RegionsMarker _regionsMarker;
 
         public RegionSelector(string rootFolder, Rectangle originRect)
         {
@@ -24,49 +25,23 @@ namespace MarkItDown
 
             CreatePictureBox();
 
-            _regions = File.ReadAllLines(Common.Paths.Regions).ToList();
+            _regionsMarker = new RegionsMarker();
+            _regions = _regionsMarker.Regions;
 
             BuildRegionsButtons();
 
-            _pictureBox.Paint += PictureBox_Paint;
+            PictureBox.Paint += PictureBox_Paint;
         }
-
-        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
-        {
-            if (keyData == Keys.S)
-            {
-                _showRegions = !_showRegions;
-
-                if (_showRegions && _parsedRegions == null)
-                {
-                    _parsedRegions = new Dictionary<string, Rectangle>();
-                    foreach (var region in _regions)
-                    {
-                        var rect = LoadRegion(region);
-                        if (rect != Rectangle.Empty)
-                        {
-                            _parsedRegions.Add(region, rect);
-                        }
-                    }
-                }
-
-                _pictureBox.Invalidate();
-                return true;
-            }
-            return base.ProcessCmdKey(ref msg, keyData);
-        }
-
-        private string RegionsDir => _rootFolder + "\\";
 
         private void BuildRegionsButtons()
         {
-            int x = BtnStart, y = _pictureBox.Size.Height + BtnStart;
+            int x = BtnStart, y = PictureBox.Size.Height + BtnStart;
             var btnSize = BtnPadding * BtnPerLine + BtnStart * 2;
 
             var countItemsSize = _regions.Count / BtnPerLine + 2;
             var btnLineSize = countItemsSize * BtnPadding + y;
 
-            Size = new Size(Math.Max(btnSize, _pictureBox.Size.Width), btnLineSize);
+            Size = new Size(Math.Max(btnSize, PictureBox.Size.Width), btnLineSize);
 
             var tempImgExtension = Path.GetExtension(Common.Paths.TempImg);
             int lineCount = 0;
@@ -88,11 +63,10 @@ namespace MarkItDown
                 }
                 b.Click += (sender, e) =>
                 {
-                    var tag = ((Button)sender).Tag as string;
-                    var regionDir = RegionsDir;
-                    if (!Directory.Exists(regionDir))
+                    var tag = ((Button)sender)?.Tag as string;
+                    if (!Directory.Exists(RegionsDir))
                     {
-                        Directory.CreateDirectory(regionDir);
+                        Directory.CreateDirectory(RegionsDir);
                     }
 
                     File.Copy(Common.Paths.TempImg, RegionsDir + tag + tempImgExtension, true);
@@ -114,7 +88,7 @@ namespace MarkItDown
             }
 
             AutoScroll = true;
-            AutoScrollMinSize = new Size(Math.Max(btnSize, _pictureBox.Size.Width), btnLineSize);
+            AutoScrollMinSize = new Size(Math.Max(btnSize, PictureBox.Size.Width), btnLineSize);
         }
 
         private void SaveRegion(string tag)
@@ -122,39 +96,22 @@ namespace MarkItDown
             File.WriteAllText(RegionsDir + tag + ".txt", new RectangleConverter().ConvertToString(_originRect));
         }
 
-        private Rectangle LoadRegion(string tag)
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            try
+            switch (keyData)
             {
-                var rectStr = File.ReadAllText(RegionsDir + tag + ".txt");
-                var rect = (Rectangle)new RectangleConverter().ConvertFromString(rectStr);
-                return rect;
-            }
-            catch
-            {
-                return Rectangle.Empty;
+                case Keys.S:
+                    _regionsMarker.MarkRegionsOnScreen(RegionsDir);
+                    return true;
+                default:
+                    return base.ProcessCmdKey(ref msg, keyData);
             }
         }
 
         private void PictureBox_Paint(object sender, PaintEventArgs e)
         {
-            if (_showRegions && _parsedRegions != null)
-            {
-                Color color = Color.Magenta;
-                using (var brush = new SolidBrush(color))
-                using (var pen = new Pen(brush, 3f))
-                {
-                    foreach (var rect in _parsedRegions)
-                    {
-                        e.Graphics.DrawRectangle(pen, rect.Value);
-                        using (var font = new Font("Arial", 6, FontStyle.Regular, GraphicsUnit.Point))
-                        {
-                            e.Graphics.DrawString(rect.Key, font, brush, rect.Value.Location);
-                        }
-
-                    }
-                }
-            }
+            _regionsMarker.PaintRegions(e);
+            PictureBox.Invalidate();
         }
     }
 }

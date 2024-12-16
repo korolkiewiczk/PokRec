@@ -44,12 +44,7 @@ public static class CVUtils
                 }
 
                 // Calculate the differences and apply them to the initial selection
-                return new Rectangle(
-                    initialSelection.X + bestFit.X,
-                    initialSelection.Y + bestFit.Y,
-                    bestFit.Width,
-                    bestFit.Height
-                );
+                return bestFit with {X = initialSelection.X + bestFit.X, Y = initialSelection.Y + bestFit.Y};
             }
         }
 

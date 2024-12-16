@@ -108,7 +108,7 @@ namespace Agent
                     Rect = bounds,
                     Settings = new List<KeyValuePair<string, string>>
                     {
-                        new KeyValuePair<string, string>(nameof(PokerBoardSettingsParser.Players), players.ToString())
+                        new(nameof(PokerBoardSettingsParser.Players), players.ToString())
                     }
                 };
 

@@ -13,6 +13,7 @@ namespace Game.Games
             _settings = board.Settings?? new List<KeyValuePair<string, string>>();
         }
 
-        public int Players => int.Parse(_settings.FirstOrDefault(x => x.Key == nameof(Players)).Value ?? "9");
+        public int Players => int.Parse(_settings.FirstOrDefault(
+            x => x.Key == nameof(Players)).Value ?? "9");
     }
 }

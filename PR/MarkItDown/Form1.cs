@@ -13,6 +13,7 @@ namespace MarkItDown
         public Form1()
         {
             InitializeComponent();
+            _regionsMarker = new RegionsMarker();
         }
 
         private bool _mouseDown;
@@ -24,6 +25,8 @@ namespace MarkItDown
         private string _baseRegionsPath;
 
         private bool _scrModeOn;
+        private readonly RegionsMarker _regionsMarker;
+        private Rectangle _rectange;
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
@@ -79,11 +82,13 @@ namespace MarkItDown
             {
                 // Get refined rectangle based on edge detection
                 Bitmap bm = GetFormImageWithoutBorders(this, window);
-                Rectangle refinedWindow = ModifierKeys.HasFlag(Keys.Shift) ? CVUtils.GetRefinedRectangle(bm, window) : window;
-                if (refinedWindow!=window)
+                Rectangle refinedWindow =
+                    ModifierKeys.HasFlag(Keys.Shift) ? CVUtils.GetRefinedRectangle(bm, window) : window;
+                if (refinedWindow != window)
                 {
                     bm = GetFormImageWithoutBorders(this, refinedWindow);
                 }
+
                 bm.Save(Paths.TempImg);
                 bm.Dispose();
                 using (var selector = new ClassSelector(ClassesRootFolder))
@@ -96,7 +101,7 @@ namespace MarkItDown
                 var rectangle = new Rectangle(0, 0, _myImg.Width, _myImg.Height);
                 Bitmap bm = GetFormImageWithoutBorders(this, rectangle);
                 var g = Graphics.FromImage(bm);
-                g.DrawRectangle(new Pen(Color.Red) { Width = 4 }, window);
+                g.DrawRectangle(new Pen(Color.Red) {Width = 4}, window);
                 g.Dispose();
                 bm.Save(Paths.TempImg);
                 bm.Dispose();
@@ -139,6 +144,8 @@ namespace MarkItDown
                 SolidBrush semiTransBrush = new SolidBrush(Color.FromArgb(128, 0, 0, 255));
                 e.Graphics.FillRegion(semiTransBrush, new Region(window));
             }
+
+            _regionsMarker.PaintRegions(e);
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -147,10 +154,12 @@ namespace MarkItDown
             string imgPath = args.Length > 1 ? args[1] : Paths.CaptureImg;
             if (!File.Exists(imgPath))
             {
-                MessageBox.Show($"Image file not found: {imgPath}. Please use Refresh button to capture new image", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Image file not found: {imgPath}. Please use Refresh button to capture new image",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Close();
                 return;
             }
+
             _myImg = Image.FromFile(imgPath);
 
             if (args.Length == 3)
@@ -161,8 +170,12 @@ namespace MarkItDown
             if (args.Length == 4)
             {
                 _baseRegionsPath = args[2];
-                _baseClassesPath = args[3];
+                //_baseClassesPath = args[3];
+                _rectange = (Rectangle)new RectangleConverter().ConvertFromString(args[3])!;         
             }
+
+            // MessageBox.Show(
+            //     $"{args.Length}\n{imgPath}\n{_baseRegionsPath}\n{_baseClassesPath}\n{_rectange}\n{string.Join(",", args)}");
 
             Width = _myImg.Width;
             Height = _myImg.Height + 80;
@@ -172,9 +185,18 @@ namespace MarkItDown
 
             KeyPress += (s, ke) =>
             {
-                if (ke.KeyChar == 's')
+                switch (ke.KeyChar)
                 {
-                    SetCaptureMode(true);
+                    case 'c':
+                        SetCaptureMode(true);
+                        break;
+                    case 'v':
+                        CaptureNewScreenshot(true);
+                        break;
+                    case 's':
+                        _regionsMarker.MarkRegionsOnScreen(RegionsRootFolder + "\\");
+                        Invalidate();
+                        break;
                 }
             };
 
@@ -185,9 +207,9 @@ namespace MarkItDown
         {
             if (_scrModeOn == set) return;
             _scrModeOn = set;
-            
+
             UpdateCaptureStatus();
-            
+
             if (!_scrModeOn)
             {
                 CaptureNewScreenshot();
@@ -199,31 +221,30 @@ namespace MarkItDown
             Text = _scrModeOn ? "[Capturing]" : ClassesRootFolder;
         }
 
-        private void CaptureNewScreenshot()
+        private void CaptureNewScreenshot(bool useRect = false)
         {
             DisposeCurrentImage();
 
-            Rectangle bounds;
-            string title;
-            using (var bmp = ScreenShot.Capture(out bounds, out title))
-            {
-                if (bmp == null)
-                {
-                    Text = "Not captured";
-                    return;
-                }
+            var captureArea = useRect ? _rectange : (Rectangle?) null;
+            var title = "";
+            using var bmp = captureArea.HasValue
+                ? ScreenShot.Capture(captureArea.Value)
+                : ScreenShot.Capture(out _, out title);
 
-                ProcessCapturedImage(bmp, title);
+            if (bmp == null)
+            {
+                Text = "Not captured";
+                return;
             }
+
+            ProcessCapturedImage(bmp, captureArea.HasValue ? "" : title);
         }
 
         private void DisposeCurrentImage()
         {
-            if (_myImg != null)
-            {
-                _myImg.Dispose();
-                _myImg = null;
-            }
+            if (_myImg == null) return;
+            _myImg.Dispose();
+            _myImg = null;
         }
 
         private void ProcessCapturedImage(Bitmap bmp, string title)
@@ -237,7 +258,8 @@ namespace MarkItDown
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving capture: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error saving capture: {ex.Message}", "Error", MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
                 Text = "Capture failed";
             }
         }

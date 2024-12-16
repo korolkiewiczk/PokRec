@@ -243,6 +243,7 @@
             this.tabSettings.BackColor = System.Drawing.Color.Transparent;
             this.tabSettings.Controls.Add(this.labelSavedImagesPerBoard);
             this.tabSettings.Controls.Add(this.numericSavedImagesPerBoard);
+            
             this.tabSettings.Location = new System.Drawing.Point(4, 22);
             this.tabSettings.Name = "tabSettings";
             this.tabSettings.Size = new System.Drawing.Size(150, 207);

@@ -221,7 +221,7 @@ namespace MarkItDown
         private void BuildClassesButtons()
         {
             var (startingX, btnSize, btnLineSize) = CalculateButtonLayoutDimensions();
-            Size = new Size(Math.Max(btnSize, _pictureBox.Size.Width), btnLineSize);
+            Size = new Size(Math.Max(btnSize, PictureBox.Size.Width), btnLineSize);
 
             var buttonPosition = new Point(startingX, BtnStart);
             var lineCount = 0;
@@ -240,7 +240,7 @@ namespace MarkItDown
 
         private (int startingX, int btnSize, int btnLineSize) CalculateButtonLayoutDimensions()
         {
-            var startingX = _pictureBox.Size.Width + BtnSize;
+            var startingX = PictureBox.Size.Width + BtnSize;
             var btnSize = BtnPadding * BtnPerLine + startingX + BtnSize;
             
             var countItemsSize = _classes.Aggregate(0, (c, kvp) => c += kvp.Value.Count + BtnPerLine) / BtnPerLine + 1;

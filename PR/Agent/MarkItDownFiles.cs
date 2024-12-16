@@ -43,17 +43,18 @@ public static class MarkItDownFiles
 
         var regionContents = new StringBuilder(string.Join("\r\n", regionsContent)).AppendLine();
 
-        for (int i = 0; i < 10; i++)
+        var maxPlayers = 10;
+        for (int i = 0; i < maxPlayers; i++)
         {
             regionContents.AppendLine($"{nameof(Position)}{i + 1}");
         }
 
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < maxPlayers; i++)
         {
             regionContents.AppendLine($"{nameof(Opponent)}{i + 1}");
         }
 
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < maxPlayers; i++)
         {
             regionContents.AppendLine($"{nameof(Stack)}{i + 1}");
         }

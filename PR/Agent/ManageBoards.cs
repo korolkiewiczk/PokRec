@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
@@ -11,7 +12,7 @@ namespace Agent
     public partial class ManageBoards : Form
     {
         private readonly string _projectDirectory;
-        private string _name;
+        private readonly string _name;
         private Project _project;
 
         public ManageBoards(string projectDirectory, string name)
@@ -65,7 +66,10 @@ namespace Agent
 
         private void MarkSelectedBoard()
         {
-            Process.Start("MarkItDown.exe", $@"""{SaveLoad.GetBoardPath(_project, SelectedBoard)}"" ""{RegionLoader.GetRegionPath(_project,SelectedBoard)}""");
+            Process.Start("MarkItDown.exe", 
+                $"""
+                 "{SaveLoad.GetBoardPath(_project, SelectedBoard)}" "{RegionLoader.GetRegionPath(_project,SelectedBoard)}" "{new RectangleConverter().ConvertToString(SelectedBoard.Rect)}"
+                 """);
         }
 
         private void btnRefresh_Click(object sender, EventArgs e)

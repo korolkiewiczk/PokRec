@@ -32,7 +32,7 @@ namespace PT.Poker.Model
 
         public int CompareTo(object other)
         {
-            return GetMark().CompareTo(((IMarkable)other).GetMark());
+            return GetMark().CompareTo(((IMarkable)other)!.GetMark());
         }
 
         public IMark GetMark()
