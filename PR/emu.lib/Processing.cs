@@ -4,7 +4,7 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace emu.lib;
 
-public class Processing
+public static class Processing
 {
     private static readonly log4net.ILog log =
         log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod()?.DeclaringType);
@@ -15,11 +15,11 @@ public class Processing
         log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("emulog.config"));
     }
 
-    public static void Process(string specFilePath)
+    public static void Process(string specJson)
     {
         try
         {
-            var spec = ImgReconSpec.Load(specFilePath);
+            var spec = ImgReconSpec.FromJson(specJson);
 
             if (spec == null) return;
 

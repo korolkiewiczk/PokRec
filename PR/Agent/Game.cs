@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Common;
 using Game.Games;
@@ -44,14 +45,14 @@ namespace Agent
             Closed += (s, e) => _closed = true;
         }
 
-        public void BoardUpdated()
+        public async Task BoardUpdated()
         {
             if (_closed)
             {
                 return;
             }
 
-            _pokerGame.Process();
+            await Task.Run(() => _pokerGame.Process());
 
             Text = $@"{DateTime.Now} {_board.Generated} {_board.Computed}";
         }

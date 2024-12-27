@@ -17,11 +17,10 @@ namespace emu.lib
         private static readonly log4net.ILog log =
             log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        // Custom class to store image scores
         private class WeightedImages : IComparable<WeightedImages>
         {
             public string ImagePath { get; set; }
-            public double Score { get; set; } // Changed to double for precision
+            public double Score { get; set; }
 
             public int CompareTo(WeightedImages other)
             {
@@ -32,7 +31,6 @@ namespace emu.lib
             }
         }
 
-        // A List<> which contains processed images scores
         private readonly List<WeightedImages> _imgList = new List<WeightedImages>();
 
         private readonly string _regionPath;
@@ -61,24 +59,23 @@ namespace emu.lib
         {
             try
             {
-                GenerateRegionImage();
+                var regionImage = GenerateRegionImage();
 
                 if (_isOcr)
                 {
-                    Stopwatch swOcr = new Stopwatch();
+                    var swOcr = new Stopwatch();
                     swOcr.Start();
-                    using var image = Image.Load(RegionFilename).CloneAs<Rgba32>();
-                    string recognizedText = CVUtilsOcr.GetTextFromRegion(image);
+                    var recognizedText = CVUtilsOcr.GetTextFromRegion(regionImage);
                     swOcr.Stop();
                     log.Info($"OCR result '{recognizedText}' in {swOcr.ElapsedMilliseconds} ms");
                     return !string.IsNullOrWhiteSpace(recognizedText)
-                        ? new List<string> {recognizedText}
+                        ? [recognizedText]
                         : [];
                 }
 
-                Stopwatch sw = new Stopwatch();
+                var sw = new Stopwatch();
                 sw.Start();
-                ProcessFolder();
+                ProcessFolder(regionImage);
                 sw.Stop();
 
                 log.Info(
@@ -90,7 +87,7 @@ namespace emu.lib
                     .Select(x => Path.GetFileNameWithoutExtension(x.ImagePath))
                     .ToList();
 
-                return result.Any() ? result : [];
+                return result.Any() ? result : new List<string>();
             }
             catch (Exception ex)
             {
@@ -99,14 +96,14 @@ namespace emu.lib
             }
         }
 
-        private void ProcessFolder()
+        private void ProcessFolder(Image<Rgba32> regionImage)
         {
-            bool checkFurther = true;
+            var checkFurther = true;
             if (_toCheckFirst != null && _toCheckFirst.Any())
             {
                 foreach (var classImage in _toCheckFirst.Select(x => Path.Combine(_classPath, x)))
                 {
-                    if (!ProcessImage(RegionFilename, classImage + ".png")) break;
+                    if (!ProcessImage(regionImage, classImage + ".png")) break;
                 }
 
                 if (_imgList.All(x => Math.Abs(x.Score - 100) < 1))
@@ -120,87 +117,97 @@ namespace emu.lib
                 _imgList.Clear();
                 foreach (var classImage in Directory.GetFiles(_classPath))
                 {
-                    if (!ProcessImage(RegionFilename, classImage)) break;
+                    if (!ProcessImage(regionImage, classImage)) break;
                 }
             }
         }
-
-        /// <summary>
-        /// Process single image: calculate score then add the occurrence to imgList List<WeightedImage>
-        /// </summary>
-        private bool ProcessImage(string mainImagePath, string classImagePath)
+        
+        private Image<Gray, byte> ConvertToEmguCvGray(Image<Rgba32> imageSharp)
         {
-            if (classImagePath == mainImagePath) return true;
+            var width = imageSharp.Width;
+            var height = imageSharp.Height;
 
-            // Load images using Emgu CV
-            using (var mainImage = new Image<Gray, byte>(mainImagePath))
-            using (var classImageFull = new Image<Gray, byte>(classImagePath))
+            // Initialize the 3D array for Emgu CV
+            var data = new byte[height, width, 1];
+
+            // Process each row using ProcessPixelRows
+            imageSharp.ProcessPixelRows(accessor =>
             {
-                // Calculate the number of extra columns to ignore (5% of the image width)
-                int numExtraColumns = (int) (classImageFull.Width * 0.05);
-
-                // Ensure that cropping does not result in an invalid region
-                if (numExtraColumns >= classImageFull.Width)
+                for (var y = 0; y < height; y++)
                 {
-                    // Handle the error appropriately, e.g., skip processing or throw an exception
-                    return true; // Or handle accordingly
-                }
+                    var pixelRow = accessor.GetRowSpan(y);
 
-                // Define the cropping rectangle to exclude the left 5% of the class image
-                Rectangle cropRect = new Rectangle(numExtraColumns, 0, classImageFull.Width - numExtraColumns,
-                    classImageFull.Height);
-
-                // Crop the template image
-                using (var classImage = classImageFull.Copy(cropRect))
-                {
-                    // Ensure template size is smaller than source image
-                    if (classImage.Width > mainImage.Width || classImage.Height > mainImage.Height)
-                        return true; // Or handle accordingly
-
-                    // Use template matching
-                    var result = mainImage.MatchTemplate(classImage, TemplateMatchingType.CcoeffNormed);
-
-                    // Find the best match position
-                    double[] maxValues;
-                    result.MinMax(out _, out maxValues, out _, out _);
-
-                    // The maximum value corresponds to the best match
-                    double similarity = maxValues[0];
-
-                    // Only add to list if above threshold
-                    if (similarity * 100 >= _threshold)
+                    for (var x = 0; x < width; x++)
                     {
-                        _imgList.Add(new WeightedImages
-                        {
-                            ImagePath = classImagePath,
-                            Score = similarity * 100 // Convert to percentage
-                        });
+                        var pixel = pixelRow[x];
+
+                        // Convert to grayscale
+                        var grayValue = (byte)(
+                            0.299f * pixel.R +
+                            0.587f * pixel.G +
+                            0.114f * pixel.B
+                        );
+
+                        data[y, x, 0] = grayValue;
                     }
                 }
-            }
+            });
 
-            return true; // Always continue processing
+            // Create the Emgu CV image
+            return new Image<Gray, byte>(data);
         }
 
-
-        private void GenerateRegionImage()
+        private bool ProcessImage(Image<Rgba32> regionImage, string classImagePath)
         {
-            // Read the rectangle dimensions from the file
+            using var regionImageCv = ConvertToEmguCvGray(regionImage);
+            // Load class image using Emgu CV
+            using var classImageFull = new Image<Gray, byte>(classImagePath);
+            
+            var numExtraColumns = (int) (classImageFull.Width * 0.05);
+
+            if (numExtraColumns >= classImageFull.Width)
+            {
+                return true;
+            }
+
+            var cropRect = new Rectangle(numExtraColumns, 0, classImageFull.Width - numExtraColumns,
+                classImageFull.Height);
+
+            using var classImage = classImageFull.Copy(cropRect);
+            
+            if (classImage.Width > regionImage.Width || classImage.Height > regionImage.Height)
+                return true;
+
+            var result = regionImageCv.MatchTemplate(classImage, TemplateMatchingType.CcoeffNormed);
+
+            result.MinMax(out _, out var maxValues, out _, out _);
+
+            var similarity = maxValues[0];
+
+            if (similarity * 100 >= _threshold)
+            {
+                _imgList.Add(new WeightedImages
+                {
+                    ImagePath = classImagePath,
+                    Score = similarity * 100
+                });
+            }
+
+            return true;
+        }
+
+        private Image<Rgba32> GenerateRegionImage()
+        {
             var rectangle = (Rectangle)new RectangleConverter().ConvertFromString(
                 File.ReadAllText($"{Path.Combine(_regionPath, _regionName)}.txt"))!;
 
-            // Create a new blank image with the dimensions of the rectangle
-            using var regionImage = new Image<Rgba32>(rectangle.Width, rectangle.Height);
-            // Crop the region from the main image and draw it on the regionImage
+            var regionImage = new Image<Rgba32>(rectangle.Width, rectangle.Height);
             var sourceRectangle = new SixLabors.ImageSharp.Rectangle(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height);
 
             regionImage.Mutate(ctx => ctx
-                .DrawImage(_mainImage,new SixLabors.ImageSharp.Point(0, 0), sourceRectangle, PixelColorBlendingMode.Normal, PixelAlphaCompositionMode.SrcOver, 1.0f));
+                .DrawImage(_mainImage, new SixLabors.ImageSharp.Point(0, 0), sourceRectangle, PixelColorBlendingMode.Normal, PixelAlphaCompositionMode.SrcOver, 1.0f));
 
-            // Save the result to a file
-            regionImage.Save(RegionFilename);
+            return regionImage;
         }
-
-        private string RegionFilename => _regionName + ".png";
     }
 }

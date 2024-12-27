@@ -29,6 +29,16 @@ namespace Common
             }
         }
 
+        public string ToJson()
+        {
+            return JsonConvert.SerializeObject(this, Formatting.Indented);
+        }
+
+        public static T FromJson(string json)
+        {
+            return JsonConvert.DeserializeObject<T>(json);
+        }
+
         public void Save(string path)
         {
             File.WriteAllText(path, JsonConvert.SerializeObject(this, Formatting.Indented));

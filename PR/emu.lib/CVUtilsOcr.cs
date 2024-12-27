@@ -54,10 +54,13 @@ public static class CVUtilsOcr
         using (Mat sourceMat = ConvertImageSharpToMat(region))
         using (Mat regionMat = new Mat(sourceMat, regionRect))
         {
-            var tesseract = GetTesseractInstance();
-            tesseract.SetImage(regionMat);
-            tesseract.Recognize();
-            result = tesseract.GetUTF8Text().Trim();
+            lock (_tesseractLock)
+            {
+                var tesseract = GetTesseractInstance();
+                tesseract.SetImage(regionMat);
+                tesseract.Recognize();
+                result = tesseract.GetUTF8Text().Trim();
+            }
         }
 
         return result;

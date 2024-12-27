@@ -1,7 +1,9 @@
-﻿namespace Agent
+﻿using System.Threading.Tasks;
+
+namespace Agent
 {
     public interface IBoardObserver
     {
-        void BoardUpdated();
+        Task BoardUpdated();
     }
 }

@@ -126,9 +126,7 @@ namespace Game
         
         private void ProcessSpec(ImgReconSpec spec)
         {
-            var specFileName = ImgReconSpec.SpecFileName(Project, Board);
-            spec.Save(specFileName);
-            _processor(specFileName);
+            _processor(spec.ToJson());
         }
 
         protected void ConsumeResult()
