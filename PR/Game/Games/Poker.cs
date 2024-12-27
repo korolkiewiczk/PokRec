@@ -8,6 +8,7 @@ using Game.RegionMatchers;
 using PT.Algorithm;
 using PT.Algorithm.Model;
 using PT.Poker.Model;
+using PT.Poker.Resolving;
 
 namespace Game.Games
 {
@@ -85,6 +86,8 @@ namespace Game.Games
                 int countPlayers = opponents.Count + 1; // +1 for the player
                 var result = ComputeMonteCarloResult(playerCards, flopCards.Union(turnCards).Union(riverCards).ToList(),
                     countPlayers);
+                
+                
 
                 var playerCardsStr = string.Join(" ", playerCards.Select(c => c.ToString()));
                 var flopCardsStr = string.Join(" ", flopCards.Select(c => c.ToString())); 
@@ -115,6 +118,16 @@ namespace Game.Games
                 DrawColoredString(turnCardsStr, Color.Orange, ref x, y, e.Graphics, font);
                 DrawColoredString(riverCardsStr, Color.Violet, ref x, y, e.Graphics, font);
 
+                // Determine the best layout
+                var allCards = playerCards.Union(flopCards).Union(turnCards).Union(riverCards).ToArray();
+                var layoutResolver = new LayoutResolver(new CardLayout(allCards));
+                var bestLayout = layoutResolver.PokerLayout.ToDisplayString();
+
+                // Display the best layout
+                x = 10;
+                y += (int)lineHeight;
+                DrawColoredString($"Best Poker Hand: {bestLayout}", layoutResolver.PokerLayout.ToColor(), ref x, y, e.Graphics, font);
+                
                 // Second line
                 x = 10;
                 y += (int)lineHeight;
@@ -149,7 +162,6 @@ namespace Game.Games
         private static MonteCarloResult ComputeMonteCarloResult(List<Card> myCards, List<Card> boardCards,
             int numOfPlayers)
         {
-            CardSet cardSet = new CardSet();
             RandomSetDefinition arg = new RandomSetDefinition
             {
                 MyLayout = new CardLayout(myCards.ToArray()),
@@ -157,7 +169,7 @@ namespace Game.Games
                 Board = boardCards.ToArray()
             };
             MonteCarlo<CardSet, RandomSetDefinition> monteCarlo =
-                new MonteCarlo<CardSet, RandomSetDefinition>(cardSet, 1000, arg);
+                new MonteCarlo<CardSet, RandomSetDefinition>(1000, arg);
 
             MonteCarloResult result = monteCarlo.Solve();
             return result;

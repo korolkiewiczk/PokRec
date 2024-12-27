@@ -1,3 +1,4 @@
+using System;
 using System.Drawing;
 using System.Linq;
 using Game.MultiRegionMatchers;
@@ -17,7 +18,7 @@ namespace Game.Presenters
 
                 // Draw the stack value
                 e.Graphics.DrawString($"${Stack.ParseMoneyValue(reconResult.Results.FirstOrDefault())}",
-                    new Font("Arial", 10),
+                    new Font(FontFamily.GenericMonospace, 8),
                     Brushes.Green,
                     rect.Location);
             }

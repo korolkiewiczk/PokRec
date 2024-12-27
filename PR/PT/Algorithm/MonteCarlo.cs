@@ -1,4 +1,6 @@
-﻿using PT.Algorithm.Model;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using PT.Algorithm.Model;
 using PT.Interfaces;
 
 namespace PT.Algorithm
@@ -6,37 +8,36 @@ namespace PT.Algorithm
     public class MonteCarlo<T, TK> where T : IEncounter, IRandomGenerated<TK>, new()
     {
         private readonly int _n;
-        private readonly T _item;
         private readonly TK _arg;
 
-        public MonteCarlo(T item, int n, TK arg)
+        public MonteCarlo(int n, TK arg)
         {
-            _item = item;
             _n = n;
             _arg = arg;
         }
 
         public MonteCarloResult Solve()
         {
-            int better = 0;
-            int smaller = 0;
-            T item = new T();
-            for (int i = 0; i < _n; i++)
-            {
-                item.Generate(_arg);
-                bool isWinning = item.IsWinning;
-                bool isLoosing = item.IsLoosing;
-                if (isWinning)
+            var better = 0;
+            var smaller = 0;
+
+            Parallel.For(0, _n, () => (betterLocal: 0, smallerLocal: 0),
+                (i, _, local) =>
                 {
-                    ++better;
-                }
-                else 
-                if (isLoosing)
+                    var item = new T();
+                    item.Generate(_arg);
+                    if (item.IsWinning) local.betterLocal++;
+                    else if (item.IsLoosing) local.smallerLocal++;
+                    return local;
+                },
+                localSum =>
                 {
-                    ++smaller;
-                }
-            }
-            return new MonteCarloResult((double)better / _n, (double)smaller / _n);
+                    Interlocked.Add(ref better, localSum.betterLocal);
+                    Interlocked.Add(ref smaller, localSum.smallerLocal);
+                });
+
+            var reciprocal = 1.0 / _n;
+            return new MonteCarloResult(better * reciprocal, smaller * reciprocal);
         }
     }
 }

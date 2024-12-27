@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using PT.Interfaces;
 using PT.Poker.Resolving;
 
@@ -8,26 +6,11 @@ namespace PT.Poker.Model
 {
     public class CardLayout : IComparable, IMarkable
     {
-        private readonly Card[] _cards;
-
-        public Card[] Cards
-        {
-            get { return _cards; }
-        }
-
-        public CardLayout()
-        {
-            
-        }
+        public Card[] Cards { get; }
 
         public CardLayout(Card[] cards)
         {
-            _cards = cards;
-        }
-
-        public CardLayout(IEnumerable<Card> cards)
-        {
-            _cards = cards.ToArray();
+            Cards = cards;
         }
 
         public int CompareTo(object other)
@@ -37,12 +20,12 @@ namespace PT.Poker.Model
 
         public IMark GetMark()
         {
-            LayoutResolver resolver = new LayoutResolver(this);
+            var resolver = new LayoutResolver(this);
 
-            CardPowerResolver cardPowerResolver = new CardPowerResolver(resolver.BestLayout);
-            int layoutPower = cardPowerResolver.Resolve();
+            var cardPowerResolver = new CardPowerResolver(resolver.BestLayout);
+            var layoutPower = cardPowerResolver.Resolve();
 
-            return new PokerMark(resolver.PokerLayout, layoutPower, resolver.BestLayout);
+            return new PokerMark(resolver.PokerLayout, layoutPower);
         }
 
         public override string ToString()
@@ -50,13 +33,10 @@ namespace PT.Poker.Model
 #if !DEBUG
             return string.Join(" ", Cards).Replace("♠","S").Replace("♣","C").Replace("♥","H").Replace("♦","D");
 #else
-            return string.Join(" ", _cards);
+            return string.Join(" ", Cards);
 #endif
         }
 
-        public int Size
-        {
-            get { return Cards.Length; }
-        }
+        public int Size => Cards.Length;
     }
 }

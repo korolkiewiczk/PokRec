@@ -2,50 +2,31 @@
 
 namespace PT.Poker.Model
 {
-    public struct PokerMark : IMark
+    public readonly struct PokerMark : IMark
     {
-        private readonly PokerLayouts _pokerLayout;
-        private readonly int _powerOfCards;
-        private readonly CardLayout _bestLayout;
+        private PokerLayouts PokerLayout { get; }
 
-        public PokerLayouts PokerLayout
-        {
-            get { return _pokerLayout; }
-        }
+        private int PowerOfCards { get; }
 
-        public int PowerOfCards
+        public PokerMark(PokerLayouts pokerLayout, int powerOfCards)
         {
-            get { return _powerOfCards; }
-        }
-
-        public CardLayout BestLayout
-        {
-            get { return _bestLayout; }
-        }
-
-        public PokerMark(PokerLayouts pokerLayout, int powerOfCards, CardLayout bestLayout)
-        {
-            _pokerLayout = pokerLayout;
-            _powerOfCards = powerOfCards;
-            _bestLayout = bestLayout;
+            PokerLayout = pokerLayout;
+            PowerOfCards = powerOfCards;
         }
 
         private int CompareTo(PokerMark other)
         {
-            if (PokerLayout > other.PokerLayout)
+            return PokerLayout.CompareTo(other.PokerLayout) switch
             {
-                return 1;
-            }
-            if (PokerLayout == other.PokerLayout)
-            {
-                return PowerOfCards.CompareTo(other.PowerOfCards);
-            }
-            return -1;
+                > 0 => 1,
+                0 => PowerOfCards.CompareTo(other.PowerOfCards),
+                _ => -1
+            };
         }
 
         public int CompareTo(IMark other)
         {
-            return CompareTo((PokerMark)other);
+            return CompareTo((PokerMark) other);
         }
     }
 }

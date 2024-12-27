@@ -9,9 +9,23 @@ namespace Game.Presenters
             var rect = Util.MapRect(reconResult.ItemRectangle, e);
 
             e.Graphics.DrawRectangle(new Pen(Color.Black), rect);
-            e.Graphics.DrawString(string.Join(",", reconResult.Results),
-                new Font(FontFamily.GenericMonospace, 8), Brushes.Black,
-                rect.X, rect.Y);
+            var results = reconResult.Results;
+            var font = new Font(FontFamily.GenericMonospace, 8);
+            float x = rect.X;
+            foreach (var result in results)
+            {
+                var brush = result[^1] switch
+                {
+                    's' => Brushes.Black,
+                    'c' => Brushes.Green,
+                    'h' => Brushes.Red,
+                    'd' => Brushes.Blue,
+                    _ => Brushes.Black
+                };
+
+                e.Graphics.DrawString(result, font, brush, x, rect.Y);
+                x += (int) e.Graphics.MeasureString(result, font).Width;
+            }
         }
     }
 }
