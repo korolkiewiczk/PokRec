@@ -169,7 +169,7 @@ namespace Game.Games
                 Board = boardCards.ToArray()
             };
             MonteCarlo<CardSet, RandomSetDefinition> monteCarlo =
-                new MonteCarlo<CardSet, RandomSetDefinition>(1000, arg);
+                new MonteCarlo<CardSet, RandomSetDefinition>(250, arg);
 
             MonteCarloResult result = monteCarlo.Solve();
             return result;

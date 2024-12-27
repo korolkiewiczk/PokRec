@@ -15,7 +15,7 @@ namespace PT.Poker.Model
 
         public int CompareTo(object other)
         {
-            return GetMark().CompareTo(((IMarkable)other)!.GetMark());
+            return GetMark().CompareTo(((IMarkable) other)!.GetMark());
         }
 
         public IMark GetMark()
@@ -38,5 +38,40 @@ namespace PT.Poker.Model
         }
 
         public int Size => Cards.Length;
+
+        public override int GetHashCode()
+        {
+            int hash = 17;
+            foreach (var card in Cards)
+            {
+                hash = hash * 23 + card.GetHashCode();
+            }
+
+            return hash;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null || GetType() != obj.GetType())
+            {
+                return false;
+            }
+
+            var other = (CardLayout) obj;
+            if (Cards.Length != other.Cards.Length)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < Cards.Length; i++)
+            {
+                if (!Cards[i].Equals(other.Cards[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 }

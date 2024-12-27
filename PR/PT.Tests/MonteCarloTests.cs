@@ -22,7 +22,7 @@ public class MonteCarloTests
     public void Solve_AllWinning_Returns_ProbabilityOfWinning_1_And_ProbabilityOfLosing_0()
     {
         // Arrange
-        var monteCarlo = new MonteCarlo<AlwaysWinningEncounter, object>(n, null!);
+        var monteCarlo = new MonteCarlo<AlwaysWinningEncounter, object>(n, new object());
         Stopwatch stopwatch = new();
 
         // Act
@@ -40,7 +40,7 @@ public class MonteCarloTests
     public void Solve_AllLosing_Returns_ProbabilityOfWinning_0_And_ProbabilityOfLosing_1()
     {
         // Arrange
-        var monteCarlo = new MonteCarlo<AlwaysLosingEncounter, object>(n, null!);
+        var monteCarlo = new MonteCarlo<AlwaysLosingEncounter, object>(n, new object());
         Stopwatch stopwatch = new();
 
         // Act
@@ -58,7 +58,7 @@ public class MonteCarloTests
     public void Solve_MixedResults_Returns_Approximately_HalfWinningAndHalfLosing()
     {
         // Arrange
-        var monteCarlo = new MonteCarlo<MixedEncounter, object>(n, null!);
+        var monteCarlo = new MonteCarlo<MixedEncounter, object>(n, new object());
         Stopwatch stopwatch = new();
 
         // Act
