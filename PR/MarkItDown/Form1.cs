@@ -171,7 +171,7 @@ namespace MarkItDown
             {
                 _baseRegionsPath = args[2];
                 //_baseClassesPath = args[3];
-                _rectange = (Rectangle)new RectangleConverter().ConvertFromString(args[3])!;         
+                _rectange = (Rectangle) new RectangleConverter().ConvertFromString(args[3])!;
             }
 
             // MessageBox.Show(
@@ -181,7 +181,25 @@ namespace MarkItDown
             Height = _myImg.Height + 80;
 
             DoubleBuffered = true;
-            Text = ClassesRootFolder;
+            Text = ClassesRootFolder + 
+                   " - [c]apture window, capure current [v]iew, [s]how regions, [F2] to save regions, [arrows] to move regions";
+
+            KeyDown += (o, eventArgs) =>
+            {
+                switch (eventArgs.KeyCode)
+                {
+                    case Keys.Up:
+                    case Keys.Down:
+                    case Keys.Left:
+                    case Keys.Right:
+                        HandleArrows(eventArgs.KeyCode);
+                        break;
+                    case Keys.F2:
+                        //save rectangles using _regionsMarker
+                        _regionsMarker.SaveRegions(RegionsRootFolder);
+                        break;
+                }
+            };
 
             KeyPress += (s, ke) =>
             {
@@ -194,13 +212,40 @@ namespace MarkItDown
                         CaptureNewScreenshot(true);
                         break;
                     case 's':
-                        _regionsMarker.MarkRegionsOnScreen(RegionsRootFolder + "\\");
+                        _regionsMarker.MarkRegionsOnScreen(RegionsRootFolder);
                         Invalidate();
                         break;
+                    
                 }
             };
 
             LostFocus += (s, ev) => SetCaptureMode(false);
+        }
+
+        private void HandleArrows(Keys key)
+        {
+            if (!_regionsMarker.IsShownRegions) return;
+
+            int dx = 0, dy = 0;
+            switch (key)
+            {
+                case Keys.Up:
+                    dy = -1;
+                    break;
+                case Keys.Down:
+                    dy = 1;
+                    break;
+                case Keys.Left:
+                    dx = -1;
+                    break;
+                case Keys.Right:
+                    dx = 1;
+                    break;
+            }
+
+            _regionsMarker.MoveRegions(dx, dy);
+
+            Invalidate();
         }
 
         private void SetCaptureMode(bool set)

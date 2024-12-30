@@ -19,6 +19,8 @@ public class RegionsMarker
 
     public List<string> Regions => _regions;
 
+    public bool IsShownRegions => _showRegions;
+
     public void MarkRegionsOnScreen(string regionsDir)
     {
         _showRegions = !_showRegions;
@@ -37,6 +39,19 @@ public class RegionsMarker
         }
     }
 
+    public void MoveRegions(int dx, int dy)
+    {
+        foreach (var region in _regions)
+        {
+            if (_parsedRegions.ContainsKey(region))
+            {
+                var rect = _parsedRegions[region];
+                rect.Offset(dx, dy);
+                _parsedRegions[region] = rect;
+            }
+        }
+    }
+
     private static List<string> LoadRegionsDescriptions()
     {
         return File.ReadAllLines(Common.Paths.Regions).ToList();
@@ -46,8 +61,8 @@ public class RegionsMarker
     {
         try
         {
-            var rectStr = File.ReadAllText(regionsDir + tag + ".txt");
-            var rect = (Rectangle)new RectangleConverter().ConvertFromString(rectStr)!;
+            var rectStr = File.ReadAllText(regionsDir + "\\" + tag + ".txt");
+            var rect = (Rectangle) new RectangleConverter().ConvertFromString(rectStr)!;
             return rect;
         }
         catch
@@ -59,7 +74,7 @@ public class RegionsMarker
     public void PaintRegions(PaintEventArgs e)
     {
         if (!_showRegions || _parsedRegions == null) return;
-            
+
         var color = Color.Magenta;
         using var brush = new SolidBrush(color);
         using var pen = new Pen(brush, 3f);
@@ -68,6 +83,19 @@ public class RegionsMarker
             e.Graphics.DrawRectangle(pen, rect.Value);
             using var font = new Font("Arial", 6, FontStyle.Regular, GraphicsUnit.Point);
             e.Graphics.DrawString(rect.Key, font, brush, rect.Value.Location);
+        }
+    }
+
+    public void SaveRegions(string regionsRootFolder)
+    {
+        foreach (var region in _regions)
+        {
+            if (_parsedRegions.ContainsKey(region))
+            {
+                var rect = _parsedRegions[region];
+                File.WriteAllText(regionsRootFolder + "\\" + region + ".txt",
+                    new RectangleConverter().ConvertToString(rect));
+            }
         }
     }
 }

@@ -101,7 +101,7 @@ namespace MarkItDown
             switch (keyData)
             {
                 case Keys.S:
-                    _regionsMarker.MarkRegionsOnScreen(RegionsDir);
+                    _regionsMarker.MarkRegionsOnScreen(_rootFolder);
                     return true;
                 default:
                     return base.ProcessCmdKey(ref msg, keyData);
