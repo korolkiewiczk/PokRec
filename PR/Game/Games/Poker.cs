@@ -86,8 +86,6 @@ namespace Game.Games
                 int countPlayers = opponents.Count + 1; // +1 for the player
                 var result = ComputeMonteCarloResult(playerCards, flopCards.Union(turnCards).Union(riverCards).ToList(),
                     countPlayers);
-                
-                
 
                 var playerCardsStr = string.Join(" ", playerCards.Select(c => c.ToString()));
                 var flopCardsStr = string.Join(" ", flopCards.Select(c => c.ToString())); 

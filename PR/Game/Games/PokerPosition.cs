@@ -9,8 +9,11 @@ namespace Game.Games
         UTG = 4,         // Under The Gun
         UTG1 = 5,        // UTG+1
         UTG2 = 6,        // UTG+2
-        LJ = 7,          // Lojack
-        HJ = 8,          // Hijack
-        CO = 9,          // Cutoff
+        UTG3 = 7,        // UTG+2
+        UTG4 = 8,        // UTG+2
+        UTG5 = 9,        // UTG+2
+        LJ = 10,          // Lojack
+        HJ = 11,          // Hijack
+        CO = 12,          // Cutoff
     }
 } 
