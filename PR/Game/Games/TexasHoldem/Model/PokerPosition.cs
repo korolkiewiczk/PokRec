@@ -1,4 +1,4 @@
-namespace Game.Games
+namespace Game.Games.TexasHoldem.Model
 {
     public enum PokerPosition
     {

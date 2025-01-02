@@ -1,6 +1,7 @@
-using Game.MultiRegionMatchers;
+using Common;
+using Game.Games.TexasHoldem.Model;
 
-namespace Game.Games
+namespace Game.Games.TexasHoldem.Utils
 {
     public static class PositionMapper
     {

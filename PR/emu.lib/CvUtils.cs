@@ -1,11 +1,54 @@
 using System.Drawing;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
+using Emgu.CV.Structure;
 using Emgu.CV.Util;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+using Point = SixLabors.ImageSharp.Point;
+using Rectangle = System.Drawing.Rectangle;
+using Size = System.Drawing.Size;
 
 namespace emu.lib;
-public static class CVUtils
+
+public static class CvUtils
 {
+    public static Image<Gray, byte> ConvertToEmguCvGray(Image<Rgba32> imageSharp)
+    {
+        var width = imageSharp.Width;
+        var height = imageSharp.Height;
+
+        // Initialize the 3D array for Emgu CV
+        var data = new byte[height, width, 1];
+
+        // Process each row using ProcessPixelRows
+        imageSharp.ProcessPixelRows(accessor =>
+        {
+            for (var y = 0; y < height; y++)
+            {
+                var pixelRow = accessor.GetRowSpan(y);
+
+                for (var x = 0; x < width; x++)
+                {
+                    var pixel = pixelRow[x];
+
+                    // Convert to grayscale
+                    var grayValue = (byte) (
+                        0.299f * pixel.R +
+                        0.587f * pixel.G +
+                        0.114f * pixel.B
+                    );
+
+                    data[y, x, 0] = grayValue;
+                }
+            }
+        });
+
+        // Create the Emgu CV image
+        return new Image<Gray, byte>(data);
+    }
+
     public static Rectangle GetRefinedRectangle(Bitmap selectedRegion, Rectangle initialSelection)
     {
         // Convert the selected region to Mat format
@@ -50,5 +93,18 @@ public static class CVUtils
 
         // Return original selection if no better fit found
         return initialSelection;
+    }
+
+    public static Image<Rgba32> GenerateRegionImage(Rectangle rectangle, Image<Rgba32> mainImage)
+    {
+        var regionImage = new Image<Rgba32>(rectangle.Width, rectangle.Height);
+        var sourceRectangle =
+            new SixLabors.ImageSharp.Rectangle(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height);
+
+        regionImage.Mutate(ctx => ctx
+            .DrawImage(mainImage, new Point(0, 0), sourceRectangle, PixelColorBlendingMode.Normal,
+                PixelAlphaCompositionMode.SrcOver, 1.0f));
+
+        return regionImage;
     }
 }

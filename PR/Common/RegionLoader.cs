@@ -14,7 +14,7 @@ namespace Common
         {
             string path = Path.Combine(GetRegionPath(project, board), name + ".txt");
             var converted = new RectangleConverter().ConvertFromString(File.ReadAllText(path));
-            return (Rectangle)converted;
+            return (Rectangle)converted!;
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Common;
+using Game.Interfaces;
 using Game.Presenters;
 using PT.Poker.Model;
 
@@ -23,32 +24,28 @@ namespace Game.RegionMatchers
                 ClassesPath = ClassPath,
                 Name = GetType().Name,
                 Num = 1,
-                Threshold = 60
+                Threshold = 90
             };
         }
 
         public List<Card> Match(ReconResult result)
         {
+            if (result?.Results == null)
+            {
+                return [];
+            }
             return result.Results.Select(x =>
             {
                 var cardType = (CardType) Enum.Parse(typeof(CardType), x.Substring(0, x.Length - 1));
                 var colorString = x.Substring(x.Length - 1);
-                CardColor cardColor = CardColor.Clubs;
-                switch (colorString)
+                var cardColor = colorString switch
                 {
-                    case "d":
-                        cardColor = CardColor.Diamonds;
-                        break;
-                    case "s":
-                        cardColor = CardColor.Spades;
-                        break;
-                    case "c":
-                        cardColor = CardColor.Clubs;
-                        break;
-                    case "h":
-                        cardColor = CardColor.Hearts;
-                        break;
-                }
+                    "d" => CardColor.Diamonds,
+                    "s" => CardColor.Spades,
+                    "c" => CardColor.Clubs,
+                    "h" => CardColor.Hearts,
+                    _ => CardColor.Clubs
+                };
 
                 return new Card(cardColor, cardType);
             }).ToList();

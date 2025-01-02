@@ -1,4 +1,7 @@
 ﻿using System.Drawing;
+using Common;
+using Game.Common;
+using Game.Interfaces;
 
 namespace Game.Presenters
 {
@@ -6,6 +9,11 @@ namespace Game.Presenters
     {
         public void Present(ReconResult reconResult, Environment e)
         {
+            if (reconResult == null)
+            {
+                return;
+            }
+
             var rect = Util.MapRect(reconResult.ItemRectangle, e);
 
             e.Graphics.DrawRectangle(new Pen(Color.Black), rect);

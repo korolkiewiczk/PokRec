@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Game.MultiRegionMatchers
+namespace Common
 {
     public class Place
     {

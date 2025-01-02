@@ -1,4 +1,6 @@
-namespace Game.Games
+using Game.Games.TexasHoldem.Model;
+
+namespace Game.Games.TexasHoldem.Utils
 {
     public static class PositionFormatter
     {

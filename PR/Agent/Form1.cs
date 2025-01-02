@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using Agent.Properties;
 using Common;
 using Game.Games;
+using Game.Games.TexasHoldem.Solving;
+using Game.Games.TexasHoldem.Utils;
 using scr;
 
 namespace Agent
@@ -17,12 +18,14 @@ namespace Agent
         private Project _currentProject;
         private bool _capture;
         private bool _capturePosition;
+        private readonly List<(Board,Poker,GameProcessing)> _games = new();
 
-        private Dictionary<Board, IBoardObserver> _boardObservers;
 
         public Form1()
         {
             InitializeComponent();
+            var logRepository = log4net.LogManager.GetRepository(System.Reflection.Assembly.GetEntryAssembly());
+            log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("emulog.config"));
         }
 
         private void buttonNewPrj_Click(object sender, EventArgs e)
@@ -81,47 +84,39 @@ namespace Agent
             if (!_capture) return;
             _capture = false;
 
-            Rectangle bounds;
-            string title;
-            using (var bmp = ScreenShot.Capture(out bounds, out title))
+            using var bmp = ScreenShot.Capture(out var bounds, out var title);
+            if (bmp == null) return;
+
+            var boardName = InputDialog.ShowInputDialog("Enter board name");
+            if (string.IsNullOrEmpty(boardName))
             {
-                if (bmp == null) return;
-
-                var boardName = InputDialog.ShowInputDialog("Enter board name");
-                if (string.IsNullOrEmpty(boardName))
-                {
-                    textBoxMessage.Text = "Not captured. Try again.";
-                    return;
-                }
-                
-                var numPlayers = InputDialog.ShowInputDialog("Enter number of players (i.e. 2,6,9,10)");
-                int players;
-                if (string.IsNullOrEmpty(numPlayers) || !int.TryParse(numPlayers, out players))
-                {
-                    textBoxMessage.Text = "Not captured. Try again.";
-                    return;
-                }
-
-                var board = new Board
-                {
-                    Name = boardName,
-                    Rect = bounds,
-                    Settings = new List<KeyValuePair<string, string>>
-                    {
-                        new(nameof(PokerBoardSettingsParser.Players), players.ToString())
-                    }
-                };
-
-                bmp.Save(SaveLoad.GetBoardPath(_currentProject, board));
-
-                _currentProject.Boards.Add(board);
-
-                SaveProject();
-
-                textBoxMessage.Text = $"Captured window - {title}";
-
-                ScreenShot.MarkWindow(bounds);
+                textBoxMessage.Text = "Not captured. Try again.";
+                return;
             }
+
+            var numPlayers = InputDialog.ShowInputDialog("Enter number of players (i.e. 2,6,9,10)");
+            if (string.IsNullOrEmpty(numPlayers) || !int.TryParse(numPlayers, out var players))
+            {
+                textBoxMessage.Text = "Not captured. Try again.";
+                return;
+            }
+
+            var board = new Board
+            {
+                Name = boardName,
+                Rect = bounds,
+                Settings = [new(nameof(PokerBoardSettingsParser.Players), players.ToString())]
+            };
+
+            bmp.Save(SaveLoad.GetBoardPath(_currentProject, board));
+
+            _currentProject.Boards.Add(board);
+
+            SaveProject();
+
+            textBoxMessage.Text = $"Captured window - {title}";
+
+            ScreenShot.MarkWindow(bounds);
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -133,9 +128,6 @@ namespace Agent
             buttonStop.Enabled = false;
 
             tabPlay.Enabled = false;
-
-            numericSavedImagesPerBoard.Value = Settings.Default.SavedImages;
-            numericInterval.Value = Settings.Default.UpdateInterval;
 
             MarkItDownFiles.GenerateMarkItDownFiles();
         }
@@ -153,82 +145,52 @@ namespace Agent
 
         private void buttonStart_Click(object sender, EventArgs e)
         {
-            timerGame.Interval = (int) numericInterval.Value;
-            timerGame.Start();
+            StartProcessing();
+
             textBoxMessage.Text = "Capturing";
             buttonStart.Enabled = false;
             buttonStop.Enabled = true;
         }
 
+        private void StartProcessing()
+        {
+            var boards = _currentProject.Boards;
+            _games.Clear();
+            foreach (var board in boards)
+            {
+                var poker = new Poker(board);
+                var regionSpecs = poker.GetRegionSpecs();
+                foreach (var regionSpec in regionSpecs)
+                {
+                    regionSpec.Rectangle = RegionLoader.LoadRegion(_currentProject, board, regionSpec.Name);
+                }
+                var gameProcessing = new GameProcessing(board.Rect, regionSpecs);
+                poker.SetState(gameProcessing.State);
+                gameProcessing.Start();
+                _games.Add((board, poker, gameProcessing));
+            }
+        }
+
         private void buttonStop_Click(object sender, EventArgs e)
         {
-            timerGame.Stop();
+            foreach (var (_, _, gameProcessing) in _games)
+            {
+                gameProcessing.DisposeAsync().ConfigureAwait(true);
+            }
+
             buttonStart.Enabled = true;
             buttonStop.Enabled = false;
         }
 
-        private void timerGame_Tick(object sender, EventArgs e)
-        {
-            TakeShot();
-
-            textBoxMessage.Text += ".";
-        }
-
-        private void TakeShot()
-        {
-            foreach (var board in _currentProject.Boards)
-            {
-                using (var bmp = ScreenShot.Capture(board.Rect))
-                {
-                    if (bmp == null) continue;
-
-                    board.IncrementGenerated((int) numericSavedImagesPerBoard.Value);
-
-                    bmp.Save(SaveLoad.GetBoardPathIter(_currentProject, board));
-
-                    SaveProject();
-                }
-
-                if (_boardObservers == null || !_boardObservers.ContainsKey(board))
-                {
-                    InitGameBoards();
-                }
-                _boardObservers?[board]?.BoardUpdated();
-            }
-        }
-
-        private void numericInterval_ValueChanged(object sender, EventArgs e)
-        {
-            timerGame.Interval = (int) numericInterval.Value;
-            Settings.Default.UpdateInterval = (int) numericInterval.Value;
-            Settings.Default.Save();
-        }
-
-        private void numericSavedImagesPerBoard_ValueChanged(object sender, EventArgs e)
-        {
-            Settings.Default.SavedImages = (int) numericSavedImagesPerBoard.Value;
-            Settings.Default.Save();
-        }
-
-        private void buttonTakeShot_Click(object sender, EventArgs e)
-        {
-            TakeShot();
-        }
-
         private void buttonShowGame_Click(object sender, EventArgs e)
         {
-            InitGameBoards();
-        }
-
-        private void InitGameBoards()
-        {
-            _boardObservers = new Dictionary<Board, IBoardObserver>();
-            foreach (var board in _currentProject.Boards)
+            foreach (var (_,poker,_) in _games)
             {
-                var game = new Game(_currentProject, board);
-                _boardObservers[board] = game;
+                var game = new Game(poker);
                 game.Show();
             }
+            // var game = new Game(_poker);
+            // game.Show();
         }
 
         private void buttonFixWindow_Click(object sender, EventArgs e)
@@ -239,7 +201,7 @@ namespace Agent
         protected override void OnDeactivate(EventArgs e)
         {
             base.OnDeactivate(e);
-            
+
             if (!_capturePosition) return;
             _capturePosition = false;
 

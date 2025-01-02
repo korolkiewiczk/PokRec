@@ -1,14 +1,11 @@
 using System.Collections.Generic;
 using Common;
+using Game.Interfaces;
 
 namespace Game.MultiRegionMatchers
 {
     public abstract class TextMatcher<T> : IMultiRegionMatcher<T>
     {
-        public TextMatcher()
-        {
-        }
-
         protected RegionSpec GetSingleRegionSpec(int i = -1)
         {
             return new RegionSpec

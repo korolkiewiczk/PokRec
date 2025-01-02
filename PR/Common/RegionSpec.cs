@@ -1,4 +1,6 @@
-﻿namespace Common
+﻿using System.Drawing;
+
+namespace Common
 {
     public class RegionSpec
     {
@@ -11,5 +13,7 @@
         public int Threshold { get; set; }
 
         public bool IsOcr { get; set; }
+        
+        public Rectangle Rectangle { get; set; }
     }
 }

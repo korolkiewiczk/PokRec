@@ -2,7 +2,7 @@
 using System.Linq;
 using Common;
 
-namespace Game.Games
+namespace Game.Games.TexasHoldem.Utils
 {
     public class PokerBoardSettingsParser
     {

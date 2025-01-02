@@ -1,7 +1,9 @@
-using System;
 using System.Drawing;
 using System.Linq;
+using Common;
+using Game.Interfaces;
 using Game.MultiRegionMatchers;
+using Environment = Game.Common.Environment;
 
 namespace Game.Presenters
 {

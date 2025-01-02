@@ -1,4 +1,7 @@
-﻿namespace Game
+﻿using Common;
+using Game.Common;
+
+namespace Game.Interfaces
 {
     public interface IResultPresenter
     {

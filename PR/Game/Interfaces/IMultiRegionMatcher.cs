@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using Common;
 
-namespace Game
+namespace Game.Interfaces
 {
-    public interface IMultiRegionMatcher<T>
+    public interface IMultiRegionMatcher<out T>
     {
         T Match(IEnumerable<ReconResult> results);
         IResultPresenter GetPresenter();

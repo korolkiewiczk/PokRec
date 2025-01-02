@@ -1,36 +1,35 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Drawing;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Common;
 using Game.Games;
-using Environment = Game.Environment;
+using Game.Games.TexasHoldem.Presenters;
+using Game.Games.TexasHoldem.Solving;
+using Game.Presenters;
+using Environment = Game.Common.Environment;
 
 namespace Agent
 {
-    public partial class Game : Form, IBoardObserver
+    public partial class Game : Form
     {
         private Bitmap _backbuffer;
 
         private readonly Board _board;
-        private readonly Poker _pokerGame;
-        private bool _closed;
+        private readonly PokerPresenter _pokerPresenter;
 
-        public Game()
+        private Game()
         {
             InitializeComponent();
         }
 
-        public Game(Project prj, Board board) : this()
+        public Game(Poker poker) : this()
         {
-            _board = board;
-            //_pokerGame = new Poker(prj, board, x => Process.Start("emu.exe", x));
-            _pokerGame = new Poker(prj, board, x => emu.lib.Processing.Process(x));
-            Text = board.ToString();
+            _board = poker.Board;
+            _pokerPresenter = new PokerPresenter(poker);
+
             Timer timer = new Timer();
             timer.Interval = 100;
-            timer.Tick += TimerTick;
+            timer.Tick += TimerTick_GameProcessing;
             timer.Enabled = true;
 
             SetStyle(
@@ -41,40 +40,20 @@ namespace Agent
             ResizeEnd += Form1_CreateBackBuffer;
             Load += Form1_CreateBackBuffer;
             Paint += Form1_Paint;
-
-            Closed += (s, e) => _closed = true;
         }
 
-        public async Task BoardUpdated()
+        private void TimerTick_GameProcessing(object sender, EventArgs e)
         {
-            if (_closed)
+            if (_backbuffer == null) return;
+            
+            using (var g = Graphics.FromImage(_backbuffer))
             {
-                return;
+                g.Clear(BackColor);
+
+                _pokerPresenter.Show(new Environment(g, new Rectangle(0, 0, Width, Height), _board));
             }
 
-            await Task.Run(() => _pokerGame.Process());
-
-            Text = $@"{DateTime.Now} {_board.Generated} {_board.Computed}";
-        }
-
-        private void TimerTick(object sender, EventArgs e)
-        {
-            Draw();
-        }
-
-        private void Draw()
-        {
-            if (_backbuffer != null && _pokerGame.HasComputed())
-            {
-                using (var g = Graphics.FromImage(_backbuffer))
-                {
-                    g.Clear(BackColor);
-
-                    _pokerGame.Show(new Environment(g, new Rectangle(0, 0, Width, Height), _board));
-                }
-
-                Invalidate();
-            }
+            Invalidate();
         }
 
         private void Form1_Paint(object sender, PaintEventArgs e)
@@ -87,10 +66,7 @@ namespace Agent
 
         private void Form1_CreateBackBuffer(object sender, EventArgs e)
         {
-            if (_backbuffer != null)
-            {
-                _backbuffer.Dispose();
-            }
+            _backbuffer?.Dispose();
 
             _backbuffer = new Bitmap(ClientSize.Width, ClientSize.Height);
         }

@@ -2,10 +2,10 @@
 
 namespace Common
 {
-    public class SaveLoad
+    public static class SaveLoad
     {
         public const string ProjExtension = ".proj";
-        public const string BoardsDir = "boards";
+        private const string BoardsDir = "boards";
 
         public static void SaveProject(Project prj)
         {
@@ -25,13 +25,6 @@ namespace Common
             string path = Path.Combine(prj.Path, prj.Name, BoardsDir, board.Id);
             CreateDirIfNotExists(path);
             return Path.Combine(path, "board.png");
-        }
-
-        public static string GetBoardPathIter(Project prj, Board board)
-        {
-            string path = Path.Combine(prj.Path, prj.Name, BoardsDir, board.Id);
-            CreateDirIfNotExists(path);
-            return Path.Combine(path, $"board{board.Generated}.png");
         }
 
         private static void CreateDirIfNotExists(string path)

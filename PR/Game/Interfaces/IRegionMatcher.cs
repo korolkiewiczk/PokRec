@@ -1,8 +1,8 @@
 ﻿using Common;
 
-namespace Game
+namespace Game.Interfaces
 {
-    public interface IRegionMatcher<T>
+    public interface IRegionMatcher<out T>
     {
         RegionSpec GetRegionSpec();
         T Match(ReconResult result);

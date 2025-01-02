@@ -6,13 +6,32 @@ using SixLabors.ImageSharp.PixelFormats;
 using Rectangle = System.Drawing.Rectangle;
 
 namespace emu.lib;
-public static class CVUtilsOcr
+public static class CvUtilsOcr
 {
     // Static cache for Tesseract instance
     private static Tesseract _tesseract;
     private static readonly object _tesseractLock = new();
 
-    // Cache for OCR results using a simple dictionary
+    public static string GetTextFromRegion(Image<Rgba32> region, Rectangle regionRect = new Rectangle())
+    {
+        if (regionRect.IsEmpty)
+        {
+            regionRect = new Rectangle(0, 0, region.Width, region.Height);
+        }
+       
+        string result;
+        using Mat sourceMat = ConvertImageSharpToMat(region);
+        using Mat regionMat = new Mat(sourceMat, regionRect);
+        lock (_tesseractLock)
+        {
+            var tesseract = GetTesseractInstance();
+            tesseract.SetImage(regionMat);
+            tesseract.Recognize();
+            result = tesseract.GetUTF8Text().Trim();
+        }
+
+        return result;
+    }
 
     private static Tesseract GetTesseractInstance()
     {
@@ -42,31 +61,6 @@ public static class CVUtilsOcr
         }
     }
 
-    public static string GetTextFromRegion(Image<Rgba32> region, Rectangle regionRect = new Rectangle())
-    {
-        // If not in cache, perform OCR
-        if (regionRect.IsEmpty)
-        {
-            regionRect = new Rectangle(0, 0, region.Width, region.Height);
-        }
-       
-        string result;
-        using (Mat sourceMat = ConvertImageSharpToMat(region))
-        using (Mat regionMat = new Mat(sourceMat, regionRect))
-        {
-            lock (_tesseractLock)
-            {
-                var tesseract = GetTesseractInstance();
-                tesseract.SetImage(regionMat);
-                tesseract.Recognize();
-                result = tesseract.GetUTF8Text().Trim();
-            }
-        }
-
-        return result;
-    }
-    
-   
     private static Mat ConvertImageSharpToMat(Image<Rgba32> image)
     {
         int width = image.Width;

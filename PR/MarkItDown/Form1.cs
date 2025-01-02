@@ -83,7 +83,7 @@ namespace MarkItDown
                 // Get refined rectangle based on edge detection
                 Bitmap bm = GetFormImageWithoutBorders(this, window);
                 Rectangle refinedWindow =
-                    ModifierKeys.HasFlag(Keys.Shift) ? CVUtils.GetRefinedRectangle(bm, window) : window;
+                    ModifierKeys.HasFlag(Keys.Shift) ? CvUtils.GetRefinedRectangle(bm, window) : window;
                 if (refinedWindow != window)
                 {
                     bm = GetFormImageWithoutBorders(this, refinedWindow);
