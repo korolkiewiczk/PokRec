@@ -29,7 +29,6 @@ namespace Common
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    Log.Info("Background task running.");
                     await Work(cancellationToken);
                 }
             }

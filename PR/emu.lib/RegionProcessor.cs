@@ -7,7 +7,9 @@ namespace emu.lib;
 
 public static class RegionProcessor
 {
-    public static async Task ProcessRegions(IEnumerable<RegionSpec> regionSpecs,
+    private static readonly RegionImageCache ImageCache = new();
+
+    public static async Task ProcessRegions(string id, IEnumerable<RegionSpec> regionSpecs,
         ConcurrentDictionary<string, ReconResult> state, Image<Rgba32> mainImg, CancellationToken cancellationToken)
     {
         await Parallel.ForEachAsync(regionSpecs, cancellationToken, (regionSpec, _) =>
@@ -18,6 +20,13 @@ public static class RegionProcessor
             }
 
             using var regionImage = CvUtils.GenerateRegionImage(regionSpec.Rectangle, mainImg);
+
+            // Skip processing if image hasn't changed and we're not forcing an update
+            if (!ImageCache.ShouldProcess(id + regionSpec.Name, regionImage))
+            {
+                return default;
+            }
+
             BaseRegionMatcher regionMatcher = regionSpec.IsOcr switch
             {
                 true => new OcrRegionMatcher(regionImage),

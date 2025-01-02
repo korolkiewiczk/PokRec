@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,12 +15,14 @@ namespace Agent;
 
 public class GameProcessing : BackgroundProcessing
 {
+    private string _id;
     private readonly Rectangle _rect;
     private readonly IList<RegionSpec> _regionSpecs;
     private readonly ConcurrentDictionary<string, ReconResult> _state = new();
 
-    public GameProcessing(Rectangle rect, IList<RegionSpec> regionSpecs)
+    public GameProcessing(string id, Rectangle rect, IList<RegionSpec> regionSpecs)
     {
+        _id = id;
         _regionSpecs = regionSpecs;
         _rect = rect;
     }
@@ -28,16 +31,20 @@ public class GameProcessing : BackgroundProcessing
 
     protected override async Task Work(CancellationToken cancellationToken)
     {
+        Stopwatch sw=new Stopwatch();
+        sw.Start();
         var mainImg = await GetMainImgFromScreen(cancellationToken);
 
         try
         {
-            await RegionProcessor.ProcessRegions(_regionSpecs, _state, mainImg, cancellationToken);
+            await RegionProcessor.ProcessRegions(_id, _regionSpecs, _state, mainImg, cancellationToken);
         }
         finally
         {
             mainImg.Dispose();
         }
+        sw.Stop();
+        Log.Info($"Processing done in {sw.ElapsedMilliseconds} ms");
     }
 
     private async Task<Image<Rgba32>> GetMainImgFromScreen(CancellationToken cancellationToken)

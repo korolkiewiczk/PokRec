@@ -164,7 +164,7 @@ namespace Agent
                 {
                     regionSpec.Rectangle = RegionLoader.LoadRegion(_currentProject, board, regionSpec.Name);
                 }
-                var gameProcessing = new GameProcessing(board.Rect, regionSpecs);
+                var gameProcessing = new GameProcessing(board.Name, board.Rect, regionSpecs);
                 poker.SetState(gameProcessing.State);
                 gameProcessing.Start();
                 _games.Add((board, poker, gameProcessing));
