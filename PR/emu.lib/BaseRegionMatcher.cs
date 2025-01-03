@@ -7,7 +7,7 @@ namespace emu.lib;
 
 public abstract class BaseRegionMatcher
 {
-    private static readonly log4net.ILog Log =
+    protected static readonly log4net.ILog Log =
         log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
     private readonly Image<Rgba32> _regionImage;

@@ -35,7 +35,7 @@ namespace Game.Games.TexasHoldem.Solving
         {
             _state = state;
         }
-        
+
         public Board Board { get; }
 
         public int NumPlayers => _numPlayers;
@@ -96,24 +96,28 @@ namespace Game.Games.TexasHoldem.Solving
 
             var matchResults =
                 new MatchResults(playerCards, flopCards, turnCards, riverCards, position, opponents, stack);
-            
+
             MonteCarloResult? monteCarloResult = null;
             PokerLayouts? bestLayout = null;
+            PokerPosition? pokerPosition = null;
             if (playerCards.Count != 0)
             {
                 int countPlayers = opponents.Count + 1; // +1 for the player
-                monteCarloResult = ComputeMonteCarloResult(playerCards, flopCards.Union(turnCards).Union(riverCards).ToList(),
+                monteCarloResult = ComputeMonteCarloResult(playerCards,
+                    flopCards.Union(turnCards).Union(riverCards).ToList(),
                     countPlayers);
                 var allCards = playerCards.Union(flopCards).Union(turnCards).Union(riverCards).ToArray();
                 var layoutResolver = new LayoutResolver(new CardLayout(allCards));
                 bestLayout = layoutResolver.PokerLayout;
+                pokerPosition = position.GetPokerPosition(NumPlayers);
             }
 
             return new PokerResults(
                 reconResults,
                 matchResults,
-                monteCarloResult, 
-                bestLayout);
+                monteCarloResult,
+                bestLayout,
+                pokerPosition);
         }
 
         public Dictionary<string, IResultPresenter> GetPresenters()
@@ -132,7 +136,7 @@ namespace Game.Games.TexasHoldem.Solving
 
         private IEnumerable<ReconResult> GetResultsPrefixed(string name)
         {
-            return _state.Where(x => x.Key.StartsWith(name))
+            return _state.Where(x => x.Key.StartsWith(name)).OrderBy(x => x.Key)
                 .Select(x => x.Value).ToList();
         }
 

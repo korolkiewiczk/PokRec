@@ -3,7 +3,7 @@ using Game.Common;
 
 namespace Game.Presenters
 {
-    public class Util
+    public static class Util
     {
         public static Rectangle MapRect(Rectangle originalRect, Environment e)
         {

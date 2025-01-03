@@ -7,4 +7,5 @@ public record PokerResults(
     ReconResults ReconResults,
     MatchResults MatchResults,
     MonteCarloResult? MonteCarloResult,
-    PokerLayouts? BestLayout);
+    PokerLayouts? BestLayout,
+    PokerPosition? pokerPosition);

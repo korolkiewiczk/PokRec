@@ -10,7 +10,7 @@ public class RegionImageCache
 {
     private readonly ConcurrentDictionary<string, byte[]> _previousHashes = new();
     private readonly Random _random = new();
-    private const int ForceUpdateProbability = 100;
+    private const int ForceUpdateProbability = 10;
 
     public bool ShouldProcess(string regionName, Image<Rgba32> image)
     {

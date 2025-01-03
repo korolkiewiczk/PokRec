@@ -13,7 +13,8 @@ public class OcrRegionMatcher : BaseRegionMatcher
     protected override List<string> ReconJob(Image<Rgba32> regionImage)
     {
         var recognizedText = CvUtilsOcr.GetTextFromRegion(regionImage);
-
+        Log.Info(
+            $"Recognized text: {recognizedText}");
         return !string.IsNullOrWhiteSpace(recognizedText)
             ? [recognizedText]
             : [];

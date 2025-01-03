@@ -9,9 +9,6 @@ namespace emu.lib;
 
 public class RegionMatcher : BaseRegionMatcher
 {
-    private static readonly log4net.ILog Log =
-        log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-
     private readonly List<WeightedImages> _imgList = new();
 
     private readonly string _classPath;
