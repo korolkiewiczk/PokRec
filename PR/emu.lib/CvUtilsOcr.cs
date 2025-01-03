@@ -11,9 +11,8 @@ public static class CvUtilsOcr
 {
     // Static cache for Tesseract instance
     private static Tesseract _tesseract;
-    private static readonly object _tesseractLock = new();
-
     private static Tesseract _numericTesseract;
+    private static readonly object _tesseractLock = new();
 
     public static string GetTextFromRegion(Image<Rgba32> region, bool isNumericOnly, Rectangle regionRect = new())
     {
@@ -38,14 +37,23 @@ public static class CvUtilsOcr
 
     private static Tesseract GetTesseractInstance()
     {
-        if (_tesseract != null) return _tesseract;
+        return GetTesseract(ref _tesseract, false);
+    }
+
+    private static Tesseract GetNumericTesseract()
+    {
+        return GetTesseract(ref _numericTesseract, true);
+    }
+
+    private static Tesseract GetTesseract(ref Tesseract tesseract, bool isNumericOnly)
+    {
+        if (tesseract != null) return tesseract;
 
         lock (_tesseractLock)
         {
-            if (_tesseract != null) return _tesseract;
+            if (tesseract != null) return tesseract;
 
-            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            string tessdataPath = Path.Combine(baseDirectory, "tessdata");
+            string tessdataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tessdata");
 
             if (!Directory.Exists(tessdataPath))
             {
@@ -56,36 +64,23 @@ public static class CvUtilsOcr
                 );
             }
 
-            _tesseract = new Tesseract();
-            _tesseract.SetVariable("user_defined_dpi", "70");
-            _numericTesseract.PageSegMode = PageSegMode.SingleLine;
-            _tesseract.Init(tessdataPath, "eng", OcrEngineMode.TesseractLstmCombined);
+            tesseract = new Tesseract();
+            tesseract.Init(tessdataPath, "eng", OcrEngineMode.TesseractLstmCombined);
+            tesseract.SetVariable("user_defined_dpi", "70");
 
+            if (isNumericOnly)
+            {
+                tesseract.SetVariable("tessedit_char_whitelist", "0123456789.$,");
+            }
+            else
+            {
+                tesseract.SetVariable("tessedit_char_whitelist",
+                    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.$,");
+            }
 
-            return _tesseract;
-        }
-    }
+            tesseract.PageSegMode = PageSegMode.SingleWord;
 
-    private static Tesseract GetNumericTesseract()
-    {
-        if (_numericTesseract != null) return _numericTesseract;
-
-        lock (_tesseractLock)
-        {
-            if (_numericTesseract != null) return _numericTesseract;
-
-            // Initialize with same path, but set numeric-specific vars
-            string tessdataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tessdata");
-            _numericTesseract = new Tesseract();
-            _numericTesseract.Init(tessdataPath, "eng", OcrEngineMode.TesseractLstmCombined);
-
-            // Maybe set DPI or any other variable
-            _numericTesseract.SetVariable("user_defined_dpi", "70");
-            // Restrict to digits
-            _numericTesseract.SetVariable("tessedit_char_whitelist", "0123456789.$,");
-            _numericTesseract.PageSegMode = PageSegMode.SingleLine;
-
-            return _numericTesseract;
+            return tesseract;
         }
     }
 

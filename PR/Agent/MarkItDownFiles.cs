@@ -66,11 +66,6 @@ public static class MarkItDownFiles
             regionContents.AppendLine($"{nameof(Nickname)}{i + 1}");
         }
 
-        for (int i = 0; i < maxPlayers; i++)
-        {
-            regionContents.AppendLine($"{nameof(PlayerBet)}{i + 1}");
-        }
-
         File.WriteAllText(regionsTxt, regionContents.ToString());
     }
 }
