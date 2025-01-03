@@ -6,25 +6,28 @@ using SixLabors.ImageSharp.PixelFormats;
 using Rectangle = System.Drawing.Rectangle;
 
 namespace emu.lib;
+
 public static class CvUtilsOcr
 {
     // Static cache for Tesseract instance
     private static Tesseract _tesseract;
     private static readonly object _tesseractLock = new();
 
-    public static string GetTextFromRegion(Image<Rgba32> region, Rectangle regionRect = new Rectangle())
+    private static Tesseract _numericTesseract;
+
+    public static string GetTextFromRegion(Image<Rgba32> region, bool isNumericOnly, Rectangle regionRect = new())
     {
         if (regionRect.IsEmpty)
         {
             regionRect = new Rectangle(0, 0, region.Width, region.Height);
         }
-       
+
         string result;
         using Mat sourceMat = ConvertImageSharpToMat(region);
         using Mat regionMat = new Mat(sourceMat, regionRect);
         lock (_tesseractLock)
         {
-            var tesseract = GetTesseractInstance();
+            var tesseract = isNumericOnly ? GetNumericTesseract() : GetTesseractInstance();
             tesseract.SetImage(regionMat);
             tesseract.Recognize();
             result = tesseract.GetUTF8Text().Trim();
@@ -55,9 +58,34 @@ public static class CvUtilsOcr
 
             _tesseract = new Tesseract();
             _tesseract.SetVariable("user_defined_dpi", "70");
+            _numericTesseract.PageSegMode = PageSegMode.SingleLine;
             _tesseract.Init(tessdataPath, "eng", OcrEngineMode.TesseractLstmCombined);
 
+
             return _tesseract;
+        }
+    }
+
+    private static Tesseract GetNumericTesseract()
+    {
+        if (_numericTesseract != null) return _numericTesseract;
+
+        lock (_tesseractLock)
+        {
+            if (_numericTesseract != null) return _numericTesseract;
+
+            // Initialize with same path, but set numeric-specific vars
+            string tessdataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tessdata");
+            _numericTesseract = new Tesseract();
+            _numericTesseract.Init(tessdataPath, "eng", OcrEngineMode.TesseractLstmCombined);
+
+            // Maybe set DPI or any other variable
+            _numericTesseract.SetVariable("user_defined_dpi", "70");
+            // Restrict to digits
+            _numericTesseract.SetVariable("tessedit_char_whitelist", "0123456789.$,");
+            _numericTesseract.PageSegMode = PageSegMode.SingleLine;
+
+            return _numericTesseract;
         }
     }
 

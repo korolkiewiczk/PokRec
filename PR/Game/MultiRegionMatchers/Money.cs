@@ -4,7 +4,7 @@ using Common;
 
 namespace Game.MultiRegionMatchers;
 
-public abstract class Money : MultiTextMatcher<decimal?>
+public abstract class Money : MultiTextNumericMatcher
 {
     protected Money(int seats) : base(seats)
     {

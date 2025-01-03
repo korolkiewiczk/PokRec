@@ -31,7 +31,7 @@ public static class RegionProcessor
 
             BaseRegionMatcher regionMatcher = regionSpec.IsOcr switch
             {
-                true => new OcrRegionMatcher(regionImage),
+                true => new OcrRegionMatcher(regionImage, regionSpec.IsNumericOnly),
                 _ => new RegionMatcher(regionImage, regionSpec.ClassesPath, regionSpec.Num,
                     regionSpec.Threshold)
             };
