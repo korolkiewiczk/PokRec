@@ -10,9 +10,10 @@ namespace Common
             return Path.Combine($"{project.Path}\\{project.Name}\\regions\\{board.Id}");
         }
         
-        public static Rectangle LoadRegion(Project project, Board board, string name)
+        public static Rectangle? LoadRegion(Project project, Board board, string name)
         {
             string path = Path.Combine(GetRegionPath(project, board), name + ".txt");
+            if (!File.Exists(path)) return null;
             var converted = new RectangleConverter().ConvertFromString(File.ReadAllText(path));
             return (Rectangle)converted!;
         }

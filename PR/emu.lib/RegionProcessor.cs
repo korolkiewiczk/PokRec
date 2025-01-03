@@ -16,10 +16,12 @@ public static class RegionProcessor
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return new ValueTask(Task.CompletedTask);
+                return default;
             }
 
-            using var regionImage = CvUtils.GenerateRegionImage(regionSpec.Rectangle, mainImg);
+            if (regionSpec.Rectangle is null) return default;
+
+            using var regionImage = CvUtils.GenerateRegionImage(regionSpec.Rectangle.Value, mainImg);
 
             // Skip processing if image hasn't changed and we're not forcing an update
             if (!ImageCache.ShouldProcess(id + regionSpec.Name, regionImage))
@@ -35,7 +37,7 @@ public static class RegionProcessor
             };
 
             var reconResult = new ReconResult(
-                regionSpec.Rectangle,
+                regionSpec.Rectangle.Value,
                 regionMatcher.Process()
             );
 

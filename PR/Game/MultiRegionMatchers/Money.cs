@@ -4,13 +4,10 @@ using Common;
 
 namespace Game.MultiRegionMatchers;
 
-public abstract class Money : TextMatcher<List<decimal?>>
+public abstract class Money : MultiTextMatcher<decimal?>
 {
-    private readonly int _seats;
-
-    protected Money(int seats)
+    protected Money(int seats) : base(seats)
     {
-        _seats = seats;
     }
 
     public static decimal ParseMoneyValue(string rawText)
@@ -43,17 +40,5 @@ public abstract class Money : TextMatcher<List<decimal?>>
         }
 
         return money;
-    }
-
-    public override IEnumerable<RegionSpec> GetRegionSpecs()
-    {
-        List<RegionSpec> specs = new List<RegionSpec>();
-        for (int i = 0; i < _seats; i++)
-        {
-            var spec = GetSingleRegionSpec(i);
-            specs.Add(spec);
-        }
-
-        return specs;
     }
 }

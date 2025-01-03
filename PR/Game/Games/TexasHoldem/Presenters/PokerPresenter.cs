@@ -34,6 +34,7 @@ namespace Game.Games.TexasHoldem.Presenters
             PresentResults(presenters[nameof(Position)], reconResults.PositionResults, e);
             PresentResults(presenters[nameof(Opponent)], reconResults.OpponentResults, e);
             PresentResults(presenters[nameof(Stack)], reconResults.StackResults, e);
+            PresentResults(presenters[nameof(Nickname)], reconResults.NicknameResults, e);
 
             if (matchResult.PlayerCards.Any())
             {
@@ -91,7 +92,7 @@ namespace Game.Games.TexasHoldem.Presenters
                 // Second line
                 x = 10;
                 y += (int) lineHeight;
-                e.Graphics.DrawString(string.Join(',', matchResult.Stack.Select((cash, i) => $"P{i + 1} ~ ${cash}")),
+                e.Graphics.DrawString(string.Join(", ", matchResult.NicknameToStack.Select(kvp => $"{kvp.Key} ~ ${kvp.Value}")),
                     font, new SolidBrush(Color.Black), x, y);
             }
         }

@@ -22,6 +22,7 @@ namespace Game.Games.TexasHoldem.Solving
         private Position _position;
         private Opponent _opponent;
         private Stack _stack;
+        private Nickname _nickname;
         private int _numPlayers;
         private IDictionary<string, ReconResult> _state;
 
@@ -42,16 +43,17 @@ namespace Game.Games.TexasHoldem.Solving
 
         private void InitializeMatchers()
         {
+            var settings = new PokerBoardSettingsParser(Board);
+            _numPlayers = settings.Players;
+            
             _flop = new Flop(Board);
             _turn = new Turn(Board);
             _river = new River(Board);
             _playerCards = new PlayerCards(Board);
-
-            var settings = new PokerBoardSettingsParser(Board);
-            _position = new Position(Board, settings.Players);
-            _opponent = new Opponent(Board, settings.Players - 1);
-            _stack = new Stack(settings.Players);
-            _numPlayers = settings.Players;
+            _position = new Position(Board, _numPlayers);
+            _opponent = new Opponent(Board, _numPlayers - 1);
+            _stack = new Stack(_numPlayers);
+            _nickname = new Nickname(_numPlayers);
         }
 
         public List<RegionSpec> GetRegionSpecs()
@@ -66,6 +68,7 @@ namespace Game.Games.TexasHoldem.Solving
             regionSpecs.AddRange(_position.GetRegionSpecs());
             regionSpecs.AddRange(_opponent.GetRegionSpecs());
             regionSpecs.AddRange(_stack.GetRegionSpecs());
+            regionSpecs.AddRange(_nickname.GetRegionSpecs());
             return regionSpecs;
         }
 
@@ -78,9 +81,10 @@ namespace Game.Games.TexasHoldem.Solving
             var positionResults = GetResultsPrefixed(nameof(Position)).ToList();
             var opponentResults = GetResultsPrefixed(nameof(Opponent)).ToList();
             var stackResults = GetResultsPrefixed(nameof(Stack)).ToList();
+            var nicknameResults = GetResultsPrefixed(nameof(Nickname)).ToList();
 
             return new ReconResults(playerResult, flopResult, turnResult, riverResult, positionResults,
-                opponentResults, stackResults);
+                opponentResults, stackResults, nicknameResults);
         }
 
         public PokerResults Solve()
@@ -93,9 +97,15 @@ namespace Game.Games.TexasHoldem.Solving
             var position = _position.Match(reconResults.PositionResults);
             var opponents = _opponent.Match(reconResults.OpponentResults);
             var stack = _stack.Match(reconResults.StackResults);
+            var nicknames = _nickname.Match(reconResults.NicknameResults);
+            var nicknameToStack = new Dictionary<string, int>();
+            for (int i = 0; i < nicknames.Count; i++)
+            {
+                nicknameToStack[nicknames[i]] = (int)(stack[i] ?? 0);
+            }
 
             var matchResults =
-                new MatchResults(playerCards, flopCards, turnCards, riverCards, position, opponents, stack);
+                new MatchResults(playerCards, flopCards, turnCards, riverCards, position, opponents, nicknameToStack);
 
             MonteCarloResult? monteCarloResult = null;
             PokerLayouts? bestLayout = null;
@@ -130,7 +140,8 @@ namespace Game.Games.TexasHoldem.Solving
                 {nameof(River), _river.GetPresenter()},
                 {nameof(Position), _position.GetPresenter()},
                 {nameof(Opponent), _opponent.GetPresenter()},
-                {nameof(Stack), _stack.GetPresenter()}
+                {nameof(Stack), _stack.GetPresenter()},
+                {nameof(Nickname), _nickname.GetPresenter()}
             };
         }
 

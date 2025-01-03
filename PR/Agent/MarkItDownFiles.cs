@@ -19,6 +19,7 @@ public static class MarkItDownFiles
             return;
         }
 
+        // adding classes
         StringBuilder classesContent = new StringBuilder();
         foreach (var cardType in Enum.GetValues(typeof(CardType)))
         {
@@ -33,6 +34,7 @@ public static class MarkItDownFiles
 
         File.WriteAllText(classesTxt, classesContent.ToString());
 
+        // adding regions
         string[] regionsContent =
         [
             nameof(Flop),
@@ -57,6 +59,11 @@ public static class MarkItDownFiles
         for (int i = 0; i < maxPlayers; i++)
         {
             regionContents.AppendLine($"{nameof(Stack)}{i + 1}");
+        }
+
+        for (int i = 0; i < maxPlayers; i++)
+        {
+            regionContents.AppendLine($"{nameof(Nickname)}{i + 1}");
         }
 
         File.WriteAllText(regionsTxt, regionContents.ToString());

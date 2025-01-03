@@ -11,4 +11,4 @@ public record MatchResults(
     List<Card> River,
     Place Position,
     Place Opponent,
-    List<decimal?> Stack);
+    Dictionary<string, int> NicknameToStack);

@@ -33,6 +33,25 @@ namespace Game.MultiRegionMatchers
 
         public abstract IResultPresenter GetPresenter();
 
-        public abstract IEnumerable<RegionSpec> GetRegionSpecs();
+        public virtual IEnumerable<RegionSpec> GetRegionSpecs()
+        {
+            List<RegionSpec> specs = new List<RegionSpec>();
+            for (int i = 0; i < Seats; i++)
+            {
+                specs.Add(new RegionSpec
+                {
+                    ClassesPath = Classes.ClassPath(Board, GetClassPathName()),
+                    Name = $"{GetMatcherName()}{i + 1}",
+                    Num = 1,
+                    Threshold = GetThreshold()
+                });
+            }
+
+            return specs;
+        }
+
+        protected abstract string GetClassPathName();
+        protected abstract string GetMatcherName();
+        protected abstract int GetThreshold();
     }
 }

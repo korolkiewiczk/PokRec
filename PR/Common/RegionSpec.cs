@@ -14,6 +14,6 @@ namespace Common
 
         public bool IsOcr { get; set; }
         
-        public Rectangle Rectangle { get; set; }
+        public Rectangle? Rectangle { get; set; }
     }
 }

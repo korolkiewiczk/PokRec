@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Common;
+﻿using Common;
 using Game.Interfaces;
 using Game.Presenters;
 
@@ -16,21 +15,8 @@ namespace Game.MultiRegionMatchers
             return new OpponentPresenter();
         }
 
-        public override IEnumerable<RegionSpec> GetRegionSpecs()
-        {
-            List<RegionSpec> specs = new List<RegionSpec>();
-            for (int i = 0; i < Seats; i++)
-            {
-                specs.Add(new RegionSpec
-                {
-                    ClassesPath = Classes.ClassPath(Board, "opponent"),
-                    Name = $"{nameof(Opponent)}{i + 1}",
-                    Num = 1,
-                    Threshold = 70
-                });
-            }
-
-            return specs;
-        }
+        protected override string GetClassPathName() => "opponent";
+        protected override string GetMatcherName() => nameof(Opponent);
+        protected override int GetThreshold() => 70;
     }
 }
