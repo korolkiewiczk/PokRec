@@ -1,7 +1,9 @@
 ﻿using System.Collections.Concurrent;
 using Common;
+using Newtonsoft.Json;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using Formatting = System.Xml.Formatting;
 
 namespace emu.lib;
 
@@ -31,7 +33,7 @@ public static class RegionProcessor
 
             BaseRegionMatcher regionMatcher = regionSpec.IsOcr switch
             {
-                true => new OcrRegionMatcher(regionImage, regionSpec.IsNumericOnly),
+                true => new OcrRegionMatcher(regionImage),
                 _ => new RegionMatcher(regionImage, regionSpec.ClassesPath, regionSpec.Num,
                     regionSpec.Threshold)
             };

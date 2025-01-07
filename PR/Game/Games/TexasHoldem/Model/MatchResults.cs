@@ -11,4 +11,5 @@ public record MatchResults(
     List<Card> River,
     Place Position,
     Place Opponent,
-    Dictionary<string, int> NicknameToStack);
+    Dictionary<string, int> NicknameToStack,
+    bool IsPlayerDecision);

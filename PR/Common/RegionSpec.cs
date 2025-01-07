@@ -13,9 +13,7 @@ namespace Common
         public int Threshold { get; set; }
 
         public bool IsOcr { get; set; }
-        
-        public bool IsNumericOnly { get; set; }
-        
+
         public Rectangle? Rectangle { get; set; }
     }
 }

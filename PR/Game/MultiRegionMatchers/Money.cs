@@ -17,7 +17,7 @@ public abstract class Money : MultiTextNumericMatcher
             return 0;
         }
 
-        string cleanText = new string(rawText.Where(c => char.IsDigit(c) || c == '.').ToArray());
+        string cleanText = new string(rawText.Where(char.IsDigit).ToArray());
         var parsed = decimal.TryParse(cleanText, out decimal value);
         return parsed ? value : 0;
     }

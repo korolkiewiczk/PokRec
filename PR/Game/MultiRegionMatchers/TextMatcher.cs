@@ -6,14 +6,13 @@ namespace Game.MultiRegionMatchers
 {
     public abstract class TextMatcher<T> : IMultiRegionMatcher<T>
     {
-        protected RegionSpec GetSingleRegionSpec(int i, bool isNumericOnly)
+        protected RegionSpec GetSingleRegionSpec(int i)
         {
             return new RegionSpec
             {
                 Name = i == -1 ? GetType().Name : $"{GetType().Name}{i + 1}",
                 Num = 1,
-                IsOcr = true,
-                IsNumericOnly = isNumericOnly
+                IsOcr = true
             };
         }
 

@@ -11,10 +11,9 @@ public static class CvUtilsOcr
 {
     // Static cache for Tesseract instance
     private static Tesseract _tesseract;
-    private static Tesseract _numericTesseract;
     private static readonly object _tesseractLock = new();
 
-    public static string GetTextFromRegion(Image<Rgba32> region, bool isNumericOnly, Rectangle regionRect = new())
+    public static string GetTextFromRegion(Image<Rgba32> region, Rectangle regionRect = new())
     {
         if (regionRect.IsEmpty)
         {
@@ -26,7 +25,7 @@ public static class CvUtilsOcr
         using Mat regionMat = new Mat(sourceMat, regionRect);
         lock (_tesseractLock)
         {
-            var tesseract = isNumericOnly ? GetNumericTesseract() : GetTesseractInstance();
+            var tesseract = GetTesseractInstance();
             tesseract.SetImage(regionMat);
             tesseract.Recognize();
             result = tesseract.GetUTF8Text().Trim();
@@ -37,15 +36,10 @@ public static class CvUtilsOcr
 
     private static Tesseract GetTesseractInstance()
     {
-        return GetTesseract(ref _tesseract, false);
+        return GetTesseract(ref _tesseract);
     }
 
-    private static Tesseract GetNumericTesseract()
-    {
-        return GetTesseract(ref _numericTesseract, true);
-    }
-
-    private static Tesseract GetTesseract(ref Tesseract tesseract, bool isNumericOnly)
+    private static Tesseract GetTesseract(ref Tesseract tesseract)
     {
         if (tesseract != null) return tesseract;
 
@@ -68,15 +62,8 @@ public static class CvUtilsOcr
             tesseract.Init(tessdataPath, "eng", OcrEngineMode.TesseractLstmCombined);
             tesseract.SetVariable("user_defined_dpi", "70");
 
-            if (isNumericOnly)
-            {
-                tesseract.SetVariable("tessedit_char_whitelist", "0123456789.$,");
-            }
-            else
-            {
-                tesseract.SetVariable("tessedit_char_whitelist",
-                    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.$,");
-            }
+            tesseract.SetVariable("tessedit_char_whitelist",
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.$,");
 
             tesseract.PageSegMode = PageSegMode.SingleWord;
 

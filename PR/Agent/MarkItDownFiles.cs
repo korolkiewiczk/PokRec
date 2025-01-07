@@ -31,6 +31,7 @@ public static class MarkItDownFiles
 
         classesContent.AppendLine("position\\btn");
         classesContent.AppendLine("opponent\\cards");
+        classesContent.AppendLine("decision\\bar");
 
         File.WriteAllText(classesTxt, classesContent.ToString());
 
@@ -40,7 +41,8 @@ public static class MarkItDownFiles
             nameof(Flop),
             nameof(Turn),
             nameof(River),
-            nameof(PlayerCards)
+            nameof(PlayerCards),
+            nameof(Decision),
         ];
 
         var regionContents = new StringBuilder(string.Join("\r\n", regionsContent)).AppendLine();

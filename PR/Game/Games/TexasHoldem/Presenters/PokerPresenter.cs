@@ -35,6 +35,7 @@ namespace Game.Games.TexasHoldem.Presenters
             PresentResults(presenters[nameof(Opponent)], reconResults.OpponentResults, e);
             PresentResults(presenters[nameof(Stack)], reconResults.StackResults, e);
             PresentResults(presenters[nameof(Nickname)], reconResults.NicknameResults, e);
+            presenters[nameof(Decision)].Present(reconResults.DecisionResult, e);
 
             if (matchResult.PlayerCards.Any())
             {
@@ -94,6 +95,14 @@ namespace Game.Games.TexasHoldem.Presenters
                 y += (int) lineHeight;
                 e.Graphics.DrawString(string.Join(", ", matchResult.NicknameToStack.Select(kvp => $"{kvp.Key} ~ ${kvp.Value}")),
                     font, new SolidBrush(Color.Black), x, y);
+
+                if (matchResult.IsPlayerDecision)
+                {
+                    x = 10;
+                    y += (int)lineHeight;
+                    e.Graphics.DrawString("Your Turn to Act!", 
+                        font, new SolidBrush(Color.Red), x, y);
+                }
             }
         }
 
