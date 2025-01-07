@@ -12,4 +12,5 @@ public record ReconResults(
     List<ReconResult> OpponentResults,
     List<ReconResult> StackResults,
     List<ReconResult> NicknameResults,
-    ReconResult DecisionResult);
+    ReconResult DecisionResult,
+    ReconResult PotResult);

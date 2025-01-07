@@ -11,7 +11,7 @@ namespace Game.Presenters
     {
         public void Present(ReconResult reconResult, Environment e)
         {
-            if (reconResult.Results.Any())
+            if (reconResult != null && reconResult.Results.Any())
             {
                 var rect = Util.MapRect(reconResult.ItemRectangle, e);
 
@@ -19,7 +19,7 @@ namespace Game.Presenters
                 e.Graphics.DrawRectangle(new Pen(Color.Green), rect);
 
                 // Draw the stack value
-                e.Graphics.DrawString($"${Stack.ParseMoneyValue(reconResult.Results.FirstOrDefault())}",
+                e.Graphics.DrawString($"${MoneyParser.ParseMoneyValue(reconResult.Results.FirstOrDefault())}",
                     new Font(FontFamily.GenericMonospace, 8),
                     Brushes.Green,
                     rect.Location);

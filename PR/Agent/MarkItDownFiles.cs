@@ -68,6 +68,8 @@ public static class MarkItDownFiles
             regionContents.AppendLine($"{nameof(Nickname)}{i + 1}");
         }
 
+        regionContents.AppendLine(nameof(Pot));
+
         File.WriteAllText(regionsTxt, regionContents.ToString());
     }
 }

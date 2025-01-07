@@ -9,6 +9,8 @@ namespace emu.lib;
 
 public static class RegionProcessor
 {
+    private static readonly log4net.ILog Log =
+        log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
     private static readonly RegionImageCache ImageCache = new();
 
     public static async Task ProcessRegions(string id, IEnumerable<RegionSpec> regionSpecs,
@@ -43,6 +45,7 @@ public static class RegionProcessor
                 regionMatcher.Process()
             );
 
+            Log.Info($"Processed region {regionSpec.Name} with values [{string.Join(',',reconResult.Results)}]");
             state[regionSpec.Name] = reconResult;
             return default;
         });
