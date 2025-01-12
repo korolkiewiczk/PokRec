@@ -3,16 +3,16 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Common;
+using scr;
 
 namespace Agent
 {
     public partial class ManageBoards : Form
     {
         private readonly string _projectDirectory;
-        private string _name;
+        private readonly string _name;
         private Project _project;
 
         public ManageBoards(string projectDirectory, string name)
@@ -32,10 +32,13 @@ namespace Agent
                 return;
             }
             RefreshListbox();
+
+            Deactivate += CaptureWindowPosition;
         }
 
         private void RefreshListbox()
         {
+            listBox1.Items.Clear();
             foreach (var board in _project.Boards)
             {
                 listBox1.Items.Add(board);
@@ -44,21 +47,15 @@ namespace Agent
 
         private void btnShow_Click(object sender, EventArgs e)
         {
-            IntPtr desktopPtr = GetDC(IntPtr.Zero);
-            Graphics g = Graphics.FromHdc(desktopPtr);
+            var rect = SelectedBoard.Rect;
 
-            const int width = 4;
-            var r = SelectedBoard.Rect;
-            g.DrawRectangle(new Pen(Color.Red, width), new Rectangle(r.X - width, r.Y - width, r.Width + 2 * width, r.Height + 2 * width));
-
-            g.Dispose();
-            ReleaseDC(IntPtr.Zero, desktopPtr);
+            ScreenShot.MarkWindow(rect);
         }
 
         private void btnDelete_Click(object sender, EventArgs e)
         {
             _project.Boards.Remove(SelectedBoard);
-            listBox1.Items.Clear();
+            
             RefreshListbox();
         }
 
@@ -69,24 +66,28 @@ namespace Agent
 
         private void MarkSelectedBoard()
         {
-            Process.Start("MarkItDown.exe", $@"""{SaveLoad.GetBoardPath(_project, SelectedBoard)}""");
+            Process.Start("MarkItDown.exe", 
+                $"""
+                 "{SaveLoad.GetBoardPath(_project, SelectedBoard)}" "{RegionLoader.GetRegionPath(_project,SelectedBoard)}" "{new RectangleConverter().ConvertToString(SelectedBoard.Rect)}"
+                 """);
         }
 
         private void btnRefresh_Click(object sender, EventArgs e)
         {
-            using (var bmp = scr.ScreenShot.Capture(SelectedBoard.Rect))
+            using (var bmp = ScreenShot.Capture(SelectedBoard.Rect))
             {
-                bmp.Save(SaveLoad.GetBoardPath(_project,SelectedBoard));
+                bmp.Save(SaveLoad.GetBoardPath(_project, SelectedBoard));
             }
 
             MarkSelectedBoard();
         }
 
-        private Board SelectedBoard => (Board) (listBox1.SelectedItem as Board ?? listBox1.Items[0]);
+        private Board SelectedBoard => (Board)(listBox1.SelectedItem as Board ?? listBox1.Items[0]);
 
         private void btnSave_Click(object sender, EventArgs e)
         {
             SaveLoad.SaveProject(_project);
+            MessageBox.Show("Saved");
         }
 
         private void listBox1_DragEnter(object sender, DragEventArgs e)
@@ -108,12 +109,73 @@ namespace Agent
 
         private void btnOpenFolder_Click(object sender, EventArgs e)
         {
-            Process.Start(Path.GetDirectoryName(SaveLoad.GetBoardPath(_project, SelectedBoard)));
+            string folderPath = Path.GetDirectoryName(SaveLoad.GetBoardPath(_project, SelectedBoard));
+            if (Directory.Exists(folderPath))
+            {
+                Process.Start("explorer.exe", $"\"{folderPath}\"");
+            }
+            else
+            {
+                MessageBox.Show("Folder does not exist.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
-        [DllImport("User32.dll")]
-        public static extern IntPtr GetDC(IntPtr hwnd);
-        [DllImport("User32.dll")]
-        public static extern void ReleaseDC(IntPtr hwnd, IntPtr dc);
+        private bool _capture;
+        private bool _capturePosition;
+        private void btnWinPos_Click(object sender, EventArgs e)
+        {
+            _capture = true;
+        }
+
+        private void btnSetSize_Click(object sender, EventArgs e)
+        {
+            _capturePosition = true;
+        }
+
+        private void CaptureWindowPosition(object sender, EventArgs args)
+        {
+            if (_capturePosition)
+            {
+                ScreenShot.MoveAndResizeWindow(SelectedBoard.Rect.Location, SelectedBoard.Rect.Size);
+                _capturePosition = false;
+                return;
+            }
+            if (!_capture) return;
+            _capture = false;
+
+            var bounds = ScreenShot.CaptureWindowRect();
+
+            if (bounds.Width != SelectedBoard.Rect.Width || bounds.Height != SelectedBoard.Rect.Height || bounds.Location != SelectedBoard.Rect.Location)
+            {
+                if (MessageBox.Show(string.Format(
+                            "You are changing size of rectangle from {0} to {1}. Are you sure to continue?",
+                            SelectedBoard.Rect.Size, bounds.Size), "Warning",
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Warning)
+                    == DialogResult.No)
+                {
+                    return;
+                }
+            }
+
+            ScreenShot.MarkWindow(bounds);
+
+            SelectedBoard.Rect = bounds;
+
+            RefreshListbox();
+        }
+
+        private void ManageBoards_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (!_project.HasNoChanges())
+            {
+                if (MessageBox.Show("You have unsaved changes. Are you sure to close?", "Warning", 
+                MessageBoxButtons.YesNo, MessageBoxIcon.Warning)
+                    == DialogResult.No)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+            }
+        }
     }
 }

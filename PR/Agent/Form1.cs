@@ -1,17 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Agent.Properties;
 using Common;
-using Microsoft.VisualBasic;
-using Newtonsoft.Json;
+using Game.Games;
+using Game.Games.TexasHoldem.Solving;
+using Game.Games.TexasHoldem.Utils;
 using scr;
 
 namespace Agent
@@ -19,20 +15,22 @@ namespace Agent
     public partial class Form1 : Form
     {
         private const string ProjectsDir = "projects";
-        private const string BoardsDir = "boards";
         private Project _currentProject;
         private bool _capture;
+        private bool _capturePosition;
+        private readonly List<(Board,Poker,GameProcessing)> _games = new();
 
-        private Dictionary<Board, IBoardObserver> _boardObservers;
 
         public Form1()
         {
             InitializeComponent();
+            var logRepository = log4net.LogManager.GetRepository(System.Reflection.Assembly.GetEntryAssembly());
+            log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("emulog.config"));
         }
 
         private void buttonNewPrj_Click(object sender, EventArgs e)
         {
-            var result = Interaction.InputBox("Enter project name");
+            var result = InputDialog.ShowInputDialog("Enter project name");
             if (string.IsNullOrEmpty(result)) return;
 
             _currentProject = new Project
@@ -58,7 +56,8 @@ namespace Agent
             openFileDialog.ShowDialog();
             if (openFileDialog.FileName != "")
             {
-                _currentProject = SaveLoad.LoadProject(Path.Combine(openFileDialog.InitialDirectory, openFileDialog.FileName));
+                _currentProject =
+                    SaveLoad.LoadProject(Path.Combine(openFileDialog.InitialDirectory, openFileDialog.FileName));
                 labelCurrentPrj.Text = _currentProject.Name;
                 buttonAddBoard.Enabled = true;
                 buttonBoards.Enabled = true;
@@ -80,45 +79,49 @@ namespace Agent
             _capture = true;
         }
 
-        private void Capture(object sender, EventArgs args)
+        private void CaptureWindow(object sender, EventArgs args)
         {
             if (!_capture) return;
+            _capture = false;
 
-            Rectangle bounds;
-            string title;
-            using (var bmp = ScreenShot.Capture(out bounds, out title))
+            using var bmp = ScreenShot.Capture(out var bounds, out var title);
+            if (bmp == null) return;
+
+            var boardName = InputDialog.ShowInputDialog("Enter board name");
+            if (string.IsNullOrEmpty(boardName))
             {
-                if (bmp == null) return;
-
-                var result = Interaction.InputBox("Enter board name");
-                if (string.IsNullOrEmpty(result))
-                {
-                    _capture = false;
-                    textBoxMessage.Text = "Not captured. Try again.";
-                    return;
-                }
-
-                var board = new Board
-                {
-                    Name = result,
-                    Rect = bounds
-                };
-
-                bmp.Save(SaveLoad.GetBoardPath(_currentProject, board));
-
-                _currentProject.Boards.Add(board);
-
-                SaveProject();
-
-                textBoxMessage.Text = $"Captured window - {title}";
+                textBoxMessage.Text = "Not captured. Try again.";
+                return;
             }
 
-            _capture = false;
+            var numPlayers = InputDialog.ShowInputDialog("Enter number of players (i.e. 2,6,9,10)");
+            if (string.IsNullOrEmpty(numPlayers) || !int.TryParse(numPlayers, out var players))
+            {
+                textBoxMessage.Text = "Not captured. Try again.";
+                return;
+            }
+
+            var board = new Board
+            {
+                Name = boardName,
+                Rect = bounds,
+                Settings = [new(nameof(PokerBoardSettingsParser.Players), players.ToString())]
+            };
+
+            bmp.Save(SaveLoad.GetBoardPath(_currentProject, board));
+
+            _currentProject.Boards.Add(board);
+
+            SaveProject();
+
+            textBoxMessage.Text = $"Captured window - {title}";
+
+            ScreenShot.MarkWindow(bounds);
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            Deactivate += Capture;
+            Deactivate += CaptureWindow;
             buttonAddBoard.Enabled = false;
             buttonBoards.Enabled = false;
 
@@ -126,13 +129,13 @@ namespace Agent
 
             tabPlay.Enabled = false;
 
-            numericSavedImagesPerBoard.Value = Settings.Default.SavedImages;
-            numericInterval.Value = Settings.Default.UpdateInterval;
+            MarkItDownFiles.GenerateMarkItDownFiles();
         }
 
         private void buttonBoards_Click(object sender, EventArgs e)
         {
             new ManageBoards(ProjectDirectory, _currentProject.Name).ShowDialog();
+            _currentProject = SaveLoad.LoadProject(Path.Combine(ProjectDirectory, _currentProject.Name));
         }
 
         private void buttonExit_Click(object sender, EventArgs e)
@@ -142,72 +145,70 @@ namespace Agent
 
         private void buttonStart_Click(object sender, EventArgs e)
         {
-            timerGame.Interval = (int)numericInterval.Value;
-            timerGame.Start();
+            StartProcessing();
+
             textBoxMessage.Text = "Capturing";
             buttonStart.Enabled = false;
             buttonStop.Enabled = true;
         }
 
+        private void StartProcessing()
+        {
+            var boards = _currentProject.Boards;
+            _games.Clear();
+            foreach (var board in boards)
+            {
+                var poker = new Poker(board);
+                var regionSpecs = poker.GetRegionSpecs();
+                foreach (var regionSpec in regionSpecs)
+                {
+                    regionSpec.Rectangle = RegionLoader.LoadRegion(_currentProject, board, regionSpec.Name);
+                }
+                var gameProcessing = new GameProcessing(board.Name, board.Rect, regionSpecs);
+                poker.SetState(gameProcessing.State);
+                gameProcessing.Start();
+                _games.Add((board, poker, gameProcessing));
+            }
+        }
+
         private void buttonStop_Click(object sender, EventArgs e)
         {
-            timerGame.Stop();
+            foreach (var (_, _, gameProcessing) in _games)
+            {
+                gameProcessing.DisposeAsync().ConfigureAwait(true);
+            }
+
             buttonStart.Enabled = true;
             buttonStop.Enabled = false;
         }
 
-        private void timerGame_Tick(object sender, EventArgs e)
-        {
-            TakeShot();
-
-            textBoxMessage.Text += ".";
-        }
-
-        private void TakeShot()
-        {
-            foreach (var board in _currentProject.Boards)
-            {
-                using (var bmp = ScreenShot.Capture(board.Rect))
-                {
-                    if (bmp == null) continue;
-
-                    board.Generated = (int)((board.Generated + 1) % numericSavedImagesPerBoard.Value);
-
-                    bmp.Save(SaveLoad.GetBoardPathIter(_currentProject, board));
-
-                    SaveProject();
-                }
-
-                _boardObservers?[board]?.BoardUpdated();
-            }
-        }
-
-        private void numericInterval_ValueChanged(object sender, EventArgs e)
-        {
-            timerGame.Interval = (int)numericInterval.Value;
-            Settings.Default.UpdateInterval = (int)numericInterval.Value;
-            Settings.Default.Save();
-        }
-
-        private void numericSavedImagesPerBoard_ValueChanged(object sender, EventArgs e)
-        {
-            Settings.Default.SavedImages = (int)numericSavedImagesPerBoard.Value;
-            Settings.Default.Save();
-        }
-
-        private void buttonTakeShot_Click(object sender, EventArgs e)
-        {
-            TakeShot();
-        }
-
         private void buttonShowGame_Click(object sender, EventArgs e)
         {
-            _boardObservers = new Dictionary<Board, IBoardObserver>();
-            foreach (var board in _currentProject.Boards)
+            foreach (var (_,poker,_) in _games)
             {
-                var game = new Game(board);
-                _boardObservers[board] = game;
+                var game = new Game(poker);
                 game.Show();
+            }
+            // var game = new Game(_poker);
+            // game.Show();
+        }
+
+        private void buttonFixWindow_Click(object sender, EventArgs e)
+        {
+            _capturePosition = true;
+        }
+
+        protected override void OnDeactivate(EventArgs e)
+        {
+            base.OnDeactivate(e);
+
+            if (!_capturePosition) return;
+            _capturePosition = false;
+
+            var currentBoard = _currentProject.Boards.FirstOrDefault();
+            if (currentBoard != null)
+            {
+                ScreenShot.MoveAndResizeWindow(currentBoard.Rect.Location, currentBoard.Rect.Size);
             }
         }
     }

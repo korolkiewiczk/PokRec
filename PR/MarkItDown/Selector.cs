@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using System.Windows.Forms;
+using Common;
 
 namespace MarkItDown
 {
@@ -9,18 +10,18 @@ namespace MarkItDown
         protected const int BtnPadding = 45;
         protected const int BtnStart = 20;
         
-        protected PictureBox _pictureBox;
+        protected PictureBox PictureBox;
 
         protected void CreatePictureBox()
         {
-            _pictureBox = new PictureBox();
-            var image = Image.FromFile(Common.TempImg);
+            PictureBox = new PictureBox();
+            var image = Image.FromFile(Paths.TempImg);
 
-            _pictureBox.Image = image;
+            PictureBox.Image = image;
 
-            _pictureBox.Size = image.Size;
+            PictureBox.Size = image.Size;
 
-            this.Controls.Add(_pictureBox);
+            Controls.Add(PictureBox);
 
             Text = image.Size.ToString();
         }
@@ -29,8 +30,8 @@ namespace MarkItDown
         {
             if (disposing)
             {
-                _pictureBox.Image.Dispose();
-                _pictureBox.Dispose();
+                PictureBox.Image.Dispose();
+                PictureBox.Dispose();
             }
 
             base.Dispose(disposing);

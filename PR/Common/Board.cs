@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Collections.Generic;
+using System.Drawing;
 using Newtonsoft.Json;
 
 namespace Common
@@ -7,7 +8,8 @@ namespace Common
     {
         public string Name { get; set; }
         public Rectangle Rect { get; set; }
-        public int Generated { get; set; }
+
+        public List<KeyValuePair<string,string>> Settings { get; set; }
 
         public override string ToString()
         {

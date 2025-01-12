@@ -28,104 +28,137 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.btnDelete = new System.Windows.Forms.Button();
-            this.btnEdit = new System.Windows.Forms.Button();
-            this.listBox1 = new System.Windows.Forms.ListBox();
-            this.btnShow = new System.Windows.Forms.Button();
-            this.btnRefresh = new System.Windows.Forms.Button();
-            this.btnSave = new System.Windows.Forms.Button();
-            this.btnOpenFolder = new System.Windows.Forms.Button();
-            this.SuspendLayout();
+            btnDelete = new System.Windows.Forms.Button();
+            btnEdit = new System.Windows.Forms.Button();
+            listBox1 = new System.Windows.Forms.ListBox();
+            btnShow = new System.Windows.Forms.Button();
+            btnRefresh = new System.Windows.Forms.Button();
+            btnSave = new System.Windows.Forms.Button();
+            btnOpenFolder = new System.Windows.Forms.Button();
+            btnWinPos = new System.Windows.Forms.Button();
+            btnSetSize = new System.Windows.Forms.Button();
+            SuspendLayout();
             // 
             // btnDelete
             // 
-            this.btnDelete.Location = new System.Drawing.Point(252, 100);
-            this.btnDelete.Name = "btnDelete";
-            this.btnDelete.Size = new System.Drawing.Size(36, 23);
-            this.btnDelete.TabIndex = 1;
-            this.btnDelete.Text = "D";
-            this.btnDelete.UseVisualStyleBackColor = true;
-            this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
+            btnDelete.Location = new System.Drawing.Point(336, 154);
+            btnDelete.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            btnDelete.Name = "btnDelete";
+            btnDelete.Size = new System.Drawing.Size(124, 35);
+            btnDelete.TabIndex = 1;
+            btnDelete.Text = "Delete";
+            btnDelete.UseVisualStyleBackColor = true;
+            btnDelete.Click += btnDelete_Click;
             // 
             // btnEdit
             // 
-            this.btnEdit.Location = new System.Drawing.Point(252, 71);
-            this.btnEdit.Name = "btnEdit";
-            this.btnEdit.Size = new System.Drawing.Size(36, 23);
-            this.btnEdit.TabIndex = 2;
-            this.btnEdit.Text = "E";
-            this.btnEdit.UseVisualStyleBackColor = true;
-            this.btnEdit.Click += new System.EventHandler(this.btnEdit_Click);
+            btnEdit.Location = new System.Drawing.Point(336, 109);
+            btnEdit.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            btnEdit.Name = "btnEdit";
+            btnEdit.Size = new System.Drawing.Size(124, 35);
+            btnEdit.TabIndex = 2;
+            btnEdit.Text = "Edit";
+            btnEdit.UseVisualStyleBackColor = true;
+            btnEdit.Click += btnEdit_Click;
             // 
             // listBox1
             // 
-            this.listBox1.AllowDrop = true;
-            this.listBox1.FormattingEnabled = true;
-            this.listBox1.Location = new System.Drawing.Point(13, 13);
-            this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(233, 186);
-            this.listBox1.TabIndex = 3;
-            this.listBox1.DragDrop += new System.Windows.Forms.DragEventHandler(this.listBox1_DragDrop);
-            this.listBox1.DragEnter += new System.Windows.Forms.DragEventHandler(this.listBox1_DragEnter);
+            listBox1.AllowDrop = true;
+            listBox1.FormattingEnabled = true;
+            listBox1.Location = new System.Drawing.Point(17, 20);
+            listBox1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            listBox1.Name = "listBox1";
+            listBox1.Size = new System.Drawing.Size(309, 364);
+            listBox1.TabIndex = 3;
+            listBox1.DragDrop += listBox1_DragDrop;
+            listBox1.DragEnter += listBox1_DragEnter;
             // 
             // btnShow
             // 
-            this.btnShow.Location = new System.Drawing.Point(252, 13);
-            this.btnShow.Name = "btnShow";
-            this.btnShow.Size = new System.Drawing.Size(36, 23);
-            this.btnShow.TabIndex = 4;
-            this.btnShow.Text = "S";
-            this.btnShow.UseVisualStyleBackColor = true;
-            this.btnShow.Click += new System.EventHandler(this.btnShow_Click);
+            btnShow.Location = new System.Drawing.Point(336, 20);
+            btnShow.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            btnShow.Name = "btnShow";
+            btnShow.Size = new System.Drawing.Size(124, 35);
+            btnShow.TabIndex = 4;
+            btnShow.Text = "Show";
+            btnShow.UseVisualStyleBackColor = true;
+            btnShow.Click += btnShow_Click;
             // 
             // btnRefresh
             // 
-            this.btnRefresh.Location = new System.Drawing.Point(252, 42);
-            this.btnRefresh.Name = "btnRefresh";
-            this.btnRefresh.Size = new System.Drawing.Size(36, 23);
-            this.btnRefresh.TabIndex = 5;
-            this.btnRefresh.Text = "R";
-            this.btnRefresh.UseVisualStyleBackColor = true;
-            this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
+            btnRefresh.Location = new System.Drawing.Point(336, 65);
+            btnRefresh.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            btnRefresh.Name = "btnRefresh";
+            btnRefresh.Size = new System.Drawing.Size(124, 35);
+            btnRefresh.TabIndex = 5;
+            btnRefresh.Text = "Refresh";
+            btnRefresh.UseVisualStyleBackColor = true;
+            btnRefresh.Click += btnRefresh_Click;
             // 
             // btnSave
             // 
-            this.btnSave.Location = new System.Drawing.Point(252, 176);
-            this.btnSave.Name = "btnSave";
-            this.btnSave.Size = new System.Drawing.Size(36, 23);
-            this.btnSave.TabIndex = 6;
-            this.btnSave.Text = "SV";
-            this.btnSave.UseVisualStyleBackColor = true;
-            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
+            btnSave.Location = new System.Drawing.Point(336, 349);
+            btnSave.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            btnSave.Name = "btnSave";
+            btnSave.Size = new System.Drawing.Size(124, 35);
+            btnSave.TabIndex = 6;
+            btnSave.Text = "Save";
+            btnSave.UseVisualStyleBackColor = true;
+            btnSave.Click += btnSave_Click;
             // 
             // btnOpenFolder
             // 
-            this.btnOpenFolder.Location = new System.Drawing.Point(252, 129);
-            this.btnOpenFolder.Name = "btnOpenFolder";
-            this.btnOpenFolder.Size = new System.Drawing.Size(36, 23);
-            this.btnOpenFolder.TabIndex = 7;
-            this.btnOpenFolder.Text = "O";
-            this.btnOpenFolder.UseVisualStyleBackColor = true;
-            this.btnOpenFolder.Click += new System.EventHandler(this.btnOpenFolder_Click);
+            btnOpenFolder.Location = new System.Drawing.Point(336, 198);
+            btnOpenFolder.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            btnOpenFolder.Name = "btnOpenFolder";
+            btnOpenFolder.Size = new System.Drawing.Size(124, 35);
+            btnOpenFolder.TabIndex = 7;
+            btnOpenFolder.Text = "Open folder";
+            btnOpenFolder.UseVisualStyleBackColor = true;
+            btnOpenFolder.Click += btnOpenFolder_Click;
+            // 
+            // btnWinPos
+            // 
+            btnWinPos.Location = new System.Drawing.Point(336, 243);
+            btnWinPos.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            btnWinPos.Name = "btnWinPos";
+            btnWinPos.Size = new System.Drawing.Size(124, 35);
+            btnWinPos.TabIndex = 8;
+            btnWinPos.Text = "New position";
+            btnWinPos.UseVisualStyleBackColor = true;
+            btnWinPos.Click += btnWinPos_Click;
+            // 
+            // btnSetSize
+            // 
+            btnSetSize.Location = new System.Drawing.Point(336, 288);
+            btnSetSize.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            btnSetSize.Name = "btnSetSize";
+            btnSetSize.Size = new System.Drawing.Size(124, 35);
+            btnSetSize.TabIndex = 9;
+            btnSetSize.Text = "Fix window";
+            btnSetSize.UseVisualStyleBackColor = true;
+            btnSetSize.Click += btnSetSize_Click;
             // 
             // ManageBoards
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(295, 216);
-            this.Controls.Add(this.btnOpenFolder);
-            this.Controls.Add(this.btnSave);
-            this.Controls.Add(this.btnRefresh);
-            this.Controls.Add(this.btnShow);
-            this.Controls.Add(this.listBox1);
-            this.Controls.Add(this.btnEdit);
-            this.Controls.Add(this.btnDelete);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
-            this.Name = "ManageBoards";
-            this.Text = "ManageBoards";
-            this.Load += new System.EventHandler(this.ManageBoards_Load);
-            this.ResumeLayout(false);
-
+            AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            ClientSize = new System.Drawing.Size(476, 412);
+            Controls.Add(btnSetSize);
+            Controls.Add(btnWinPos);
+            Controls.Add(btnOpenFolder);
+            Controls.Add(btnSave);
+            Controls.Add(btnRefresh);
+            Controls.Add(btnShow);
+            Controls.Add(listBox1);
+            Controls.Add(btnEdit);
+            Controls.Add(btnDelete);
+            FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            Text = "ManageBoards";
+            FormClosing += ManageBoards_FormClosing;
+            Load += ManageBoards_Load;
+            ResumeLayout(false);
         }
 
         #endregion
@@ -136,5 +169,7 @@
         private System.Windows.Forms.Button btnRefresh;
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Button btnOpenFolder;
+        private System.Windows.Forms.Button btnWinPos;
+        private System.Windows.Forms.Button btnSetSize;
     }
 }

@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Drawing;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using Common;
 
 namespace scr
 {
-    public class ScreenShot
+    public static class ScreenShot
     {
         public enum ScreenCaptureMode
         {
@@ -17,9 +16,9 @@ namespace scr
 
         public static string GetTitleOfForegroundWindow()
         {
-            IntPtr handle = GetForegroundWindow();
+            IntPtr handle = Interop.GetForegroundWindow();
             StringBuilder sb = new StringBuilder(1000);
-            GetWindowText(handle, sb, 1000);
+            Interop.GetWindowText(handle, sb, 1000);
             return sb.ToString();
         }
 
@@ -31,10 +30,7 @@ namespace scr
             }
             else
             {
-                var foregroundWindowsHandle = GetForegroundWindow();
-                var rect = new Rect();
-                GetWindowRect(foregroundWindowsHandle, ref rect);
-                bounds = new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
+                bounds = CaptureWindowRect();
             }
 
             title = GetTitleOfForegroundWindow();
@@ -51,21 +47,93 @@ namespace scr
 
             var result = new Bitmap(bounds.Width, bounds.Height);
 
-            using (var g = Graphics.FromImage(result))
-            {
-                g.CopyFromScreen(new Point(bounds.Left, bounds.Top), Point.Empty, bounds.Size);
-            }
+            using var g = Graphics.FromImage(result);
+            g.CopyFromScreen(new Point(bounds.Left, bounds.Top), Point.Empty, bounds.Size);
 
             return result;
         }
 
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
+        public static Rectangle CaptureWindowRect()
+        {
+            //EnsureDpiAwareness();
 
-        [DllImport("user32.dll")]
-        private static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+            Point point;
+            Interop.GetCursorPos(out point);
+            var foregroundWindowsHandle = Interop.WindowFromPoint(point);
+            var rect = new Rect();
+            Interop.GetWindowRect(foregroundWindowsHandle, ref rect);
+            // Adjust for DPI scaling
+            float scaleFactor = GetDpiScaleFactor(foregroundWindowsHandle);
+            if (Math.Abs(scaleFactor - 1.0f) > 0.001)
+            {
+                // Adjust for DPI scaling
+                int adjustedLeft = (int)(rect.Left * scaleFactor);
+                int adjustedTop = (int)(rect.Top * scaleFactor);
+                int adjustedRight = (int)(rect.Right * scaleFactor);
+                int adjustedBottom = (int)(rect.Bottom * scaleFactor);
 
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetWindowRect(IntPtr hWnd, ref Rect rect);
+                // Return Rectangle with corrected scaling
+                return new Rectangle(
+                    adjustedLeft,
+                    adjustedTop,
+                    adjustedRight - adjustedLeft,
+                    adjustedBottom - adjustedTop
+                );
+            }
+            else
+            {
+                // No scaling needed, return as-is
+                return new Rectangle(
+                    rect.Left,
+                    rect.Top,
+                    rect.Right - rect.Left,
+                    rect.Bottom - rect.Top
+                );
+            }
+        }
+
+        private static float GetDpiScaleFactor(IntPtr hwnd)
+        {
+            // Get DPI for the specific window
+            uint dpi = Interop.GetDpiForWindow(hwnd);
+            const float standardDpi = 96f; // 96 DPI is standard scale
+            return dpi / standardDpi;
+        }
+
+        public static void MarkWindow(Rectangle rect)
+        {
+            IntPtr desktopPtr = Interop.GetDC(IntPtr.Zero);
+            Graphics g = Graphics.FromHdc(desktopPtr);
+
+            const int width = 4;
+
+            g.DrawRectangle(new Pen(Color.Red, width),
+                new Rectangle(rect.X - width, rect.Y - width, rect.Width + 2 * width, rect.Height + 2 * width));
+
+            g.Dispose();
+            Interop.ReleaseDC(IntPtr.Zero, desktopPtr);
+        }
+
+        public static void MoveAndResizeWindow(Point newPosition, Size newSize)
+        {
+            Point point;
+            Interop.GetCursorPos(out point);
+            var foregroundWindowsHandle = Interop.WindowFromPoint(point);
+            // SWP_NOZORDER flag keeps the window's position in the Z order
+            // SWP_SHOWWINDOW ensures the window is shown after moving
+            const int SWP_NOZORDER = 0x0004;
+            const int SWP_SHOWWINDOW = 0x0040;
+
+            var dpiScale = GetDpiScaleFactor(foregroundWindowsHandle);
+            Interop.SetWindowPos(
+                foregroundWindowsHandle,
+                IntPtr.Zero,
+                (int)(newPosition.X / dpiScale),
+                (int)(newPosition.Y / dpiScale),
+                (int)(newSize.Width / dpiScale),
+                (int)(newSize.Height / dpiScale),
+                SWP_NOZORDER | SWP_SHOWWINDOW
+            );
+        }
     }
 }
