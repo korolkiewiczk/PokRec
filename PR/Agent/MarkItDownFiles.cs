@@ -25,7 +25,7 @@ public static class MarkItDownFiles
         {
             foreach (var cardColor in Enum.GetValues(typeof(CardColor)))
             {
-                classesContent.AppendLine($"cards\\{cardType}{char.ToLower(cardColor.ToString()![0])}");
+                classesContent.AppendLine($"cards\\{new Card((CardColor) cardColor, (CardType) cardType).ToEString()}");
             }
         }
 

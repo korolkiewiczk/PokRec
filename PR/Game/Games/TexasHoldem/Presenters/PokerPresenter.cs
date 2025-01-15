@@ -23,7 +23,7 @@ namespace Game.Games.TexasHoldem.Presenters
 
         public void Show(Environment e)
         {
-            var (reconResults, matchResult, monteCarloResult, bestLayout, pokerPosition) = _poker.Solve();
+            var (reconResults, matchResult, monteCarloResult, bestLayout, pokerPosition, _, phase) = _poker.Solve();
             var presenters = _poker.GetPresenters();
 
             presenters[nameof(PlayerCards)].Present(reconResults.PlayerResult, e);
@@ -55,12 +55,12 @@ namespace Game.Games.TexasHoldem.Presenters
 
                 var font = new Font(FontFamily.GenericMonospace, 10, FontStyle.Regular);
                 var lineHeight = font.GetHeight(e.Graphics);
-                // First line - Players count and Position
+                // First line - Players count, Position and Phase
                 var x = 10;
                 var y = 10;
 
                 var positionText = pokerPosition?.ToDisplayString();
-                DrawColoredString($"Players = {countPlayers} Position = {positionText}", Color.Black, ref x, y,
+                DrawColoredString($"Players = {countPlayers} Position = {positionText} Phase = {phase}", Color.Black, ref x, y,
                     e.Graphics, font);
                 // Second line - Layout and cards
                 x = 10;
@@ -95,7 +95,7 @@ namespace Game.Games.TexasHoldem.Presenters
                 x = 10;
                 y += (int) lineHeight;
                 e.Graphics.DrawString(
-                    string.Join(", ", matchResult.NicknameToStack.Select(kvp => $"{kvp.Key} ~ ${kvp.Value}")),
+                    string.Join(", ", matchResult.Stacks.Select((s, i) => $"Player {i + 1}: ${s}")),
                     font, new SolidBrush(Color.Black), x, y);
 
                 if (matchResult.IsPlayerDecision)
