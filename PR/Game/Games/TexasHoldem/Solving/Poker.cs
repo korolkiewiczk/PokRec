@@ -35,6 +35,7 @@ namespace Game.Games.TexasHoldem.Solving
 
         private PokerResults _prevPokerResults;
         private PokerPhase _previousPhase;
+        private StartingBets _startingBets;
         private List<PlayerAction> _gameActions = new();
         private PokerPosition? _lastPokerPosition;
 
@@ -52,6 +53,10 @@ namespace Game.Games.TexasHoldem.Solving
         public Board Board { get; }
 
         public int NumPlayers => _numPlayers;
+
+        public StartingBets StartingBets => _startingBets;
+
+        public List<PlayerAction> GameActions => _gameActions;
 
         private void InitializeMatchers()
         {
@@ -146,16 +151,18 @@ namespace Game.Games.TexasHoldem.Solving
             PokerPosition? pokerPosition = null;
             var newPosition = position.GetPokerPosition(NumPlayers);
             pokerPosition = newPosition;
-            
+
             // Check if position has changed
             if (_lastPokerPosition != null && newPosition != _lastPokerPosition)
             {
                 // Position changed, clear game actions
                 _gameActions.Clear();
                 _previousPhase = PokerPhase.None;
+                _startingBets = null;
             }
+
             _lastPokerPosition = newPosition;
-            
+
             if (playerCards.Count != 0)
             {
                 int countPlayers = opponents.Count + 1; // +1 for the player
@@ -206,14 +213,26 @@ namespace Game.Games.TexasHoldem.Solving
                 // Always infer actions since the start of the phase
                 if (_prevPokerResults != pokerResult)
                 {
-                    var actions = InferActions(pokerResult);
-                    _gameActions.AddRange(actions);
+                    var gameBets = InferActions(
+                        _previousPhase,
+                        _prevPokerResults.MatchResults.Pot,
+                        _prevPokerResults.MatchResults.Stacks,
+                        matchResults.Stacks,
+                        opponentsInGame,
+                        matchResults.Position.Pos,
+                        NumPlayers,
+                        _startingBets);
+                    var gameBetsActions = gameBets.Actions;
+                    Log.Debug(
+                        $"Ante={gameBets.StartingBets.Ante}, SmallBlind={gameBets.StartingBets.SmallBlind} BigBlind={gameBets.StartingBets.BigBlind}");
+                    _gameActions.AddRange(gameBetsActions);
+                    _startingBets = gameBets.StartingBets;
 
                     // Log recognized actions
-                    if (actions.Any())
+                    if (gameBetsActions.Any())
                     {
                         Log.Debug("=== Actions recognized since the start of the phase: ===");
-                        foreach (var action in actions)
+                        foreach (var action in gameBetsActions)
                         {
                             Log.Debug(action.ToString());
                         }
@@ -272,21 +291,28 @@ namespace Game.Games.TexasHoldem.Solving
             return result;
         }
 
-        private List<PlayerAction> InferActions(PokerResults current)
+        private static GameBets InferActions(
+            PokerPhase previousPhase,
+            decimal previousPot,
+            IList<decimal?> previousStacks,
+            IList<decimal?> currentStacks,
+            IReadOnlyList<bool> opponentsInGame,
+            int dealerPosition,
+            int numPlayers,
+            StartingBets startingBets)
         {
             var actions = new List<PlayerAction>();
-            var baselineResults = _prevPokerResults.MatchResults;
-            var phase = _previousPhase;
+            var phase = previousPhase;
 
             // Calculate pot delta, assuming 0 starting pot for preflop
-            decimal startingPot = phase == PokerPhase.Preflop ? 0 : baselineResults.Pot;
+            decimal startingPot = phase == PokerPhase.Preflop ? 0 : previousPot;
 
             // Calculate stack differences
-            decimal[] contributions = new decimal[baselineResults.Stacks.Count];
-            for (int i = 0; i < baselineResults.Stacks.Count; i++)
+            decimal[] contributions = new decimal[previousStacks.Count];
+            for (int i = 0; i < previousStacks.Count; i++)
             {
-                if (baselineResults.Stacks[i].HasValue && current.MatchResults.Stacks[i].HasValue)
-                    contributions[i] = baselineResults.Stacks[i].Value - current.MatchResults.Stacks[i].Value;
+                if (previousStacks[i].HasValue && currentStacks[i].HasValue)
+                    contributions[i] = previousStacks[i].Value - currentStacks[i].Value;
                 else
                     contributions[i] = 0;
             }
@@ -294,65 +320,69 @@ namespace Game.Games.TexasHoldem.Solving
             // First pass - identify ante amount from players not in game and blind amounts
             decimal ante = 0;
 
-            // First identify ante from players not in game
-            for (int i = 1; i < contributions.Length; i++) // Start from 1 to skip player
-            {
-                bool isOpponentInGame = current.OpponentsInGame[i - 1]; // Adjust index for OpponentsInGame
-                if (contributions[i] > 0 && !isOpponentInGame)
-                {
-                    ante = contributions[i];
-                    break;
-                }
-            }
-
             // Identify SB and BB positions based on dealer position
-            int dealerPos = current.MatchResults.Position.Pos;
-            int sbPos = (dealerPos + 1) % NumPlayers;
-            int bbPos = (dealerPos + 2) % NumPlayers;
+            int sbPos = (dealerPosition + 1) % numPlayers;
+            int bbPos = (dealerPosition + 2) % numPlayers;
+
+            if (startingBets == null)
+            {
+                decimal smallBlind = 0;
+                decimal bigBlind = 0;
+                // First identify ante from players not in game
+                for (int i = 0; i < contributions.Length; i++) // Start from 1 to skip player
+                {
+                    bool isSmallBlind = (i + 1) % numPlayers == sbPos; // Is Small Blind
+                    bool isBigBlind = (i + 1) % numPlayers == bbPos; // Is Big Blind
+                    if (!isSmallBlind && !isBigBlind && ante == 0 && contributions[i] > 0)
+                    {
+                        ante = contributions[i];
+                    }
+
+                    if (isSmallBlind)
+                    {
+                        smallBlind = contributions[i];
+                    }
+
+                    if (isBigBlind)
+                    {
+                        bigBlind = contributions[i];
+                    }
+                }
+
+                startingBets = new StartingBets(ante, smallBlind - ante, bigBlind - ante);
+            }
 
             // Process actions for active players
             for (int i = 0; i < contributions.Length; i++)
             {
                 // For player (i == 0) always process, for opponents check if they're in game
                 bool isPlayer = i == 0;
-                bool isOpponentInGame = !isPlayer && current.OpponentsInGame[i - 1]; // Adjust index for OpponentsInGame
+                bool isOpponentInGame = !isPlayer && opponentsInGame[i - 1]; // Adjust index for OpponentsInGame
 
                 // Skip if it's an opponent not in game or no contribution
                 if (!isPlayer && !isOpponentInGame || contributions[i] <= 0)
                     continue;
 
-                string playerName = $"Player{i + 1}";
-                bool isAllIn = current.MatchResults.Stacks[i] == 0;
+                bool isAllIn = currentStacks[i] == 0;
                 decimal actualAmount = ante > 0 ? contributions[i] - ante : contributions[i];
-                
-                var actionType = DetermineActionType(
-                    startingPot,
-                    isAllIn,
-                    phase == PokerPhase.None && (i + 1) % NumPlayers == sbPos, // Is Small Blind
-                    phase == PokerPhase.None && (i + 1) % NumPlayers == bbPos // Is Big Blind
-                );
+                var isSmallBlind = phase == PokerPhase.None && (i + 1) % numPlayers == sbPos;
+                var isBigBlind = phase == PokerPhase.None && (i + 1) % numPlayers == bbPos;
+                if (actualAmount == 0 || isSmallBlind || isBigBlind) continue;
 
-                actions.Add(new PlayerAction
-                {
-                    PlayerName = playerName,
-                    ActionType = actionType,
-                    Amount = actualAmount,
-                    Phase = phase
-                });
+                var actionType = DetermineActionType(startingPot, isAllIn);
+
+                actions.Add(new PlayerAction(i + 1, actionType, actualAmount,
+                    phase));
             }
 
-            return actions;
+            return new GameBets(actions.ToImmutableList(), startingBets);
         }
 
-        private PokerActionType DetermineActionType(
+        private static PokerActionType DetermineActionType(
             decimal startingPot,
-            bool isAllIn,
-            bool isSmallBlind,
-            bool isBigBlind)
+            bool isAllIn)
         {
             if (isAllIn) return PokerActionType.AllIn;
-            if (isSmallBlind) return PokerActionType.SmallBlind;
-            if (isBigBlind) return PokerActionType.BigBlind;
             return startingPot != 0 ? PokerActionType.Bet : PokerActionType.Call;
         }
     }

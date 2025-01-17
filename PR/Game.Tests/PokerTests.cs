@@ -360,60 +360,60 @@ public class PokerTests
 
         poker.SetState(riverState3);
         poker.Solve();
-
-        var gameActionsField = typeof(Poker).GetField(
-            "_gameActions",
-            BindingFlags.NonPublic | BindingFlags.Instance
-        );
-
-        var gameActions = gameActionsField.GetValue(poker) as List<PlayerAction>;
+        
+        var gameActions = poker.GameActions;
+        var startingBets = poker.StartingBets;
 
         // Print them out for clarity
         _testOutputHelper.WriteLine("=== All Inferred Actions ===");
         foreach (var a in gameActions)
-            _testOutputHelper.WriteLine($"{a.PlayerName}: {a.ActionType} {a.Amount} {a.Phase}");
+            _testOutputHelper.WriteLine(a.ToString());
+        
+        Assert.Equal(10, startingBets.Ante);
+        Assert.Equal(50, startingBets.SmallBlind);
+        Assert.Equal(100, startingBets.BigBlind);
 
         return;
         Assert.Collection(
             gameActions,
             a =>
             {
-                Assert.Equal("Player1", a.PlayerName);
+                Assert.Equal(1, a.PlayerIndex);
                 Assert.Equal(PokerActionType.Bet, a.ActionType);
                 Assert.Equal(50, a.Amount);
                 Assert.Equal(PokerPhase.Preflop, a.Phase);
             },
             a =>
             {
-                Assert.Equal("Player2", a.PlayerName);
+                Assert.Equal(2, a.PlayerIndex);
                 Assert.Equal(PokerActionType.Bet, a.ActionType);
                 Assert.Equal(100, a.Amount);
                 Assert.Equal(PokerPhase.Preflop, a.Phase);
             },
             a =>
             {
-                Assert.Equal("Player2", a.PlayerName);
+                Assert.Equal(2, a.PlayerIndex);
                 Assert.Equal(PokerActionType.Bet, a.ActionType);
                 Assert.Equal(100, a.Amount);
                 Assert.Equal(PokerPhase.Flop, a.Phase);
             },
             a =>
             {
-                Assert.Equal("Player1", a.PlayerName);
+                Assert.Equal(1, a.PlayerIndex);
                 Assert.Equal(PokerActionType.Bet, a.ActionType);
                 Assert.Equal(100, a.Amount);
                 Assert.Equal(PokerPhase.Turn, a.Phase);
             },
             a =>
             {
-                Assert.Equal("Player1", a.PlayerName);
+                Assert.Equal(1, a.PlayerIndex);
                 Assert.Equal(PokerActionType.Bet, a.ActionType);
                 Assert.Equal(300, a.Amount);
                 Assert.Equal(PokerPhase.River, a.Phase);
             },
             a =>
             {
-                Assert.Equal("Player2", a.PlayerName);
+                Assert.Equal(2, a.PlayerIndex);
                 Assert.Equal(PokerActionType.Bet, a.ActionType);
                 Assert.Equal(300, a.Amount);
                 Assert.Equal(PokerPhase.River, a.Phase);

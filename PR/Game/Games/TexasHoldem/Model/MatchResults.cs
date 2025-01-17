@@ -18,7 +18,7 @@ public record MatchResults(
     bool IsPlayerDecision,
     decimal Pot)
 {
-    public virtual bool Equals(MatchResults? other)
+    public virtual bool Equals(MatchResults other)
     {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;
