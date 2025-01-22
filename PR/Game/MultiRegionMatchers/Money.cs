@@ -16,8 +16,8 @@ public abstract class Money : MultiTextNumericMatcher
         foreach (var result in results)
         {
             string rawText = result.Result;
-            decimal value = MoneyParser.ParseMoneyValue(rawText);
-            if (value != 0)
+            decimal? value = MoneyParser.ParseMoneyValue(rawText);
+            if (value != null)
             {
                 money.Add(value);
             }

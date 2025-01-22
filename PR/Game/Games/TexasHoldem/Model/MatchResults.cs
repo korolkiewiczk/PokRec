@@ -16,7 +16,7 @@ public record MatchResults(
     List<string> Nicknames,
     List<decimal?> Stacks,
     bool IsPlayerDecision,
-    decimal Pot)
+    decimal? Pot)
 {
     public virtual bool Equals(MatchResults other)
     {

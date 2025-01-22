@@ -56,12 +56,11 @@ namespace Game.Games.TexasHoldem.Utils
             // 3-handed convention:
             if (totalPlayers == 3)
             {
-                // seat 1 => Button, seat 2 => SB, seat 3 => BB
                 return rawPos switch
                 {
                     1 => PokerPosition.Button,
-                    2 => PokerPosition.SmallBlind,
-                    3 => PokerPosition.BigBlind,
+                    2 => PokerPosition.BigBlind,
+                    3 => PokerPosition.SmallBlind,
                     _ => PokerPosition.None
                 };
             }
