@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using Agent.Properties;
 using Common;
 using Game.Games;
+using Game.Games.TexasHoldem.Model;
 using Game.Games.TexasHoldem.Solving;
 using Game.Games.TexasHoldem.Utils;
 using scr;
@@ -159,6 +160,7 @@ namespace Agent
             foreach (var board in boards)
             {
                 var poker = new Poker(board);
+                poker.DebugFlags = PokerDebugFlags.StateResults;
                 var regionSpecs = poker.GetRegionSpecs();
                 foreach (var regionSpec in regionSpecs)
                 {
@@ -184,13 +186,11 @@ namespace Agent
 
         private void buttonShowGame_Click(object sender, EventArgs e)
         {
-            foreach (var (_,poker,_) in _games)
+            foreach (var (_, poker, gameProcessing) in _games)
             {
-                var game = new Game(poker);
+                var game = new Game(poker, gameProcessing);
                 game.Show();
             }
-            // var game = new Game(_poker);
-            // game.Show();
         }
 
         private void buttonFixWindow_Click(object sender, EventArgs e)

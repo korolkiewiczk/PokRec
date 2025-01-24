@@ -63,6 +63,8 @@ namespace Game.Games.TexasHoldem.Solving
 
         public List<PlayerAction> GameActions => _gameActions;
 
+        public PokerDebugFlags DebugFlags { get; set; } = PokerDebugFlags.None;
+
         private void InitializeMatchers()
         {
             var settings = new PokerBoardSettingsParser(Board);
@@ -207,26 +209,33 @@ namespace Game.Games.TexasHoldem.Solving
 
             if (playerCards.Count != 0 && (_lastMatchResults == null || !_lastMatchResults.Equals(matchResults)))
             {
-                Log.Debug(System.Text.Json.JsonSerializer.Serialize(
-                    _state.OrderBy(kvp => kvp.Key)
-                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Results)));
-                /*Log.Debug(System.Text.Json.JsonSerializer.Serialize(
-                    new
-                    {
-                        PlayerCards = matchResults.PlayerCards.Select(c => c.ToCString()),
-                        Flop = matchResults.Flop.Select(c => c.ToCString()),
-                        Turn = matchResults.Turn.Select(c => c.ToCString()),
-                        River = matchResults.River.Select(c => c.ToCString()),
+                if (DebugFlags.HasFlag(PokerDebugFlags.StateResults))
+                {
+                    Log.Debug(System.Text.Json.JsonSerializer.Serialize(
+                        _state.OrderBy(kvp => kvp.Key)
+                        .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Results)));
+                }
 
-                        OpponentCount = matchResults.Opponent.Count,
-                        matchResults.Stacks,
-                        matchResults.IsPlayerDecision,
-                        matchResults.Pot,
+                if (DebugFlags.HasFlag(PokerDebugFlags.MatchResults))
+                {
+                    Log.Debug(System.Text.Json.JsonSerializer.Serialize(
+                        new
+                        {
+                            PlayerCards = matchResults.PlayerCards.Select(c => c.ToCString()),
+                            Flop = matchResults.Flop.Select(c => c.ToCString()),
+                            Turn = matchResults.Turn.Select(c => c.ToCString()),
+                            River = matchResults.River.Select(c => c.ToCString()),
 
-                        PokerPosition = pokerPosition?.ToDisplayString() ?? "",
-                        OpponentsInGame = opponentsInGame
-                    }
-                ));*/
+                            OpponentCount = matchResults.Opponent.Count,
+                            matchResults.Stacks,
+                            matchResults.IsPlayerDecision,
+                            matchResults.Pot,
+
+                            PokerPosition = pokerPosition?.ToDisplayString() ?? "",
+                            OpponentsInGame = opponentsInGame
+                        }
+                    ));
+                }
                 _lastMatchResults = matchResults;
 
                 // Always infer actions since the start of the phase
@@ -245,20 +254,25 @@ namespace Game.Games.TexasHoldem.Solving
                         ref _currentStreetHighestBet,
                         _lastActionThisStreet);
                     var gameBetsActions = gameBets.Actions;
-                    // Log.Debug(
-                    //     $"Ante={gameBets.StartingBets.Ante}, SmallBlind={gameBets.StartingBets.SmallBlind} BigBlind={gameBets.StartingBets.BigBlind}");
+                    
+                    if (DebugFlags.HasFlag(PokerDebugFlags.ActionRecognition))
+                    {
+                        Log.Debug(
+                            $"Ante={gameBets.StartingBets.Ante}, SmallBlind={gameBets.StartingBets.SmallBlind} BigBlind={gameBets.StartingBets.BigBlind}");
+                    }
+                    
                     _gameActions.AddRange(gameBetsActions);
                     _startingBets = gameBets.StartingBets;
 
-                    // Log recognized actions
-                    // if (gameBetsActions.Any())
-                    // {
-                    //     Log.Debug("=== Actions recognized since the start of the phase: ===");
-                    //     foreach (var action in gameBetsActions)
-                    //     {
-                    //         Log.Debug(action.ToString());
-                    //     }
-                    // }
+                    //Log recognized actions
+                    if (gameBetsActions.Any() && DebugFlags.HasFlag(PokerDebugFlags.ActionRecognition))
+                    {
+                        Log.Debug("=== Actions recognized since the start of the phase: ===");
+                        foreach (var action in gameBetsActions)
+                        {
+                            Log.Debug(action.ToString());
+                        }
+                    }
                 }
             }
 
@@ -407,6 +421,7 @@ namespace Game.Games.TexasHoldem.Solving
                         {
                             // Existing logic: Bet/Call/Raise/AllIn
                             currentStreetContributions[i] += amountPutIn;
+                            
                             var actionType = DetermineActionType(
                                 currentStreetHighestBet,
                                 currentStreetContributions[i],
@@ -423,10 +438,10 @@ namespace Game.Games.TexasHoldem.Solving
                         {
                             // ZERO contribution => candidate for a Check
                             // but only if we haven't already recorded a Check for them in this street
-                            bool alreadyChecked = (lastActionThisStreet[i] != PokerActionType.None);
+                            bool alreadyChecked = lastActionThisStreet[i] != PokerActionType.None;
 
                             // Also confirm no new bet to call:
-                            bool noOutstandingBet = (currentStreetContributions[i] >= currentStreetHighestBet);
+                            bool noOutstandingBet = currentStreetContributions[i] >= currentStreetHighestBet;
 
                             if (!alreadyChecked && noOutstandingBet)
                             {

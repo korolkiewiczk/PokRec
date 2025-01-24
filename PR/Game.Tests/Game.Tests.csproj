@@ -24,4 +24,10 @@
       <ProjectReference Include="..\Game\Game.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="TestCases\test_case1.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>

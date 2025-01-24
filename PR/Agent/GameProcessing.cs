@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -15,10 +16,13 @@ namespace Agent;
 
 public class GameProcessing : BackgroundProcessing
 {
-    private string _id;
+    private readonly string _id;
     private readonly Rectangle _rect;
     private readonly IList<RegionSpec> _regionSpecs;
     private readonly ConcurrentDictionary<string, ReconResult> _state = new();
+
+    // Add event for processing completion
+    public event EventHandler ProcessingCompleted;
 
     public GameProcessing(string id, Rectangle rect, IList<RegionSpec> regionSpecs)
     {
@@ -31,13 +35,14 @@ public class GameProcessing : BackgroundProcessing
 
     protected override async Task Work(CancellationToken cancellationToken)
     {
-        Stopwatch sw=new Stopwatch();
+        Stopwatch sw = new Stopwatch();
         sw.Start();
         var mainImg = await GetMainImgFromScreen(cancellationToken);
 
         try
         {
             await RegionProcessor.ProcessRegions(_id, _regionSpecs, _state, mainImg, cancellationToken);
+            ProcessingCompleted?.Invoke(this, EventArgs.Empty);
         }
         finally
         {
