@@ -112,6 +112,23 @@ namespace Game.Games.TexasHoldem.Presenters
                     y += (int) lineHeight;
                     e.Graphics.DrawString($"Pot: ${matchResult.Pot}", font, new SolidBrush(Color.Black), x, y);
                 }
+                // Display game actions
+                if (_poker.GameActions.Any())
+                {
+                    x = 10;
+                    y += (int)lineHeight;
+                    e.Graphics.DrawString($"A={_poker.StartingBets.Ante}, SB={_poker.StartingBets.SmallBlind} BB={_poker.StartingBets.BigBlind}", font, new SolidBrush(Color.Black), x, y);
+                    
+                    y += (int)lineHeight;
+                    e.Graphics.DrawString("Actions:", font, new SolidBrush(Color.Black), x, y);
+
+                    foreach (var action in _poker.GameActions)
+                    {
+                        x = 10;
+                        y += (int)lineHeight;
+                        e.Graphics.DrawString(action.ToString(), font, new SolidBrush(Color.Black), x, y);
+                    }
+                }
             }
         }
 

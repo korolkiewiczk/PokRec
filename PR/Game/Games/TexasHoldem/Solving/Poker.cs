@@ -41,6 +41,8 @@ namespace Game.Games.TexasHoldem.Solving
         private PokerPosition? _lastPokerPosition;
         private decimal[] _currentStreetContributions;
         private decimal _currentStreetHighestBet;
+        private IReadOnlyList<bool> _previousOpponentsInGame;
+        private PokerActionType[] _lastActionThisStreet;
 
         public Poker(Board board)
         {
@@ -193,9 +195,22 @@ namespace Game.Games.TexasHoldem.Solving
                 _prevPokerResults = pokerResult;
             }
 
+            if (_previousOpponentsInGame == null)
+            {
+                _previousOpponentsInGame = opponentsInGame.ToArray();
+            }
+
+            if (_lastActionThisStreet == null)
+            {
+                _lastActionThisStreet = new PokerActionType[_numPlayers];
+            }
+
             if (playerCards.Count != 0 && (_lastMatchResults == null || !_lastMatchResults.Equals(matchResults)))
             {
                 Log.Debug(System.Text.Json.JsonSerializer.Serialize(
+                    _state.OrderBy(kvp => kvp.Key)
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Results)));
+                /*Log.Debug(System.Text.Json.JsonSerializer.Serialize(
                     new
                     {
                         PlayerCards = matchResults.PlayerCards.Select(c => c.ToCString()),
@@ -211,7 +226,7 @@ namespace Game.Games.TexasHoldem.Solving
                         PokerPosition = pokerPosition?.ToDisplayString() ?? "",
                         OpponentsInGame = opponentsInGame
                     }
-                ));
+                ));*/
                 _lastMatchResults = matchResults;
 
                 // Always infer actions since the start of the phase
@@ -222,26 +237,28 @@ namespace Game.Games.TexasHoldem.Solving
                         _prevPokerResults.MatchResults.Stacks,
                         matchResults.Stacks,
                         opponentsInGame,
+                        _previousOpponentsInGame,
                         matchResults.Position.Pos,
                         NumPlayers,
                         _startingBets,
-                        _currentStreetContributions, 
-                        ref _currentStreetHighestBet);
+                        _currentStreetContributions,
+                        ref _currentStreetHighestBet,
+                        _lastActionThisStreet);
                     var gameBetsActions = gameBets.Actions;
-                    Log.Debug(
-                        $"Ante={gameBets.StartingBets.Ante}, SmallBlind={gameBets.StartingBets.SmallBlind} BigBlind={gameBets.StartingBets.BigBlind}");
+                    // Log.Debug(
+                    //     $"Ante={gameBets.StartingBets.Ante}, SmallBlind={gameBets.StartingBets.SmallBlind} BigBlind={gameBets.StartingBets.BigBlind}");
                     _gameActions.AddRange(gameBetsActions);
                     _startingBets = gameBets.StartingBets;
 
                     // Log recognized actions
-                    if (gameBetsActions.Any())
-                    {
-                        Log.Debug("=== Actions recognized since the start of the phase: ===");
-                        foreach (var action in gameBetsActions)
-                        {
-                            Log.Debug(action.ToString());
-                        }
-                    }
+                    // if (gameBetsActions.Any())
+                    // {
+                    //     Log.Debug("=== Actions recognized since the start of the phase: ===");
+                    //     foreach (var action in gameBetsActions)
+                    //     {
+                    //         Log.Debug(action.ToString());
+                    //     }
+                    // }
                 }
             }
 
@@ -250,8 +267,11 @@ namespace Game.Games.TexasHoldem.Solving
             {
                 Array.Clear(_currentStreetContributions);
                 _currentStreetHighestBet = 0;
+                _lastActionThisStreet = new PokerActionType[_numPlayers];
             }
+
             _previousPhase = phase;
+            _previousOpponentsInGame = opponentsInGame.ToArray();
 
             return pokerResult;
         }
@@ -306,12 +326,15 @@ namespace Game.Games.TexasHoldem.Solving
             IList<decimal?> previousStacks,
             IList<decimal?> currentStacks,
             IReadOnlyList<bool> opponentsInGame,
+            IReadOnlyList<bool> previousOpponentsInGame,
             int dealerPosition,
             int numPlayers,
             StartingBets startingBets,
             IList<decimal> currentStreetContributions,
-            ref decimal currentStreetHighestBet)
+            ref decimal currentStreetHighestBet,
+            PokerActionType[] lastActionThisStreet)
         {
+            if (previousStacks.Count == 0) return new GameBets([], new StartingBets(0, 0, 0));
             var actions = new List<PlayerAction>();
 
             // Calculate stack differences
@@ -324,11 +347,11 @@ namespace Game.Games.TexasHoldem.Solving
 
             // First pass - identify ante amount from players not in game and blind amounts
             decimal ante = 0;
+            int sbPos = (dealerPosition + 1) % numPlayers;
+            int bbPos = (dealerPosition + 2) % numPlayers;
 
             if (startingBets == null)
             {
-                int sbPos = (dealerPosition + 1) % numPlayers;
-                int bbPos = (dealerPosition + 2) % numPlayers;
                 decimal smallBlind = 0;
                 decimal bigBlind = 0;
                 // First identify ante from players not in game
@@ -356,33 +379,61 @@ namespace Game.Games.TexasHoldem.Solving
 
                 startingBets = new StartingBets(ante, smallBlind - ante, bigBlind - ante);
             }
-            
+
             // Process actions for active players
             if (phase != PokerPhase.None)
             {
-                for (int i = 0; i < contributions.Length; i++)
+                for (int k = 0; k < numPlayers; k++)
                 {
-                    // For player (i == 0) always process, for opponents check if they're in game
-                    var isPlayer = i == 0;
-                    var isOpponentInGame = !isPlayer && opponentsInGame[i - 1]; // Adjust index for OpponentsInGame
+                    var i = (dealerPosition + k) % numPlayers;
+                    bool wasInGame = (i == 0) || (previousOpponentsInGame?[i - 1] ?? false);
+                    bool isInGame = (i == 0) || opponentsInGame[i - 1];
 
-                    // Skip if it's an opponent not in game or no contribution
-                    if (!isPlayer && !isOpponentInGame || contributions[i] <= 0)
-                        continue;
-
-                    bool isAllIn = currentStacks[i] == 0;
-                    decimal actualAmount = ante > 0 ? contributions[i] - ante : contributions[i];
-                    // Update current street contributions for this player
-                    currentStreetContributions[i] += actualAmount;
-                    var actionType =
-                        DetermineActionType(currentStreetHighestBet, currentStreetContributions[i], isAllIn);
-
-                    actions.Add(new PlayerAction(i + 1, actionType, actualAmount, phase));
-
-                    // Update current street highest bet if necessary
-                    if (actualAmount > currentStreetHighestBet)
+                    // 1) FOLD: if seat was in but now is out
+                    if (wasInGame && !isInGame)
                     {
-                        currentStreetHighestBet = actualAmount;
+                        actions.Add(new PlayerAction(i + 1, PokerActionType.Fold, 0, phase));
+                        lastActionThisStreet[i] = PokerActionType.Fold;
+                        continue;
+                    }
+
+                    // 2) STILL IN
+                    if (wasInGame)
+                    {
+                        decimal amountPutIn = contributions[i];
+                        bool isAllIn = currentStacks[i] == 0;
+
+                        if (amountPutIn > 0)
+                        {
+                            // Existing logic: Bet/Call/Raise/AllIn
+                            currentStreetContributions[i] += amountPutIn;
+                            var actionType = DetermineActionType(
+                                currentStreetHighestBet,
+                                currentStreetContributions[i],
+                                isAllIn
+                            );
+                            actions.Add(new PlayerAction(i + 1, actionType, amountPutIn, phase));
+                            lastActionThisStreet[i] = actionType;
+
+                            // Possibly update highest bet
+                            if (currentStreetContributions[i] > currentStreetHighestBet)
+                                currentStreetHighestBet = currentStreetContributions[i];
+                        }
+                        else if (phase != PokerPhase.Preflop)
+                        {
+                            // ZERO contribution => candidate for a Check
+                            // but only if we haven't already recorded a Check for them in this street
+                            bool alreadyChecked = (lastActionThisStreet[i] != PokerActionType.None);
+
+                            // Also confirm no new bet to call:
+                            bool noOutstandingBet = (currentStreetContributions[i] >= currentStreetHighestBet);
+
+                            if (!alreadyChecked && noOutstandingBet)
+                            {
+                                actions.Add(new PlayerAction(i + 1, PokerActionType.Check, 0, phase));
+                                lastActionThisStreet[i] = PokerActionType.Check;
+                            }
+                        }
                     }
                 }
             }
@@ -398,10 +449,10 @@ namespace Game.Games.TexasHoldem.Solving
         {
             if (isAllIn)
                 return PokerActionType.AllIn;
-            
+
             if (currentStreetHighestBet == 0)
             {
-                return PokerActionType.Bet; 
+                return PokerActionType.Bet;
             }
 
             if (playerContributionInThisStreet <= currentStreetHighestBet)
