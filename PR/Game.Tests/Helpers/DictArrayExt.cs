@@ -33,8 +33,8 @@ public static class DictArrayExt
         {
             // Extract current stack value and subtract stackDiffs
             var currentStack = dictArray.LastOrDefault()?[$"Stack{i + 1}"]?.Result ?? "0";
-            decimal stackValue = decimal.TryParse(currentStack, out var parsedValue) ? parsedValue : 0;
-            newState[$"Stack{i + 1}"] = I((stackValue - stackDiffs[i]).ToString(CultureInfo.InvariantCulture));
+            decimal stackValue = MoneyParser.ParseMoneyValue(currentStack) ?? 0;
+            newState[$"Stack{i + 1}"] = I("$"+(stackValue - stackDiffs[i]).ToString(CultureInfo.InvariantCulture));
         }
 
         // Add pot

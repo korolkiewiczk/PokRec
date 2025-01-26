@@ -39,13 +39,13 @@ public class PokerSyntheticTests : PokerTestsBase
             {"Position4", I()},
             {"Position5", I()},
             {"Position6", I("btn")},
-            {"Stack1", I("5538")},
-            {"Stack2", I("9540")},
-            {"Stack3", I("9182")},
-            {"Stack4", I("14181")},
-            {"Stack5", I("7422")},
-            {"Stack6", I("5827")},
-            {nameof(Pot), I("460")}
+            {"Stack1", I("$5538")},
+            {"Stack2", I("$9540")},
+            {"Stack3", I("$9182")},
+            {"Stack4", I("$14181")},
+            {"Stack5", I("$7422")},
+            {"Stack6", I("$5827")},
+            {nameof(Pot), I("$460")}
         };
 
         var states = ((Dictionary<string, ReconResult>[]) [prepreflopState])

@@ -213,7 +213,7 @@ namespace Game.Games.TexasHoldem.Solving
                 {
                     Log.Debug(System.Text.Json.JsonSerializer.Serialize(
                         _state.OrderBy(kvp => kvp.Key)
-                        .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Results)));
+                            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Results)));
                 }
 
                 if (DebugFlags.HasFlag(PokerDebugFlags.MatchResults))
@@ -236,6 +236,7 @@ namespace Game.Games.TexasHoldem.Solving
                         }
                     ));
                 }
+
                 _lastMatchResults = matchResults;
 
                 // Always infer actions since the start of the phase
@@ -254,13 +255,31 @@ namespace Game.Games.TexasHoldem.Solving
                         ref _currentStreetHighestBet,
                         _lastActionThisStreet);
                     var gameBetsActions = gameBets.Actions;
-                    
+
                     if (DebugFlags.HasFlag(PokerDebugFlags.ActionRecognition))
                     {
                         Log.Debug(
                             $"Ante={gameBets.StartingBets.Ante}, SmallBlind={gameBets.StartingBets.SmallBlind} BigBlind={gameBets.StartingBets.BigBlind}");
                     }
-                    
+
+                    foreach (var gameBetsAction in gameBetsActions)
+                    {
+                        if (gameBetsAction.ActionType != PokerActionType.Check)
+                        {
+                            for (var i = _gameActions.Count - 1; i >= 0; i--)
+                            {
+                                var a = _gameActions[i];
+                                if (a.PlayerIndex == gameBetsAction.PlayerIndex &&
+                                    a.Phase == phase &&
+                                    a.ActionType == PokerActionType.Check)
+                                {
+                                    _gameActions.RemoveAt(i);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
                     _gameActions.AddRange(gameBetsActions);
                     _startingBets = gameBets.StartingBets;
 
@@ -391,7 +410,20 @@ namespace Game.Games.TexasHoldem.Solving
                     }
                 }
 
-                startingBets = new StartingBets(ante, smallBlind - ante, bigBlind - ante);
+                smallBlind -= ante;
+                bigBlind -= ante;
+
+                if (smallBlind < 0)
+                {
+                    smallBlind = bigBlind / 2;
+                }
+
+                if (bigBlind < 0)
+                {
+                    bigBlind = smallBlind * 2;
+                }
+
+                startingBets = new StartingBets(ante, smallBlind, bigBlind);
             }
 
             // Process actions for active players
@@ -421,12 +453,13 @@ namespace Game.Games.TexasHoldem.Solving
                         {
                             // Existing logic: Bet/Call/Raise/AllIn
                             currentStreetContributions[i] += amountPutIn;
-                            
+
                             var actionType = DetermineActionType(
                                 currentStreetHighestBet,
                                 currentStreetContributions[i],
                                 isAllIn
                             );
+
                             actions.Add(new PlayerAction(i + 1, actionType, amountPutIn, phase));
                             lastActionThisStreet[i] = actionType;
 
