@@ -23,7 +23,7 @@ namespace Game.Games.TexasHoldem.Presenters
 
         public void Show(Environment e)
         {
-            var (reconResults, matchResult, monteCarloResult, bestLayout, pokerPosition, _, phase) = _poker.Solve();
+            var (reconResults, matchResult, monteCarloResult, bestLayout, pokerPosition, _, phase, isCorrectPot) = _poker.Solve();
             var presenters = _poker.GetPresenters();
 
             presenters[nameof(PlayerCards)].Present(reconResults.PlayerResult, e);
@@ -112,6 +112,15 @@ namespace Game.Games.TexasHoldem.Presenters
                     y += (int) lineHeight;
                     e.Graphics.DrawString($"Pot: ${matchResult.Pot}", font, new SolidBrush(Color.Black), x, y);
                 }
+
+                // Add this after all other text drawing
+                if (matchResult.IsPlayerDecision && !isCorrectPot)
+                {
+                    x = 10;
+                    y += (int)lineHeight;
+                    e.Graphics.DrawString("Error: Wrong computed POT", font, new SolidBrush(Color.Red), x, y);
+                }
+
                 // Display game actions
                 if (_poker.GameActions.Any())
                 {

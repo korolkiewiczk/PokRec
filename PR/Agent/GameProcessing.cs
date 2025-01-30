@@ -43,6 +43,7 @@ public class GameProcessing : BackgroundProcessing
         {
             await RegionProcessor.ProcessRegions(_id, _regionSpecs, _state, mainImg, cancellationToken);
             ProcessingCompleted?.Invoke(this, EventArgs.Empty);
+            await Task.Delay(100, CancellationToken.None);
         }
         finally
         {

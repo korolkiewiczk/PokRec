@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using Common;
+using Game.Games.TexasHoldem.Model;
 using Game.Games.TexasHoldem.Solving;
 using Game.Games.TexasHoldem.Utils;
 using Xunit.Abstractions;
@@ -10,11 +11,12 @@ public class PokerFromJsonTests : PokerTestsBase
 {
     public PokerFromJsonTests(ITestOutputHelper testOutputHelper) : base(testOutputHelper)
     {
-        
     }
 
     [Theory]
     [InlineData(6, "test_case1.json")]
+    [InlineData(6, "test_case2.json")]
+    [InlineData(6, "test_case3.json")]
     public void LoadLogFromJsonAndSolvesGame(int numPlayers, string testcaseFileName)
     {
         // Arrange
@@ -25,6 +27,7 @@ public class PokerFromJsonTests : PokerTestsBase
                 new KeyValuePair<string, string>(nameof(PokerBoardSettingsParser.Players), numPlayers.ToString())
             ]
         });
+        // poker.DebugFlags = PokerDebugFlags.MatchResults | PokerDebugFlags.ActionRecognition;
         var jsonFilePath = Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory, "TestCases",
             testcaseFileName
@@ -52,23 +55,43 @@ public class PokerFromJsonTests : PokerTestsBase
                 return reconDict;
             })
             .ToArray();
+        for (int i = 0; i < states.Length; i++)
+        {
+            states[i]["_id"] = I((i+1).ToString());
+        }
 
+        PokerResults? results = null;
         foreach (var state in states)
         {
             poker.SetState(state);
-            poker.Solve();
+            results = poker.Solve();
+            // if (results?.MatchResults?.IsPlayerDecision ?? false)
+            // {
+            //     if (!(results?.IsCorrectPot ?? false))
+            //     {
+            //         _testOutputHelper.WriteLine("IsCorrectPot: " + results?.IsCorrectPot.ToString());
+            //
+            //         _testOutputHelper.WriteLine(results?.MatchResults?.Pot.ToString());
+            //         _testOutputHelper.WriteLine("=== All Inferred Actions ===");
+            //         foreach (var a in poker.GameActions)
+            //             _testOutputHelper.WriteLine(a.ToString());
+            //     }
+            // }
         }
 
         var gameActions = poker.GameActions;
         var startingBets = poker.StartingBets;
         if (startingBets != null)
         {
-            _testOutputHelper.WriteLine($"Ante={startingBets.Ante}, SmallBlind={startingBets.SmallBlind} BigBlind={startingBets.BigBlind}");
+            _testOutputHelper.WriteLine(
+                $"Ante={startingBets.Ante}, SmallBlind={startingBets.SmallBlind} BigBlind={startingBets.BigBlind}");
         }
 
         // Print them out for clarity
         _testOutputHelper.WriteLine("=== All Inferred Actions ===");
         foreach (var a in gameActions)
             _testOutputHelper.WriteLine(a.ToString());
+
+        //Assert.True(results?.IsCorrectPot);
     }
 }

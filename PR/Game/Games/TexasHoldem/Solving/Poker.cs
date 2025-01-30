@@ -182,6 +182,9 @@ namespace Game.Games.TexasHoldem.Solving
                 bestLayout = layoutResolver.PokerLayout;
             }
 
+            bool isCorrectPot = true;
+            
+
             var pokerResult = new PokerResults(
                 reconResults,
                 matchResults,
@@ -189,7 +192,8 @@ namespace Game.Games.TexasHoldem.Solving
                 bestLayout,
                 pokerPosition,
                 ImmutableList<bool>.Empty.AddRange(opponentsInGame),
-                phase);
+                phase,
+                isCorrectPot);
 
             // Initialize snapshots if they're not set
             if (_prevPokerResults == null)
@@ -254,6 +258,14 @@ namespace Game.Games.TexasHoldem.Solving
                         _currentStreetContributions,
                         ref _currentStreetHighestBet,
                         _lastActionThisStreet);
+                    if (_state.ContainsKey("_id"))
+                    {
+                        gameBets = gameBets with
+                        {
+                            Actions = gameBets.Actions.Select(x => x with {Id = _state["_id"].Result})
+                                .ToImmutableList()
+                        };
+                    }
                     var gameBetsActions = gameBets.Actions;
 
                     if (DebugFlags.HasFlag(PokerDebugFlags.ActionRecognition))
@@ -294,6 +306,19 @@ namespace Game.Games.TexasHoldem.Solving
                     }
                 }
             }
+            
+            if (matchResults.IsPlayerDecision)
+            {
+                // Calculate total contributions
+                decimal totalContributions = 0;
+
+                totalContributions += _gameActions.Sum(action => action.Amount);
+
+                if (matchResults.Pot != null)
+                    isCorrectPot = Math.Abs(totalContributions - matchResults.Pot.Value) < 0.01m;
+            }
+
+            pokerResult = pokerResult with {IsCorrectPot = isCorrectPot};
 
             _prevPokerResults = pokerResult;
             if (phase != _previousPhase)
@@ -424,6 +449,22 @@ namespace Game.Games.TexasHoldem.Solving
                 }
 
                 startingBets = new StartingBets(ante, smallBlind, bigBlind);
+
+                actions.Add(new PlayerAction(dealerPosition % numPlayers + 1, PokerActionType.Put, smallBlind + ante,
+                    phase));
+                actions.Add(new PlayerAction((dealerPosition + 1) % numPlayers + 1, PokerActionType.Put,
+                    bigBlind + ante,
+                    phase));
+                for (int i = 0; i < numPlayers - 2; i++)
+                {
+                    actions.Add(new PlayerAction((dealerPosition + 2 + i) % numPlayers + 1,
+                        PokerActionType.Put, ante, phase));
+                }
+            }
+
+            if (phase == PokerPhase.Preflop && currentStreetHighestBet < startingBets.BigBlind)
+            {
+                currentStreetHighestBet = startingBets.BigBlind;
             }
 
             // Process actions for active players

@@ -4,6 +4,7 @@ public enum PokerActionType
 {
     None,
     Fold,
+    Put,
     Check,
     Call,
     Bet,

@@ -12,4 +12,5 @@ public record PokerResults(
     PokerLayouts? BestLayout,
     PokerPosition? PokerPosition,
     IImmutableList<bool> OpponentsInGame,
-    PokerPhase Phase);
+    PokerPhase Phase,
+    bool IsCorrectPot);
