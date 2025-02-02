@@ -57,7 +57,7 @@ namespace Game.Games.TexasHoldem.Solving
 
         public Board Board { get; }
 
-        public int NumPlayers => _numPlayers;
+        private int NumPlayers => _numPlayers;
 
         public StartingBets StartingBets => _startingBets;
 
@@ -136,18 +136,19 @@ namespace Game.Games.TexasHoldem.Solving
             var flopCards = _flop.Match(reconResults.FlopResult);
             var turnCards = _turn.Match(reconResults.TurnResult);
             var riverCards = _river.Match(reconResults.RiverResult);
-            var position = _position.Match(reconResults.PositionResults);
-            var opponents = _opponent.Match(reconResults.OpponentResults);
-            var stack = _stack.Match(reconResults.StackResults);
-            var nicknames = _nickname.Match(reconResults.NicknameResults);
+            Place position = _position.Match(reconResults.PositionResults);
+            Place opponents = _opponent.Match(reconResults.OpponentResults);
+            List<decimal?> stack = _stack.Match(reconResults.StackResults);
+            List<string> nicknames = _nickname.Match(reconResults.NicknameResults);
             var isDecision = _decision.Match(reconResults.DecisionResult);
             var pot = _pot.Match([reconResults.PotResult]);
-
+            var numPlayers = NumPlayers;
+            
             var matchResults =
                 new MatchResults(playerCards, flopCards, turnCards, riverCards,
                     position, opponents, nicknames, stack, isDecision, pot);
 
-            var opponentsInGame = opponents.Places(NumPlayers - 1);
+            var opponentsInGame = opponents.Places(numPlayers - 1);
             var phase = DeterminePokerPhase(flopCards, turnCards, riverCards);
             if (_previousPhase == PokerPhase.None)
             {
@@ -157,7 +158,7 @@ namespace Game.Games.TexasHoldem.Solving
             MonteCarloResult? monteCarloResult = null;
             PokerLayouts? bestLayout = null;
             PokerPosition? pokerPosition = null;
-            var newPosition = position.GetPokerPosition(NumPlayers);
+            var newPosition = position.GetPokerPosition(numPlayers);
             pokerPosition = newPosition;
 
             // Check if position has changed
@@ -208,7 +209,7 @@ namespace Game.Games.TexasHoldem.Solving
 
             if (_lastActionThisStreet == null)
             {
-                _lastActionThisStreet = new PokerActionType[_numPlayers];
+                _lastActionThisStreet = new PokerActionType[numPlayers];
             }
 
             if (playerCards.Count != 0 && (_lastMatchResults == null || !_lastMatchResults.Equals(matchResults)))
@@ -253,16 +254,16 @@ namespace Game.Games.TexasHoldem.Solving
                         opponentsInGame,
                         _previousOpponentsInGame,
                         matchResults.Position.Pos,
-                        NumPlayers,
+                        numPlayers,
                         _startingBets,
                         _currentStreetContributions,
                         ref _currentStreetHighestBet,
                         _lastActionThisStreet);
-                    if (_state.ContainsKey("_id"))
+                    if (_state.TryGetValue("_id", out var value))
                     {
                         gameBets = gameBets with
                         {
-                            Actions = gameBets.Actions.Select(x => x with {Id = _state["_id"].Result})
+                            Actions = gameBets.Actions.Select(x => x with {Id = value.Result})
                                 .ToImmutableList()
                         };
                     }
@@ -307,15 +308,35 @@ namespace Game.Games.TexasHoldem.Solving
                 }
             }
             
-            if (matchResults.IsPlayerDecision)
+            // Calculate total contributions
+            decimal totalContributions = _gameActions.Sum(action => action.Amount);
+
+            if (matchResults.Pot != null)
+                isCorrectPot = Math.Abs(totalContributions - matchResults.Pot.Value) < 0.01m;
+
+            if (!isCorrectPot)
             {
-                // Calculate total contributions
-                decimal totalContributions = 0;
-
-                totalContributions += _gameActions.Sum(action => action.Amount);
-
-                if (matchResults.Pot != null)
-                    isCorrectPot = Math.Abs(totalContributions - matchResults.Pot.Value) < 0.01m;
+                var potDiff = pokerResult.MatchResults.Pot - _prevPokerResults.MatchResults.Pot;
+                if (potDiff.HasValue)
+                {
+                    var newGameActionsAmounts = _gameActions.Select(x => x.Amount).ToList();
+                    if (newGameActionsAmounts.Any())
+                    {
+                        newGameActionsAmounts[^1] = potDiff.Value;
+                        var totalContributions2 = newGameActionsAmounts.Sum(x => x);
+                        if (matchResults.Pot != null)
+                        {
+                            var isCorrectPot2 = Math.Abs(totalContributions2 - matchResults.Pot.Value) < 0.01m;
+                            if (isCorrectPot2)
+                            {
+                                _gameActions[^1] = new PlayerAction(Amount: potDiff.Value, Id: _gameActions[^1].Id,
+                                    Phase: _gameActions[^1].Phase,
+                                    ActionType: potDiff == 0 ? PokerActionType.Check : _gameActions[^1].ActionType,
+                                    PlayerIndex: _gameActions[^1].PlayerIndex);
+                            }
+                        }
+                    }
+                }
             }
 
             pokerResult = pokerResult with {IsCorrectPot = isCorrectPot};
@@ -325,7 +346,7 @@ namespace Game.Games.TexasHoldem.Solving
             {
                 Array.Clear(_currentStreetContributions);
                 _currentStreetHighestBet = 0;
-                _lastActionThisStreet = new PokerActionType[_numPlayers];
+                _lastActionThisStreet = new PokerActionType[numPlayers];
             }
 
             _previousPhase = phase;
@@ -412,8 +433,7 @@ namespace Game.Games.TexasHoldem.Solving
             {
                 decimal smallBlind = 0;
                 decimal bigBlind = 0;
-                // First identify ante from players not in game
-                for (int i = 0; i < contributions.Length; i++) // Start from 1 to skip player
+                for (int i = 0; i < contributions.Length; i++)
                 {
                     var playerPos = (i + 1) % numPlayers;
                     var isSmallBlind = playerPos == sbPos;
@@ -508,13 +528,10 @@ namespace Game.Games.TexasHoldem.Solving
                             if (currentStreetContributions[i] > currentStreetHighestBet)
                                 currentStreetHighestBet = currentStreetContributions[i];
                         }
-                        else if (phase != PokerPhase.Preflop)
+                        else
                         {
-                            // ZERO contribution => candidate for a Check
-                            // but only if we haven't already recorded a Check for them in this street
                             bool alreadyChecked = lastActionThisStreet[i] != PokerActionType.None;
 
-                            // Also confirm no new bet to call:
                             bool noOutstandingBet = currentStreetContributions[i] >= currentStreetHighestBet;
 
                             if (!alreadyChecked && noOutstandingBet)

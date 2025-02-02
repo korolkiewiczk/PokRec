@@ -34,7 +34,8 @@ namespace Game.RegionMatchers
             {
                 return [];
             }
-            return result.Results.Select(Card.FromEString).ToList();
+
+            return result.Results.OrderBy(x => x).Select(Card.FromEString).ToList();
         }
 
         public IResultPresenter GetPresenter()

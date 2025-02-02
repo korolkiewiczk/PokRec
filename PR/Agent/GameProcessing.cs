@@ -43,7 +43,6 @@ public class GameProcessing : BackgroundProcessing
         {
             await RegionProcessor.ProcessRegions(_id, _regionSpecs, _state, mainImg, cancellationToken);
             ProcessingCompleted?.Invoke(this, EventArgs.Empty);
-            await Task.Delay(100, CancellationToken.None);
         }
         finally
         {
@@ -51,6 +50,7 @@ public class GameProcessing : BackgroundProcessing
         }
         sw.Stop();
         Log.Info($"Processing done in {sw.ElapsedMilliseconds} ms");
+        await Task.Delay(250, CancellationToken.None);
     }
 
     private async Task<Image<Rgba32>> GetMainImgFromScreen(CancellationToken cancellationToken)
