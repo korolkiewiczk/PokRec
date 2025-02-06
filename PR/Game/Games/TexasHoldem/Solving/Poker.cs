@@ -44,6 +44,7 @@ namespace Game.Games.TexasHoldem.Solving
         private IReadOnlyList<bool> _previousOpponentsInGame;
         private PokerActionType[] _lastActionThisStreet;
         private List<int> _activeIndices;
+        private List<int> _prevActiveIndices;
 
         public Poker(Board board)
         {
@@ -167,21 +168,17 @@ namespace Game.Games.TexasHoldem.Solving
 
             stack = _activeIndices.Select(i => stack[i]).ToList();
 
-            // Abnormal situations
-            if (numPlayers <= 1 || stack.Count < (_prevPokerResults?.MatchResults.Stacks.Count ?? 0))
+            if (_prevPokerResults != null)
             {
-                _prevPokerResults = null;
-                return new PokerResults(
-                    reconResults,
-                    new MatchResults(playerCards, flopCards, turnCards, riverCards,
-                        position, opponents, nicknames, stack, isDecision, pot),
-                    null,
-                    null,
-                    null,
-                    new ImmutableArray<bool>(),
-                    PokerPhase.None,
-                    false);
+                var remappedStacks = RemapPreviousStacks(stack, _activeIndices, _prevActiveIndices,
+                    _prevPokerResults.MatchResults.Stacks);
+                _prevPokerResults = _prevPokerResults with
+                {
+                    MatchResults = _prevPokerResults.MatchResults with {Stacks = remappedStacks}
+                };
             }
+
+            _prevActiveIndices = _activeIndices;
 
             nicknames = _activeIndices.Select(i => nicknames[i]).ToList();
 
@@ -235,7 +232,7 @@ namespace Game.Games.TexasHoldem.Solving
                         _currentStreetContributions,
                         ref _currentStreetHighestBet,
                         _lastActionThisStreet);
-                    
+
                     if (_state.TryGetValue("_id", out var value))
                     {
                         gameBets = gameBets with
@@ -284,6 +281,33 @@ namespace Game.Games.TexasHoldem.Solving
             return pokerResult;
         }
 
+        private static List<decimal?> RemapPreviousStacks(
+            List<decimal?> stack,
+            List<int> activeIndices,
+            List<int> prevActiveIndices,
+            List<decimal?> prevStacks)
+        {
+            if (prevStacks == null)
+            {
+                return stack.ToList(); // If no previous stacks exist, return the current stack.
+            }
+
+
+            if (stack.Count < prevStacks.Count)
+            {
+                return activeIndices.Select(i => prevStacks[i]).ToList();
+            }
+
+            if (stack.Count > prevStacks.Count && prevActiveIndices != null)
+            {
+                return activeIndices
+                    .Select(activeIndex => prevActiveIndices.IndexOf(activeIndex))
+                    .Select((prevIndex, i) => prevIndex != -1 ? prevStacks[prevIndex] : stack[i]).ToList();
+            }
+
+            return prevStacks;
+        }
+        
         private void RemoveRedundantChecks(IImmutableList<PlayerAction> gameBetsActions, PokerPhase phase)
         {
             foreach (var gameBetsAction in gameBetsActions)
@@ -452,7 +476,8 @@ namespace Game.Games.TexasHoldem.Solving
                 {
                     (ante, smallBlind, bigBlind) = DeduceBlindsBasingOnContributions(contributions);
                     startingBets = new StartingBets(ante, smallBlind, bigBlind);
-                    actions.AddRange(contributions.Select((x,i)=>new PlayerAction(i+1,PokerActionType.Put,x,PokerPhase.None)));
+                    actions.AddRange(contributions.Select((x, i) =>
+                        new PlayerAction(i + 1, PokerActionType.Put, x, PokerPhase.None)));
                 }
                 else
                 {
@@ -581,7 +606,8 @@ namespace Game.Games.TexasHoldem.Solving
             return remappedPlace;
         }
 
-        private static (decimal ante, decimal smallBlind, decimal bigBlind) DeduceBlindsBasingOnPosition(int dealerPosition,
+        private static (decimal ante, decimal smallBlind, decimal bigBlind) DeduceBlindsBasingOnPosition(
+            int dealerPosition,
             decimal[] contributions)
         {
             int sbPos = (dealerPosition + 1) % contributions.Length;
@@ -627,7 +653,8 @@ namespace Game.Games.TexasHoldem.Solving
             return (ante, smallBlind, bigBlind);
         }
 
-        private static (decimal Ante, decimal SmallBlind, decimal BigBlind) DeduceBlindsBasingOnContributions(decimal[] contributions)
+        private static (decimal Ante, decimal SmallBlind, decimal BigBlind) DeduceBlindsBasingOnContributions(
+            decimal[] contributions)
         {
             var validContribs = (contributions.Any(x => x > 0)
                 ? contributions.Where(x => x > 0)
@@ -655,7 +682,7 @@ namespace Game.Games.TexasHoldem.Solving
 
             return (ante, smallBlind, bigBlind);
         }
-        
+
         private void DebuggingLogs(MatchResults matchResults, PokerPosition? pokerPosition, List<bool> opponentsInGame)
         {
             if (DebugFlags.HasFlag(PokerDebugFlags.StateResults))
@@ -686,7 +713,7 @@ namespace Game.Games.TexasHoldem.Solving
                 ));
             }
         }
-        
+
         private void DebuggingLogs(GameBets gameBets)
         {
             if (DebugFlags.HasFlag(PokerDebugFlags.ActionRecognition))
