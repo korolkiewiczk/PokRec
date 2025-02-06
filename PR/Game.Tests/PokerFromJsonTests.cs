@@ -17,6 +17,10 @@ public class PokerFromJsonTests : PokerTestsBase
     [InlineData(6, "test_case1.json")]
     [InlineData(6, "test_case2.json")]
     [InlineData(6, "test_case3.json")]
+    [InlineData(6, "test_case4.json")]
+    [InlineData(6, "test_case5.json")]
+    [InlineData(6, "test_case6.json")]
+    [InlineData(6, "test_case7.json")]
     public void LoadLogFromJsonAndSolvesGame(int numPlayers, string testcaseFileName)
     {
         // Arrange
@@ -64,19 +68,22 @@ public class PokerFromJsonTests : PokerTestsBase
         foreach (var state in states)
         {
             poker.SetState(state);
-            results = poker.Solve();
-            // if (results?.MatchResults?.IsPlayerDecision ?? false)
-            // {
-            //     if (!(results?.IsCorrectPot ?? false))
-            //     {
-            //         _testOutputHelper.WriteLine("IsCorrectPot: " + results?.IsCorrectPot.ToString());
-            //
-            //         _testOutputHelper.WriteLine(results?.MatchResults?.Pot.ToString());
-            //         _testOutputHelper.WriteLine("=== All Inferred Actions ===");
-            //         foreach (var a in poker.GameActions)
-            //             _testOutputHelper.WriteLine(a.ToString());
-            //     }
-            // }
+            try
+            {
+                results = poker.Solve();
+            }
+            catch (Exception)
+            {
+                _testOutputHelper.WriteLine(state["_id"].Result);
+                throw;
+            }
+            if (results?.MatchResults?.IsPlayerDecision ?? false)
+            {
+                if (!(results?.IsCorrectPot ?? false))
+                {
+                    _testOutputHelper.WriteLine($"IsCorrectPot: {results?.IsCorrectPot} {state["_id"].Result}");
+                }
+            }
         }
 
         var gameActions = poker.GameActions;
