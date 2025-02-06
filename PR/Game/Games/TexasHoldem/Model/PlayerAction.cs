@@ -4,7 +4,6 @@ public record PlayerAction(int PlayerIndex, PokerActionType ActionType, decimal 
 {
     public override string ToString()
     {
-        // E.g. "Opp1 -> Fold (Preflop)" or "Hero -> Raise 120 (Flop)"
         return $"Player{PlayerIndex} -> {ActionType}{(Amount > 0 ? $" {Amount}" : "")} ({Phase}) {Id}";
     }
 }

@@ -38,10 +38,10 @@ namespace Game.Games.TexasHoldem.Solving
         private PokerPhase _previousPhase;
         private StartingBets _startingBets;
         private readonly List<PlayerAction> _gameActions = new();
-        private Place? _lastPosition;
+        private Place _lastPosition;
         private decimal[] _currentStreetContributions;
         private decimal _currentStreetHighestBet;
-        private IReadOnlyList<bool> _previousOpponentsInGame;
+        private IList<bool> _previousOpponentsInGame;
         private PokerActionType[] _lastActionThisStreet;
         private List<int> _activeIndices;
         private List<int> _prevActiveIndices;
@@ -152,17 +152,12 @@ namespace Game.Games.TexasHoldem.Solving
             // Check if position has changed - new game then
             if (_lastPosition != null && position != _lastPosition)
             {
-                // Clear some properties
-                ClearProperties();
+                ClearPropertiesOnNewStreet();
             }
 
             _lastPosition = position;
 
-            _activeIndices ??= stack
-                .Select((s, index) => new {StackValue = s, Index = index})
-                .Where(x => x.StackValue.HasValue)
-                .Select(x => x.Index)
-                .ToList();
+            _activeIndices ??= FilterActiveIndices(stack);
 
             var numPlayers = _activeIndices.Count;
 
@@ -187,6 +182,7 @@ namespace Game.Games.TexasHoldem.Solving
                 _numPlayers - 1);
 
             PokerPosition? pokerPosition = position.GetPokerPosition(numPlayers);
+
             var matchResults =
                 new MatchResults(playerCards, flopCards, turnCards, riverCards,
                     position, opponents, nicknames, stack, isDecision, pot);
@@ -202,13 +198,13 @@ namespace Game.Games.TexasHoldem.Solving
                 monteCarloResult,
                 bestLayout,
                 pokerPosition,
-                ImmutableList<bool>.Empty.AddRange(opponentsInGame),
+                opponentsInGame.ToImmutableList(),
                 phase,
                 true);
 
             // Initialize snapshots if they're not set
             _prevPokerResults ??= pokerResult;
-            _previousOpponentsInGame ??= opponentsInGame.ToArray();
+            _previousOpponentsInGame ??= opponentsInGame.ToList();
             _lastActionThisStreet ??= new PokerActionType[numPlayers];
 
             if (_lastMatchResults == null || !_lastMatchResults.Equals(matchResults))
@@ -233,14 +229,7 @@ namespace Game.Games.TexasHoldem.Solving
                         ref _currentStreetHighestBet,
                         _lastActionThisStreet);
 
-                    if (_state.TryGetValue("_id", out var value))
-                    {
-                        gameBets = gameBets with
-                        {
-                            Actions = gameBets.Actions.Select(x => x with {Id = value.Result})
-                                .ToImmutableList()
-                        };
-                    }
+                    gameBets = FillWithId(gameBets);
 
                     var gameBetsActions = gameBets.Actions;
 
@@ -251,15 +240,7 @@ namespace Game.Games.TexasHoldem.Solving
                     _gameActions.AddRange(gameBetsActions);
                     _startingBets = gameBets.StartingBets;
 
-                    //Log recognized actions
-                    if (gameBetsActions.Any() && DebugFlags.HasFlag(PokerDebugFlags.ActionRecognition))
-                    {
-                        Log.Debug("=== Actions recognized since the start of the phase: ===");
-                        foreach (var action in gameBetsActions)
-                        {
-                            Log.Debug(action.ToString());
-                        }
-                    }
+                    DebuggingLogs(gameBetsActions);
                 }
             }
 
@@ -270,15 +251,44 @@ namespace Game.Games.TexasHoldem.Solving
             _prevPokerResults = pokerResult;
             if (phase != _previousPhase)
             {
-                Array.Clear(_currentStreetContributions);
-                _currentStreetHighestBet = 0;
-                _lastActionThisStreet = new PokerActionType[numPlayers];
+                ClearPropertiesOnNewPhase(numPlayers);
             }
 
             _previousPhase = phase;
-            _previousOpponentsInGame = opponentsInGame.ToArray();
+            _previousOpponentsInGame = opponentsInGame.ToList();
 
             return pokerResult;
+        }
+
+        private static List<int> FilterActiveIndices(IEnumerable<decimal?> stack)
+        {
+            return stack
+                .Select((s, index) => new {StackValue = s, Index = index})
+                .Where(x => x.StackValue.HasValue)
+                .Select(x => x.Index)
+                .ToList();
+        }
+
+        private void ClearPropertiesOnNewPhase(int numPlayers)
+        {
+            Array.Clear(_currentStreetContributions);
+            _currentStreetHighestBet = 0;
+            _lastActionThisStreet = new PokerActionType[numPlayers];
+        }
+
+
+        private GameBets FillWithId(GameBets gameBets)
+        {
+            if (_state.TryGetValue("_id", out var value))
+            {
+                gameBets = gameBets with
+                {
+                    Actions = gameBets.Actions.Select(x => x with {Id = value.Result})
+                        .ToImmutableList()
+                };
+            }
+
+            return gameBets;
         }
 
         private static List<decimal?> RemapPreviousStacks(
@@ -289,9 +299,8 @@ namespace Game.Games.TexasHoldem.Solving
         {
             if (prevStacks == null)
             {
-                return stack.ToList(); // If no previous stacks exist, return the current stack.
+                return stack.ToList();
             }
-
 
             if (stack.Count < prevStacks.Count)
             {
@@ -307,8 +316,8 @@ namespace Game.Games.TexasHoldem.Solving
 
             return prevStacks;
         }
-        
-        private void RemoveRedundantChecks(IImmutableList<PlayerAction> gameBetsActions, PokerPhase phase)
+
+        private void RemoveRedundantChecks(IEnumerable<PlayerAction> gameBetsActions, PokerPhase phase)
         {
             foreach (var gameBetsAction in gameBetsActions)
             {
@@ -329,8 +338,7 @@ namespace Game.Games.TexasHoldem.Solving
             }
         }
 
-
-        private void ClearProperties()
+        private void ClearPropertiesOnNewStreet()
         {
             _gameActions.Clear();
             _previousPhase = PokerPhase.None;
@@ -355,7 +363,7 @@ namespace Game.Games.TexasHoldem.Solving
                 if (potDiff.HasValue)
                 {
                     var newGameActionsAmounts = _gameActions.Select(x => x.Amount).ToList();
-                    if (newGameActionsAmounts.Any())
+                    if (newGameActionsAmounts.Count != 0)
                     {
                         newGameActionsAmounts[^1] = potDiff.Value;
                         var totalContributions2 = newGameActionsAmounts.Sum(x => x);
@@ -379,7 +387,7 @@ namespace Game.Games.TexasHoldem.Solving
 
         private static (MonteCarloResult? monteCarloResult, PokerLayouts? bestLayout) SolvePlayerLayout(
             List<Card> playerCards,
-            Place opponents, List<Card> flopCards, List<Card> turnCards, List<Card> riverCards)
+            Place opponents, IList<Card> flopCards, IList<Card> turnCards, IList<Card> riverCards)
         {
             MonteCarloResult? monteCarloResult = null;
             PokerLayouts? bestLayout = null;
@@ -426,7 +434,7 @@ namespace Game.Games.TexasHoldem.Solving
             return result;
         }
 
-        private static MonteCarloResult ComputeMonteCarloResult(List<Card> myCards, List<Card> boardCards,
+        private static MonteCarloResult ComputeMonteCarloResult(IEnumerable<Card> myCards, IEnumerable<Card> boardCards,
             int numOfPlayers)
         {
             RandomSetDefinition arg = new RandomSetDefinition
@@ -446,8 +454,8 @@ namespace Game.Games.TexasHoldem.Solving
             PokerPhase phase,
             IList<decimal?> previousStacks,
             IList<decimal?> currentStacks,
-            IReadOnlyList<bool> opponentsInGame,
-            IReadOnlyList<bool> previousOpponentsInGame,
+            IList<bool> opponentsInGame,
+            IList<bool> previousOpponentsInGame,
             int dealerPosition,
             int numPlayers,
             StartingBets startingBets,
@@ -539,7 +547,7 @@ namespace Game.Games.TexasHoldem.Solving
                             actions.Add(new PlayerAction(i + 1, actionType, amountPutIn, phase));
                             lastActionThisStreet[i] = actionType;
 
-                            // Possibly update highest bet
+                            // Possibly update the highest bet
                             if (currentStreetContributions[i] > currentStreetHighestBet)
                                 currentStreetHighestBet = currentStreetContributions[i];
                         }
@@ -589,16 +597,16 @@ namespace Game.Games.TexasHoldem.Solving
             throw new InvalidOperationException("Unable to determine action type.");
         }
 
-        private static Place RemapPlace(Place p, List<int> active, int originalNumPlayers)
+        private static Place RemapPlace(Place p, IList<int> active, int originalNumPlayers)
         {
             var remappedPlace = new Place();
-            List<bool> origPlaceBools = p.Places(originalNumPlayers);
+            var origPlaceBooleans = p.Places(originalNumPlayers);
 
-            for (int i = 0; i < origPlaceBools.Count; i++)
+            for (int i = 0; i < origPlaceBooleans.Count; i++)
             {
-                if (origPlaceBools[i] && active.Contains(i))
+                if (origPlaceBooleans[i] && active.Contains(i))
                 {
-                    int newIndex = active.IndexOf(i);
+                    var newIndex = active.IndexOf(i);
                     remappedPlace.Add(newIndex);
                 }
             }
@@ -683,6 +691,8 @@ namespace Game.Games.TexasHoldem.Solving
             return (ante, smallBlind, bigBlind);
         }
 
+        #region Debbuging methods
+
         private void DebuggingLogs(MatchResults matchResults, PokerPosition? pokerPosition, List<bool> opponentsInGame)
         {
             if (DebugFlags.HasFlag(PokerDebugFlags.StateResults))
@@ -722,5 +732,21 @@ namespace Game.Games.TexasHoldem.Solving
                     $"Ante={gameBets.StartingBets.Ante}, SmallBlind={gameBets.StartingBets.SmallBlind} BigBlind={gameBets.StartingBets.BigBlind}");
             }
         }
+
+        private void DebuggingLogs(IEnumerable<PlayerAction> gameBetsActions)
+        {
+            //Log recognized actions
+            var playerActions = gameBetsActions.ToList();
+            if (playerActions.Count != 0 && DebugFlags.HasFlag(PokerDebugFlags.ActionRecognition))
+            {
+                Log.Debug("=== Actions recognized since the start of the phase: ===");
+                foreach (var action in playerActions)
+                {
+                    Log.Debug(action.ToString());
+                }
+            }
+        }
+
+        #endregion
     }
 }
