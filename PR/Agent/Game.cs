@@ -16,21 +16,20 @@ namespace Agent
 
         private readonly Board _board;
         private readonly PokerPresenter _pokerPresenter;
+        private readonly GameProcessing _gameProcessing;
 
         private Game()
         {
             InitializeComponent();
         }
 
-        public Game(Poker poker) : this()
+        public Game(Poker poker, GameProcessing gameProcessing) : this()
         {
             _board = poker.Board;
             _pokerPresenter = new PokerPresenter(poker);
+            _gameProcessing = gameProcessing;
 
-            Timer timer = new Timer();
-            timer.Interval = 100;
-            timer.Tick += TimerTick_GameProcessing;
-            timer.Enabled = true;
+            _gameProcessing.ProcessingCompleted += GameProcessing_ProcessingCompleted;
 
             SetStyle(
                 ControlStyles.UserPaint |
@@ -42,14 +41,23 @@ namespace Agent
             Paint += Form1_Paint;
         }
 
-        private void TimerTick_GameProcessing(object sender, EventArgs e)
+        private void GameProcessing_ProcessingCompleted(object sender, EventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new Action(() => Render()));
+                return;
+            }
+            Render();
+        }
+
+        private void Render()
         {
             if (_backbuffer == null) return;
             
             using (var g = Graphics.FromImage(_backbuffer))
             {
                 g.Clear(BackColor);
-
                 _pokerPresenter.Show(new Environment(g, new Rectangle(0, 0, Width, Height), _board));
             }
 

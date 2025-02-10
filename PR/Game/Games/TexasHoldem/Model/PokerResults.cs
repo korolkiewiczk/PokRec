@@ -1,4 +1,7 @@
-﻿using PT.Algorithm.Model;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
+using Game.Games.TexasHoldem.Solving;
+using PT.Algorithm.Model;
 using PT.Poker.Model;
 
 namespace Game.Games.TexasHoldem.Model;
@@ -8,4 +11,8 @@ public record PokerResults(
     MatchResults MatchResults,
     MonteCarloResult? MonteCarloResult,
     PokerLayouts? BestLayout,
-    PokerPosition? pokerPosition);
+    PokerPosition? PokerPosition,
+    IImmutableList<bool> OpponentsInGame,
+    PokerPhase Phase,
+    bool IsCorrectPot,
+    EvResult EvResult);

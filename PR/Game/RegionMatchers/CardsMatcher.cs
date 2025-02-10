@@ -34,21 +34,8 @@ namespace Game.RegionMatchers
             {
                 return [];
             }
-            return result.Results.Select(x =>
-            {
-                var cardType = (CardType) Enum.Parse(typeof(CardType), x.Substring(0, x.Length - 1));
-                var colorString = x.Substring(x.Length - 1);
-                var cardColor = colorString switch
-                {
-                    "d" => CardColor.Diamonds,
-                    "s" => CardColor.Spades,
-                    "c" => CardColor.Clubs,
-                    "h" => CardColor.Hearts,
-                    _ => CardColor.Clubs
-                };
 
-                return new Card(cardColor, cardType);
-            }).ToList();
+            return result.Results.OrderBy(x => x).Select(Card.FromEString).ToList();
         }
 
         public IResultPresenter GetPresenter()

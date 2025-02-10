@@ -6,9 +6,9 @@ using Game.Presenters;
 
 namespace Game.MultiRegionMatchers;
 
-public class Pot : TextMatcher<decimal>
+public class Pot : TextMatcher<decimal?>
 {
-    public override decimal Match(IEnumerable<ReconResult> results)
+    public override decimal? Match(IEnumerable<ReconResult> results)
     {
         return MoneyParser.ParseMoneyValue(results?.FirstOrDefault()?.Result ?? "");
     }

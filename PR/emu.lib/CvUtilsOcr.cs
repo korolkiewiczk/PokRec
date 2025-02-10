@@ -59,7 +59,7 @@ public static class CvUtilsOcr
             }
 
             tesseract = new Tesseract();
-            tesseract.Init(tessdataPath, "eng", OcrEngineMode.TesseractLstmCombined);
+            tesseract.Init(tessdataPath, "eng", OcrEngineMode.LstmOnly);
             tesseract.SetVariable("user_defined_dpi", "70");
 
             tesseract.SetVariable("tessedit_char_whitelist",
