@@ -20,6 +20,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PT.Tests", "PT.Tests\PT.Tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Game.Tests", "Game.Tests\Game.Tests.csproj", "{38733DA3-E500-4A74-9580-B2719E3766A1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CfrSolver", "CfrSolver\CfrSolver.csproj", "{F03545D3-2E3C-4594-8151-C3018C182969}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CfrSolver.Datalayer", "CfrSolver.Datalayer\CfrSolver.Datalayer.csproj", "{ACE2F81F-23B6-4725-A55F-7079ADDDF0EE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -62,6 +66,14 @@ Global
 		{38733DA3-E500-4A74-9580-B2719E3766A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{38733DA3-E500-4A74-9580-B2719E3766A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{38733DA3-E500-4A74-9580-B2719E3766A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F03545D3-2E3C-4594-8151-C3018C182969}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F03545D3-2E3C-4594-8151-C3018C182969}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F03545D3-2E3C-4594-8151-C3018C182969}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F03545D3-2E3C-4594-8151-C3018C182969}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ACE2F81F-23B6-4725-A55F-7079ADDDF0EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACE2F81F-23B6-4725-A55F-7079ADDDF0EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACE2F81F-23B6-4725-A55F-7079ADDDF0EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACE2F81F-23B6-4725-A55F-7079ADDDF0EE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

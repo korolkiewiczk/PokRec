@@ -4,7 +4,7 @@ namespace PT.Poker.Model
 {
     public readonly struct PokerMark : IMark
     {
-        private PokerLayouts PokerLayout { get; }
+        public PokerLayouts PokerLayout { get; }
 
         private int PowerOfCards { get; }
 

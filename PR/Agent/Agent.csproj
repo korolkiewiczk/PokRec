@@ -26,4 +26,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="CfrSolver.Graphgen\" />
+    <Folder Include="CfrSolver.Player\" />
+  </ItemGroup>
 </Project>
