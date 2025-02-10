@@ -1,6 +1,6 @@
 ﻿namespace Game.Games.TexasHoldem.Model;
 
-public record PlayerAction(int PlayerIndex, PokerActionType ActionType, decimal Amount, PokerPhase Phase, string Id="")
+    public record PlayerAction(int PlayerIndex, PokerActionType ActionType, decimal Amount, PokerPhase Phase, string Id="")
 {
     public override string ToString()
     {

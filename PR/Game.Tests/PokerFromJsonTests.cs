@@ -31,7 +31,7 @@ public class PokerFromJsonTests : PokerTestsBase
                 new KeyValuePair<string, string>(nameof(PokerBoardSettingsParser.Players), numPlayers.ToString())
             ]
         });
-        // poker.DebugFlags = PokerDebugFlags.MatchResults | PokerDebugFlags.ActionRecognition;
+        poker.DebugFlags = PokerDebugFlags.PlayerStatistics;
         var jsonFilePath = Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory, "TestCases",
             testcaseFileName

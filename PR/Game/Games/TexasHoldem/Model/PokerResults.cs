@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
+using Game.Games.TexasHoldem.Solving;
 using PT.Algorithm.Model;
 using PT.Poker.Model;
 
@@ -13,4 +14,5 @@ public record PokerResults(
     PokerPosition? PokerPosition,
     IImmutableList<bool> OpponentsInGame,
     PokerPhase Phase,
-    bool IsCorrectPot);
+    bool IsCorrectPot,
+    EvResult EvResult);

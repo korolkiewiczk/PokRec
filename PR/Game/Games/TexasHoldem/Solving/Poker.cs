@@ -46,6 +46,9 @@ namespace Game.Games.TexasHoldem.Solving
         private List<int> _activeIndices;
         private List<int> _prevActiveIndices;
 
+        private Dictionary<int, List<string>> _nickNamesAtPos = new();
+        private readonly Dictionary<string, PlayerStats> _playerStats = new();
+
         public Poker(Board board)
         {
             Board = board;
@@ -64,6 +67,8 @@ namespace Game.Games.TexasHoldem.Solving
         public List<PlayerAction> GameActions => _gameActions;
 
         public PokerDebugFlags DebugFlags { get; set; } = PokerDebugFlags.None;
+
+        public Dictionary<string, PlayerStats> PlayerStats => _playerStats;
 
         private void InitializeMatchers()
         {
@@ -177,6 +182,13 @@ namespace Game.Games.TexasHoldem.Solving
 
             nicknames = _activeIndices.Select(i => nicknames[i]).ToList();
 
+            for (var i = 0; i < nicknames.Count; i++)
+            {
+                if (!_nickNamesAtPos.ContainsKey(i))
+                    _nickNamesAtPos[i] = new List<string>();
+                _nickNamesAtPos[i].Add(nicknames[i]);
+            }
+
             position = RemapPlace(position, _activeIndices, _numPlayers);
             opponents = RemapPlace(opponents, _activeIndices.Where(x => x != 0).Select(x => x - 1).ToList(),
                 _numPlayers - 1);
@@ -191,6 +203,16 @@ namespace Game.Games.TexasHoldem.Solving
 
             var (monteCarloResult, bestLayout) =
                 SolvePlayerLayout(playerCards, opponents, flopCards, turnCards, riverCards);
+            var playerFold =
+                _gameActions.FirstOrDefault(x => x.PlayerIndex == 1 && x.ActionType == PokerActionType.Fold);
+            if (bestLayout == null && playerFold == null)
+            {
+                _gameActions.Add(new PlayerAction(1, PokerActionType.Fold, 0, _previousPhase));
+            }
+            else if (bestLayout != null && playerFold != null)
+            {
+                _gameActions.Remove(playerFold);
+            }
 
             var pokerResult = new PokerResults(
                 reconResults,
@@ -200,7 +222,7 @@ namespace Game.Games.TexasHoldem.Solving
                 pokerPosition,
                 opponentsInGame.ToImmutableList(),
                 phase,
-                true);
+                true, null);
 
             // Initialize snapshots if they're not set
             _prevPokerResults ??= pokerResult;
@@ -242,6 +264,14 @@ namespace Game.Games.TexasHoldem.Solving
 
                     DebuggingLogs(gameBetsActions);
                 }
+            }
+            
+            if (isDecision && monteCarloResult.HasValue && pot.HasValue)
+            {
+                var evResult = EvCalculator.CalculateEv(_gameActions, monteCarloResult.Value, pot.Value);
+                Log.Debug(evResult);
+                        
+                pokerResult = pokerResult with {EvResult = evResult};
             }
 
             var isCorrectPot = IsCorrectPotWithFixActions(matchResults);
@@ -304,7 +334,7 @@ namespace Game.Games.TexasHoldem.Solving
 
             if (stack.Count < prevStacks.Count)
             {
-                return activeIndices.Select(i => prevStacks[i]).ToList();
+                return activeIndices.Select(i => i < prevStacks.Count ? prevStacks[i] : 0).ToList();
             }
 
             if (stack.Count > prevStacks.Count && prevActiveIndices != null)
@@ -340,11 +370,44 @@ namespace Game.Games.TexasHoldem.Solving
 
         private void ClearPropertiesOnNewStreet()
         {
+            UpdateStatistics();
+
             _gameActions.Clear();
             _previousPhase = PokerPhase.None;
             _startingBets = null;
             _activeIndices = null;
             _previousOpponentsInGame = null;
+            _nickNamesAtPos = new Dictionary<int, List<string>>();
+        }
+
+        private void UpdateStatistics()
+        {
+            if (_gameActions.Count == 0) return;
+            if (_gameActions[^1].PlayerIndex == 1 && _gameActions[^1].ActionType==PokerActionType.Fold) 
+                _gameActions.Remove(_gameActions[^1]);
+            var uniquePlayers = _gameActions.Select(x => x.PlayerIndex).Distinct();
+            foreach (var playerIndex in uniquePlayers)
+            {
+                var i = playerIndex - 1;
+                var normalizedNickName = NormalizedInputSelector.GetNormalizedFromInputs(_nickNamesAtPos[i]);
+
+                var similarKey = FuzzyKeyFinder.FindSimilarKey(_playerStats.Keys, normalizedNickName, maxDistance: 2);
+
+                if (similarKey != null)
+                {
+                    normalizedNickName = similarKey;
+                }
+                else if (!_playerStats.ContainsKey(normalizedNickName))
+                {
+                    _playerStats[normalizedNickName] = new PlayerStats();
+                }
+
+                _playerStats[normalizedNickName] = PlayerStatistics.AddToStats(_playerStats[normalizedNickName],
+                    playerIndex, _gameActions);
+            }
+
+            if (DebugFlags.HasFlag(PokerDebugFlags.PlayerStatistics))
+                Log.Debug(_playerStats.ToDebugString());
         }
 
         private bool IsCorrectPotWithFixActions(MatchResults matchResults)
@@ -648,12 +711,12 @@ namespace Game.Games.TexasHoldem.Solving
             smallBlind -= ante;
             bigBlind -= ante;
 
-            if (smallBlind < 0)
+            if (smallBlind <= 0)
             {
                 smallBlind = bigBlind / 2;
             }
 
-            if (bigBlind < 0)
+            if (bigBlind <= 0)
             {
                 bigBlind = smallBlind * 2;
             }
