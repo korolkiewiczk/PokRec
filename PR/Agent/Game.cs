@@ -2,10 +2,8 @@
 using System.Drawing;
 using System.Windows.Forms;
 using Common;
-using Game.Games;
 using Game.Games.TexasHoldem.Presenters;
 using Game.Games.TexasHoldem.Solving;
-using Game.Presenters;
 using Environment = Game.Common.Environment;
 
 namespace Agent

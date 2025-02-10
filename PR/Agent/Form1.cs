@@ -211,5 +211,11 @@ namespace Agent
                 ScreenShot.MoveAndResizeWindow(currentBoard.Rect.Location, currentBoard.Rect.Size);
             }
         }
+
+        private void buttonOpenCfrGraphgen_Click(object sender, EventArgs e)
+        {
+            var cfrForm = new CfrSolver.Graphgen.GraphgenForm();
+            cfrForm.Show();
+        }
     }
 }

@@ -43,9 +43,13 @@
             buttonStart = new System.Windows.Forms.Button();
             buttonFixWindow = new System.Windows.Forms.Button();
             tabSettings = new System.Windows.Forms.TabPage();
+            tabCfr = new System.Windows.Forms.TabPage();
+            buttonOpenCfrGraphgen = new System.Windows.Forms.Button();
             tabControl1.SuspendLayout();
             pageDesign.SuspendLayout();
             tabPlay.SuspendLayout();
+            tabSettings.SuspendLayout();
+            tabCfr.SuspendLayout();
             SuspendLayout();
             // 
             // buttonNewPrj
@@ -130,6 +134,7 @@
             tabControl1.Controls.Add(pageDesign);
             tabControl1.Controls.Add(tabPlay);
             tabControl1.Controls.Add(tabSettings);
+            tabControl1.Controls.Add(tabCfr);
             tabControl1.Location = new System.Drawing.Point(4, 52);
             tabControl1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             tabControl1.Name = "tabControl1";
@@ -221,6 +226,28 @@
             tabSettings.TabIndex = 2;
             tabSettings.Text = "Settings";
             // 
+            // tabCfr
+            // 
+            tabCfr.BackColor = System.Drawing.Color.Transparent;
+            tabCfr.Controls.Add(buttonOpenCfrGraphgen);
+            tabCfr.Location = new System.Drawing.Point(4, 29);
+            tabCfr.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            tabCfr.Name = "tabCfr";
+            tabCfr.Size = new System.Drawing.Size(203, 325);
+            tabCfr.TabIndex = 3;
+            tabCfr.Text = "CFR";
+            // 
+            // buttonOpenCfrGraphgen
+            // 
+            buttonOpenCfrGraphgen.Location = new System.Drawing.Point(5, 17);
+            buttonOpenCfrGraphgen.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            buttonOpenCfrGraphgen.Name = "buttonOpenCfrGraphgen";
+            buttonOpenCfrGraphgen.Size = new System.Drawing.Size(187, 62);
+            buttonOpenCfrGraphgen.TabIndex = 0;
+            buttonOpenCfrGraphgen.Text = "Open CFR Graphgen";
+            buttonOpenCfrGraphgen.UseVisualStyleBackColor = true;
+            buttonOpenCfrGraphgen.Click += buttonOpenCfrGraphgen_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
@@ -238,6 +265,8 @@
             tabControl1.ResumeLayout(false);
             pageDesign.ResumeLayout(false);
             tabPlay.ResumeLayout(false);
+            tabSettings.ResumeLayout(false);
+            tabCfr.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -258,6 +287,8 @@
         private System.Windows.Forms.Button buttonStop;
         private System.Windows.Forms.Button buttonStart;
         private System.Windows.Forms.TabPage tabSettings;
+        private System.Windows.Forms.TabPage tabCfr;
+        private System.Windows.Forms.Button buttonOpenCfrGraphgen;
         private System.Windows.Forms.Button buttonFixWindow;
     }
 }
