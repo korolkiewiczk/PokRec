@@ -133,8 +133,8 @@
             // 
             tabControl1.Controls.Add(pageDesign);
             tabControl1.Controls.Add(tabPlay);
-            tabControl1.Controls.Add(tabSettings);
             tabControl1.Controls.Add(tabCfr);
+            tabControl1.Controls.Add(tabSettings);
             tabControl1.Location = new System.Drawing.Point(4, 52);
             tabControl1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             tabControl1.Name = "tabControl1";

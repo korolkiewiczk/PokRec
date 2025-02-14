@@ -1,5 +1,4 @@
 ﻿using CfrSolver.Model;
-using Action = CfrSolver.Model.Action;
 
 namespace CfrSolver
 {
@@ -26,18 +25,18 @@ namespace CfrSolver
 
             Node childNode = GenerateRecursive(
                 player: _config.NumPlayers - 1,
-                currentAction: Action.Initial(_config.SbValue), 
+                currentAction: PlayerAction.Initial(_config.BbValue-_config.SbValue), 
                 round: Round.PreFlop, 
                 availableReraises: _config.ReraiseAmount + 1,   //add one for preflop - bigblind can react for smallblind raise
-                prevAction: Action.Initial(_config.SbValue), 
+                prevAction: PlayerAction.Initial(_config.SbValue), 
                 pot: _config.SbValue + _config.BbValue, 
                 invest: invest);
 
             Node rootNode = new Node(
                 pos: (byte)(_config.NumPlayers - 2), 
-                action: Action.Initial(_config.SbValue), 
+                action: PlayerAction.Initial(_config.SbValue), 
                 round: Round.PreFlop, 
-                children: new[] { childNode }, 
+                children: [childNode], 
                 payOff: invest.Max());
 
             return rootNode;
@@ -62,21 +61,27 @@ namespace CfrSolver
         /// <param name="pot">Current deal pot</param>
         /// <param name="invest">How much players invested</param>
         /// <returns>Node with recursively generated child nodes for subtree game states</returns>
-        private Node GenerateRecursive(int player, Action currentAction, Round round, int availableReraises, Action prevAction, int pot, int[] invest)
+        private Node GenerateRecursive(int player, PlayerAction currentAction, Round round, int availableReraises, PlayerAction prevAction, int pot, int[] invest)
         {
             if (IsSmallblindLimpedBigBlindOnPreflop(player, currentAction, round))
             {
                 availableReraises = _config.ReraiseAmount;
             }
 
+            var willBeNewRound = false;
+            if (GetNewRoundBasingOnCurrentActions(player, round, currentAction, prevAction, availableReraises,
+                    out var newRoundBasingOnCurrentActions))
+            {
+                willBeNewRound = newRoundBasingOnCurrentActions != round;
+            }
             //todo BUG - player=1 has only one CALL action in new section when betting was previously performed
-            Action[] possibleActions = GetPossibleActions(round, availableReraises, currentAction, pot);
+            PlayerAction[] possibleActions = GetPossibleActions(round, availableReraises, currentAction, pot, willBeNewRound);
 
             List<Node> nodes = new List<Node>(possibleActions.Length);
             foreach (var possibleAction in possibleActions)
             {
-                Action newCurrentAction = SaturateBet(invest, possibleAction);
-                if (newCurrentAction.Equals(Action.Invalid))
+                PlayerAction newCurrentAction = SaturateBet(invest, possibleAction);
+                if (newCurrentAction.Equals(PlayerAction.Invalid))
                 {
                     continue;
                 }
@@ -114,7 +119,7 @@ namespace CfrSolver
         /// <summary>
         /// Situation when Small blind player has called (limped) Bigblind. Bigblind can perform betting action
         /// </summary>
-        private static bool IsSmallblindLimpedBigBlindOnPreflop(int player, Action currentAction, Round round)
+        private static bool IsSmallblindLimpedBigBlindOnPreflop(int player, PlayerAction currentAction, Round round)
         {
             return player == 1 && currentAction.OpType == OpType.Call && round == Round.PreFlop;
         }
@@ -122,17 +127,17 @@ namespace CfrSolver
         /// <summary>
         /// Cut bet to it's max value
         /// </summary>
-        private Action SaturateBet(int[] invest, Action possibleAction)
+        private PlayerAction SaturateBet(int[] invest, PlayerAction possibleAction)
         {
             if (possibleAction.OpType == OpType.All)
             {
-                return new Action(OpType.All, possibleAction.Bet - invest.Max());
+                return new PlayerAction(OpType.All, possibleAction.Bet - invest.Max());
             }
 
             if (possibleAction.OpType == OpType.Raise 
                 && possibleAction.Bet + invest.Max() > _config.Bankroll)  //when possible raise is bigger than current player bankroll
             {
-                return Action.Invalid;  //since All action is always included, we will skip this action at all
+                return PlayerAction.Invalid;  //since All action is always included, we will skip this action at all
             }
 
             return possibleAction;
@@ -152,7 +157,7 @@ namespace CfrSolver
             return 0;
         }
 
-        private int GetCurrentActionInvestValue(Action newAction, Action currentAction)
+        private int GetCurrentActionInvestValue(PlayerAction newAction, PlayerAction currentAction)
         {
             switch (newAction.OpType)
             {
@@ -178,7 +183,7 @@ namespace CfrSolver
         /// <param name="prevAction">Previous action</param>
         /// <param name="availableReraises">Available amount of reraise</param>
         /// <returns>New round for next player</returns>
-        private Round GetNewRound(int player, Action newAction, Round round, Action currentAction, Action prevAction, int availableReraises)
+        private Round GetNewRound(int player, PlayerAction newAction, Round round, PlayerAction currentAction, PlayerAction prevAction, int availableReraises)
         {
             if (newAction.OpType == OpType.Fold)    //if we folds, go to Fold round
             {
@@ -193,12 +198,22 @@ namespace CfrSolver
                 return Round.Showdown;
             }
 
+            if (GetNewRoundBasingOnCurrentActions(player, round, currentAction, prevAction, availableReraises, out var newRound)) 
+                return newRound;
+
+            return round;
+        }
+
+        private bool GetNewRoundBasingOnCurrentActions(int player, Round round, PlayerAction currentAction,
+            PlayerAction prevAction, int availableReraises, out Round newRound)
+        {
             if (round > Round.PreFlop)
             {
                 if (player == 0 && currentAction.OpType == OpType.Call  //dealer only calls => next round
                     || player == 1 && currentAction.OpType == OpType.Call && prevAction.OpType == OpType.Raise) //last to decision player calls after raise => next round
                 {
-                    return round + 1;
+                    newRound = round + 1;
+                    return true;
                 }
             }
             else  //preflop
@@ -206,11 +221,13 @@ namespace CfrSolver
                 if (player == 1 && currentAction.OpType == OpType.Call  //last-to-decision player only calls => Flop
                     || player == 0 && currentAction.OpType == OpType.Call && prevAction.OpType == OpType.Raise && availableReraises != _config.ReraiseAmount) //dealer calls => Flop
                 {
-                    return Round.Flop;
+                    newRound = Round.Flop;
+                    return true;
                 }
             }
 
-            return round;
+            newRound = round;
+            return false;
         }
 
         /// <summary>
@@ -221,60 +238,60 @@ namespace CfrSolver
         /// <param name="currentAction">Current action</param>
         /// <param name="pot">Current deal pot</param>
         /// <returns>Possible actions for current state</returns>
-        private Action[] GetPossibleActions(Round round, int availableReraises, Action currentAction, int pot)
+        private PlayerAction[] GetPossibleActions(Round round, int availableReraises, PlayerAction currentAction, int pot, bool willBeNewRound)
         {
             if (round == Round.Fold || round == Round.Showdown) //for terminal state, no actions are permited
             {
-                return new Action[0];
+                return new PlayerAction[0];
             }
 
             if (currentAction.OpType == OpType.All) //player can only Fold or check all-in
             {
                 return new[]
                 {
-                    new Action(OpType.Fold),
-                    new Action(OpType.Call)
+                    new PlayerAction(OpType.Fold),
+                    new PlayerAction(OpType.Call)
                 };
             }
 
-            if (availableReraises <= 0) //no available reraises - just call or fold
+            if (availableReraises <= 0 && !willBeNewRound) //no available reraises - just call or fold
             {
                 if (currentAction.OpType == OpType.Call)
                 {
                     return new[]
                     {
-                        new Action(OpType.Call)
+                        new PlayerAction(OpType.Call)
                     };
                 }
 
                 return new[]
                 {
-                    new Action(OpType.Fold),
-                    new Action(OpType.Call)
+                    new PlayerAction(OpType.Fold),
+                    new PlayerAction(OpType.Call)
                 };
             }
 
-            var actions = new List<Action>  //base actions
+            var actions = new List<PlayerAction>  //base actions
             {
-                new Action(OpType.Call),
-                new Action(OpType.All, _config.Bankroll)
+                new PlayerAction(OpType.Call),
+                new PlayerAction(OpType.All, _config.Bankroll)
             };
 
             if (currentAction.OpType != OpType.Call)    //we can also fold if Raise was done before
             {
-                actions.Insert(0, new Action(OpType.Fold));
+                actions.Insert(0, new PlayerAction(OpType.Fold));
             }
 
             //beting
             if (_config.RelativeBetting)
             {
                 actions.AddRange(_config.PossibleRaises[(int)round]
-                    .Select(possibleRaise => new Action(OpType.Raise, GetRelativeBet(pot, possibleRaise))));
+                    .Select(possibleRaise => new PlayerAction(OpType.Raise, GetRelativeBet(pot, possibleRaise))));
             }
             else
             {
                 actions.AddRange(_config.PossibleRaises[(int)round]
-                    .Select(possibleRaise => new Action(OpType.Raise, possibleRaise)));
+                    .Select(possibleRaise => new PlayerAction(OpType.Raise, possibleRaise)));
             }
 
             return actions.ToArray();

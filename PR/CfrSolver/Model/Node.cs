@@ -6,7 +6,7 @@
         private readonly Dictionary<int, float[]> _strategy;
         private readonly Dictionary<int, float[]> _strategySum;
 
-        public Node(byte pos, Action action, Round round, Node[] children, int payOff = 0)
+        public Node(byte pos, PlayerAction action, Round round, Node[] children, int payOff = 0)
         {
             Pos = pos;
             Action = action;
@@ -21,7 +21,7 @@
 
         public byte Pos { get; }
 
-        public Action Action { get; }
+        public PlayerAction Action { get; }
 
         public Round Round { get; }
 

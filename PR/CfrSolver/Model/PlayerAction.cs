@@ -1,14 +1,14 @@
 ﻿namespace CfrSolver.Model
 {
-    public struct Action
+    public record struct PlayerAction
     {
         public OpType OpType { get; }
         public short Bet { get; }
 
-        public static Action Initial(int b) => new Action(OpType.Raise, (short)b);
-        public static Action Invalid => new Action(OpType.Fold, -1);
+        public static PlayerAction Initial(int b) => b == 0 ? new PlayerAction(OpType.Call) : new PlayerAction(OpType.Raise, (short) b);
+        public static PlayerAction Invalid => new PlayerAction(OpType.Fold, -1);
 
-        public Action(OpType opType)
+        public PlayerAction(OpType opType)
         {
             if (opType == OpType.Raise)
             {
@@ -19,7 +19,7 @@
             Bet = 0;
         }
 
-        public Action(OpType opType, int bet)
+        public PlayerAction(OpType opType, int bet)
         {
             OpType = opType;
             Bet = (short)bet;

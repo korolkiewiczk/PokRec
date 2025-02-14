@@ -9,26 +9,39 @@ using CfrSolver.Datalayer;
 using CfrSolver.Utils;
 using System.Diagnostics;
 using Newtonsoft.Json;
+using System.Linq;
 
 namespace Agent.CfrSolver.Graphgen
 {
-    public partial class GraphgenForm : Form
+    public partial class GraphgenForm
     {
         private const int MaxHandResolution = 16;
 
-        public GraphgenForm()
+        private void LoadConfigValues(NodeGenConfig config)
         {
-            InitializeComponent();
+            // Set numeric values
+            numSbValue.Value = config.SbValue;
+            numBbValue.Value = config.BbValue;
+            numReraiseAmount.Value = config.ReraiseAmount;
+            numNumPlayers.Value = config.NumPlayers;
+            numBankroll.Value = config.Bankroll;
+            chkRelativeBetting.Checked = config.RelativeBetting;
+
+            // Set possible raises for each phase
+            for (var i = 0; i < 4; i++)
+            {
+                dgvPossibleRaises.Rows[i].Cells[colBets.Name].Value =
+                    string.Join(", ", config.PossibleRaises[i]);
+            }
         }
 
-        private void BrowseFile(TextBox textBox, string filter)
+        private static void BrowseFile(TextBox textBox, string filter)
         {
-            using (var dialog = new OpenFileDialog { Filter = filter })
+            using var dialog = new OpenFileDialog();
+            dialog.Filter = filter;
+            if (dialog.ShowDialog() == DialogResult.OK)
             {
-                if (dialog.ShowDialog() == DialogResult.OK)
-                {
-                    textBox.Text = dialog.FileName;
-                }
+                textBox.Text = dialog.FileName;
             }
         }
 
@@ -36,33 +49,43 @@ namespace Agent.CfrSolver.Graphgen
         {
             if (txtLog.InvokeRequired)
             {
-                txtLog.Invoke(new Action(() => Log(message)));
+                txtLog.Invoke(() => Log(message));
                 return;
             }
 
             txtLog.AppendText(message + Environment.NewLine);
         }
 
-        private void UpdateProgress(int value)
+        private void UpdateProgress(int value, int max)
         {
             if (progressBar.InvokeRequired)
             {
-                progressBar.Invoke(new Action(() => UpdateProgress(value)));
+                progressBar.Invoke(() => UpdateProgress(value, max));
                 return;
             }
 
-            progressBar.Value = value;
+            var percent = (value * 100) / max;
+            progressBar.Value = percent;
+            if (value < max)
+            {
+                lblProgress.Text = $"{value}/{max}";
+            }
+            else
+            {
+                lblProgress.Text = string.Empty;
+            }
         }
 
         private void BtnGenConfig_Click(object sender, EventArgs e)
         {
-            using (var dialog = new SaveFileDialog { Filter = "JSON files|*.json", FileName = "default.json" })
+            using var dialog = new SaveFileDialog();
+            dialog.Filter = "JSON files|*.json";
+            dialog.FileName = "default.json";
+            if (dialog.ShowDialog() == DialogResult.OK)
             {
-                if (dialog.ShowDialog() == DialogResult.OK)
-                {
-                    File.WriteAllText(dialog.FileName, JsonConvert.SerializeObject(DefaultConfig, Formatting.Indented));
-                    Log($"Config file generated: {dialog.FileName}");
-                }
+                File.WriteAllText(dialog.FileName, JsonConvert.SerializeObject(GetConfigFromControls(),
+                    Formatting.Indented));
+                Log($"Config file generated: {dialog.FileName}");
             }
         }
 
@@ -75,9 +98,7 @@ namespace Agent.CfrSolver.Graphgen
             {
                 var options = new Options
                 {
-                    ConfigFileName = string.IsNullOrEmpty(txtConfigFile.Text) ? null : txtConfigFile.Text,
-                    XmlOnlyFile = string.IsNullOrEmpty(txtXmlFile.Text) ? null : txtXmlFile.Text,
-                    Iterations = (int)numIterations.Value,
+                    Iterations = (int) numIterations.Value,
                     TableName = txtTableName.Text,
                     Silent = chkSilent.Checked
                 };
@@ -86,7 +107,7 @@ namespace Agent.CfrSolver.Graphgen
             }
             catch (Exception ex)
             {
-                Log($"Error: {ex.Message}");
+                Log($"Error: {ex}");
             }
             finally
             {
@@ -94,37 +115,51 @@ namespace Agent.CfrSolver.Graphgen
             }
         }
 
+        private NodeGenConfig GetConfigFromControls()
+        {
+            var possibleRaises = new List<int[]>();
+            foreach (DataGridViewRow row in dgvPossibleRaises.Rows)
+            {
+                var betsStr = row.Cells[colBets.Name].Value as string;
+                if (!string.IsNullOrWhiteSpace(betsStr))
+                {
+                    var bets = betsStr.Split(',')
+                        .Select(s => int.Parse(s.Trim()))
+                        .ToArray();
+                    possibleRaises.Add(bets);
+                }
+                else
+                {
+                    possibleRaises.Add([]);
+                }
+            }
+
+            return new NodeGenConfig
+            {
+                SbValue = (int) numSbValue.Value,
+                BbValue = (int) numBbValue.Value,
+                PossibleRaises = possibleRaises.ToArray(),
+                ReraiseAmount = (int) numReraiseAmount.Value,
+                NumPlayers = (int) numNumPlayers.Value,
+                Bankroll = (int) numBankroll.Value,
+                RelativeBetting = chkRelativeBetting.Checked,
+            };
+        }
+
         private void ProcessMain(Options options)
         {
-            NodeGen nodeGen = null;
-            bool onlyXml = false;
-            string xmlFileName = "";
-
-            NodeGenConfig defaultConfig = DefaultConfig;
-
-            if (options.ConfigFileName != null)
+            try
             {
-                var nodeGenConfig = JsonConvert.DeserializeObject<NodeGenConfig>(File.ReadAllText(options.ConfigFileName));
-                nodeGen = new NodeGen(nodeGenConfig);
-            }
-            else
-            {
-                nodeGen = new NodeGen(defaultConfig);
-            }
+                btnStart.Enabled = false;
+                var nodeGen = new NodeGen(GetConfigFromControls());
+                txtLog.Text = string.Empty;
 
-            if (options.XmlOnlyFile != null)
-            {
-                onlyXml = true;
-                xmlFileName = options.XmlOnlyFile;
+                TrainAndWriteToDb(nodeGen, options);
             }
-
-            if (onlyXml)
+            finally
             {
-                GenerateXml(nodeGen, xmlFileName, options);
-                return;
+                btnStart.Enabled = true;
             }
-
-            TrainAndWriteToDb(nodeGen, options);
         }
 
         private void TrainAndWriteToDb(NodeGen nodeGen, Options options)
@@ -132,49 +167,39 @@ namespace Agent.CfrSolver.Graphgen
             Stopwatch sw = new Stopwatch();
 
             sw.Start();
-            var trainer = new Trainer(nodeGen, options.Iterations, new HandGenerator(MaxHandResolution), new CfrPlusFactory());
+            var trainer = new Trainer(nodeGen, options.Iterations, new HandGenerator(MaxHandResolution),
+                new CfrPlusFactory());
             float eq;
-            HashSet<int> possibleHands;
 
-            if (!options.Silent)
-            {
-                Log("Generating game tree...");
-            }
+            Log("Generating game tree...");
 
-            var rootNode = trainer.Train(out eq, out possibleHands, options.Silent ? null : x =>
-            {
-                UpdateProgress(x * 100 / options.Iterations);
-            });
+            var rootNode = trainer.Train(out eq, out var possibleHands,
+                options.Silent ? null : x => { UpdateProgress(x + 1, options.Iterations); });
             sw.Stop();
 
-            if (!options.Silent)
-            {
-                Log($"\nElapsed seconds on training: {(double)sw.ElapsedMilliseconds / 1000:0.##}");
-                Log($"Equity: {eq}");
-            }
+            Log($"\nElapsed seconds on training: {(double) sw.ElapsedMilliseconds / 1000:0.##}");
+            Log($"Equity: {eq}");
 
-            var dbWriter = new DbWriter(options.TableName, () => 
-                MessageBox.Show("Remove existing DB? (Y/N). If No, new table with random name will be generated.", 
+            var dbWriter = new DbWriter(options.TableName, () =>
+                MessageBox.Show("Remove existing DB? (Y/N). If No, new table with random name will be generated.",
                     "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes);
 
-            if (!options.Silent)
-            {
-                Log("Writing to " + dbWriter.DbName);
-            }
+            Log("Writing to " + dbWriter.DbName);
 
-            foreach (var hand in possibleHands)
+            for (var i = 0; i < possibleHands.Count; i++)
             {
+                var hand = possibleHands.ElementAt(i);
                 Log($"Hand {hand:X4}");
                 dbWriter.WriteToDb(hand, rootNode, options.Silent ? null : x => Log($"Written {x} entries"));
+                UpdateProgress((i + 1), possibleHands.Count);
             }
+
+            Log("Completed");
         }
 
-        private void GenerateXml(NodeGen nodeGen, string xmlFileName, Options options)
+        private void GenerateXml(NodeGen nodeGen, string xmlFileName)
         {
-            if (!options.Silent)
-            {
-                Log("Generating game tree...");
-            }
+            Log("Generating game tree...");
 
             var rootNode0 = nodeGen.Generate();
             XElement xElement = new XElement("Node");
@@ -185,21 +210,92 @@ namespace Agent.CfrSolver.Graphgen
             doc.Save(xmlFileName);
         }
 
-
-        public static NodeGenConfig DefaultConfig => new NodeGenConfig
+        private void btnBrowseConfig_Click(object sender, EventArgs e)
         {
-            SbValue = 1,
-            BbValue = 2,
-            PossibleRaises = new[]
+            BrowseFile(txtConfigFile, "JSON files|*.json");
+            if (!string.IsNullOrEmpty(txtConfigFile.Text))
             {
-                new[] {4, 6},
-                new[] {6, 12},
-                new[] {10, 20},
-                new[] {15, 25}
-            },
-            ReraiseAmount = 1,
-            NumPlayers = 2,
-            Bankroll = 100
-        };
+                try
+                {
+                    var config = JsonConvert.DeserializeObject<NodeGenConfig>(File.ReadAllText(txtConfigFile.Text));
+                    LoadConfigValues(config);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error loading config file: {ex.Message}", "Error", MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private static NodeGenConfig DefaultConfig(bool relativeBetting) =>
+            relativeBetting
+                ? new NodeGenConfig
+                {
+                    SbValue = 1,
+                    BbValue = 2,
+                    PossibleRaises =
+                    [
+                        [150, 200],
+                        [150, 180],
+                        [200],
+                        [250]
+                    ],
+                    ReraiseAmount = 2,
+                    NumPlayers = 2,
+                    Bankroll = 100,
+                    RelativeBetting = true
+                }
+                : new NodeGenConfig
+                {
+                    SbValue = 1,
+                    BbValue = 2,
+                    PossibleRaises =
+                    [
+                        [4, 6],
+                        [6, 12],
+                        [10],
+                        [15]
+                    ],
+                    ReraiseAmount = 1,
+                    NumPlayers = 2,
+                    Bankroll = 100,
+                    RelativeBetting = false
+                };
+
+        private void btnOpenConfig_Click(object sender, EventArgs e)
+        {
+            this.tabControlMain.SelectedIndex = 1;
+        }
+
+        private void GraphgenForm_Load(object sender, EventArgs e)
+        {
+            // Initialize grid with predefined rows
+            dgvPossibleRaises.Rows.Add("Preflop", "");
+            dgvPossibleRaises.Rows.Add("Flop", "");
+            dgvPossibleRaises.Rows.Add("Turn", "");
+            dgvPossibleRaises.Rows.Add("River", "");
+
+            // Load default config values
+            LoadConfigValues(DefaultConfig(chkRelativeBetting.Checked));
+        }
+
+        private void btnGenXml_Click(object sender, EventArgs e)
+        {
+            using var dialog = new SaveFileDialog();
+            dialog.Filter = "XML files|*.xml";
+            dialog.FileName = "nodes.xml";
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                var nodeGen = new NodeGen(GetConfigFromControls());
+                GenerateXml(nodeGen, dialog.FileName);
+                Log($"XML file generated: {dialog.FileName}");
+            }
+        }
+
+        private void chkRelativeBetting_CheckedChanged(object sender, EventArgs e)
+        {
+            LoadConfigValues(DefaultConfig(chkRelativeBetting.Checked));
+        }
     }
-} 
+}
