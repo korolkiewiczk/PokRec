@@ -3,6 +3,9 @@ using CfrSolver.Model;
 
 namespace CfrSolver.Cfr
 {
+    /// <summary>
+    /// Implementation of the CFR+ algorithm.
+    /// </summary>
     internal class CfrPlus : ICfr
     {
         private readonly int _player;
@@ -16,62 +19,57 @@ namespace CfrSolver.Cfr
             _winningPlayer = winningPlayer;
         }
 
-        public float Compute(Node node, float op)
+        /// <summary>
+        /// Computes the counterfactual regret value for the given node.
+        /// </summary>
+        /// <param name="node">The current game tree node.</param>
+        /// <param name="reachProb">The current reach probability (realization weight).</param>
+        /// <returns>The computed expected value.</returns>
+        public float Compute(Node node, float reachProb)
         {
             if (node.Round == Round.Fold)
             {
-                return (node.Pos == _player ? -node.PayOff : node.PayOff) * op;
+                return (node.Pos == _player ? -node.PayOff : node.PayOff) * reachProb;
             }
 
             if (node.Round == Round.Showdown)
             {
                 if (_winningPlayer == -1) return 0;
-                return (_player == _winningPlayer ? node.PayOff : -node.PayOff) * op;
+                return (_player == _winningPlayer ? node.PayOff : -node.PayOff) * reachProb;
             }
 
-            float[] s = node.GetStrategy(_hand, op);
-
+            float[] strategy = node.GetStrategy(_hand, reachProb);
             float ev = 0;
 
             if (node.Pos == _player)
             {
-                var u = new float[node.Children.Length];
+                var utilities = new float[node.Children.Length];
 
+                // First loop: compute utilities and accumulate expected value.
                 for (int a = 0; a < node.Children.Length; a++)
                 {
-                    u[a] = Compute(node.Children[a], op);
-
-                    ev += s[a] * u[a];
+                    utilities[a] = Compute(node.Children[a], reachProb);
+                    ev += strategy[a] * utilities[a];
                 }
 
-                for (var a = 0; a < node.Children.Length; a++)
+                // Second loop: update regrets.
+                for (int a = 0; a < node.Children.Length; a++)
                 {
-                    node.UpdateCfr(_hand, a, u[a] - ev);
+                    node.UpdateCfr(_hand, a, utilities[a] - ev);
                 }
             }
             else
             {
-                for (var a = 0; a < node.Children.Length; a++)
+                // For opponent nodes, simply accumulate the EV from children.
+                for (int a = 0; a < node.Children.Length; a++)
                 {
-                    float newop = s[a] * op;
-
-                    CopyOrAdd(a == 0, ref ev, Compute(node.Children[a], newop));
+                    float newReachProb = strategy[a] * reachProb;
+                    float childEV = Compute(node.Children[a], newReachProb);
+                    ev = (a == 0) ? childEV : ev + childEV;
                 }
             }
 
             return ev;
-        }
-
-        private void CopyOrAdd(bool isNew, ref float ev, float vanillaCfrPlus)
-        {
-            if (isNew)
-            {
-                ev = vanillaCfrPlus;
-            }
-            else
-            {
-                ev += vanillaCfrPlus;
-            }
         }
     }
 }

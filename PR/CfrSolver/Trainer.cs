@@ -3,7 +3,7 @@ using CfrSolver.Model;
 
 namespace CfrSolver
 {
-    public class Trainer
+    public class Trainer : ITrainer
     {
         private readonly NodeGen _nodeGen;
         private readonly int _trainIterations;

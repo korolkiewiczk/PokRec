@@ -69,35 +69,41 @@ namespace CfrSolver
 
         private int EvaluatePreflop(Card[] playerHand)
         {
-            if (playerHand[0].CardType == playerHand[1].CardType) return 3;
+            if (playerHand[0].CardType == playerHand[1].CardType) return playerHand[0].CardType > CardType.C10 ? ((int)playerHand[0].CardType - (int)CardType.J + 4) : 3;
             if (playerHand[0].CardType > CardType.C10 && playerHand[1].CardType > CardType.C10 ||
-                (playerHand[0].CardType > CardType.C7 && playerHand[1].CardType > CardType.C7 && playerHand[0].CardColor == playerHand[1].CardColor)) return 2;
+                (playerHand[0].CardType > CardType.C7 && playerHand[1].CardType > CardType.C7 &&
+                 playerHand[0].CardColor == playerHand[1].CardColor)) return 2;
             if (playerHand[0].CardType > CardType.C7 && playerHand[1].CardType > CardType.C7) return 1;
             return 0;
+        }
+
+        private static int GetHandBucket(PokerMark mark)
+        {
+            return (int) mark.PokerLayout - 1; //Math.Min((int)mark.PokerLayout / 2, 4);
         }
 
         private int EvaluateFlop(Card[] playerFlop)
         {
             var cardLayout = new CardLayout(playerFlop);
-            PokerMark mark = (PokerMark)cardLayout.GetMark();
+            PokerMark mark = (PokerMark) cardLayout.GetMark();
 
-            return Math.Min((int)mark.PokerLayout / 2, 3);
+            return GetHandBucket(mark);
         }
 
         private int EvaluateTurn(Card[] playerFlop)
         {
             var cardLayout = new CardLayout(playerFlop);
-            PokerMark mark = (PokerMark)cardLayout.GetMark();
+            PokerMark mark = (PokerMark) cardLayout.GetMark();
 
-            return Math.Min((int)mark.PokerLayout / 2, 3);
+            return GetHandBucket(mark);
         }
 
         private int EvaluateRiver(Card[] playerFlop)
         {
             var cardLayout = new CardLayout(playerFlop);
-            PokerMark mark = (PokerMark)cardLayout.GetMark();
+            PokerMark mark = (PokerMark) cardLayout.GetMark();
 
-            return Math.Min((int)mark.PokerLayout / 2, 3);
+            return GetHandBucket(mark);
         }
 
         private Card[] GetShuffledCards()
@@ -110,7 +116,7 @@ namespace CfrSolver
                 {
                     for (int j = 0; j < 4; j++)
                     {
-                        _baseCards[i * 4 + j] = new Card((CardColor)j, (CardType)i);
+                        _baseCards[i * 4 + j] = new Card((CardColor) j, (CardType) i);
                     }
                 }
             }

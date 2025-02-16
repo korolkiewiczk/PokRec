@@ -167,7 +167,7 @@ namespace Agent.CfrSolver.Graphgen
             Stopwatch sw = new Stopwatch();
 
             sw.Start();
-            var trainer = new Trainer(nodeGen, options.Iterations, new HandGenerator(MaxHandResolution),
+            var trainer = new TrainerParallel(nodeGen, options.Iterations, new HandGenerator(MaxHandResolution),
                 new CfrPlusFactory());
             float eq;
 

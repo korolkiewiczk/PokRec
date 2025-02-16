@@ -1,10 +1,37 @@
-﻿namespace CfrSolver.Model
+﻿using System;
+using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+
+namespace CfrSolver.Model
 {
-    public struct Node
+    /// <summary>
+    /// Represents a node in the game tree.
+    /// This implementation is fully thread safe by grouping all per-hand data
+    /// into a structure and protecting it with a per-key lock.
+    /// </summary>
+    public class Node
     {
-        private readonly Dictionary<int, float[]> _cfr;
-        private readonly Dictionary<int, float[]> _strategy;
-        private readonly Dictionary<int, float[]> _strategySum;
+        // Private class that holds the per-masked-hand data.
+        private class NodeData
+        {
+            public readonly float[] Cfr;
+            public readonly float[] Strategy;
+            public readonly float[] StrategySum;
+            public readonly object Lock = new object();
+
+            public NodeData(int actions)
+            {
+                Cfr = new float[actions];
+                Strategy = new float[actions];
+                StrategySum = new float[actions];
+            }
+        }
+
+        // Dictionary mapping the masked hand value to its NodeData.
+        private readonly ConcurrentDictionary<int, NodeData> _data = new();
+
+        // Cache the mask for this node (assuming Round doesn't change)
+        private readonly int _cachedMask;
 
         public Node(byte pos, PlayerAction action, Round round, Node[] children, int payOff = 0)
         {
@@ -13,20 +40,13 @@
             Round = round;
             Children = children;
             PayOff = (short)payOff;
-
-            _cfr = new Dictionary<int, float[]>();
-            _strategy = new Dictionary<int, float[]>();
-            _strategySum = new Dictionary<int, float[]>();
+            _cachedMask = ComputeMask();
         }
 
         public byte Pos { get; }
-
         public PlayerAction Action { get; }
-
         public Round Round { get; }
-
         public Node[] Children { get; }
-
         public short PayOff { get; }
 
         public static bool IsTerminal(Round round) => round == Round.Fold || round == Round.Showdown;
@@ -44,109 +64,99 @@
             return $"{part1} [{part2}]";
         }
 
+        /// <summary>
+        /// Gets the current strategy for a given hand and updates the cumulative strategy sum.
+        /// </summary>
         public float[] GetStrategy(int hand, float realizationWeight)
         {
-            float normalizingSum = 0;
-            float[] strategy = Strategy(hand);
-            float[] cfr = Cfr(hand);
-            float[] strategySum = StrategySum(hand);
-
-            for (int a = 0; a < Children.Length; a++)
+            NodeData data = GetOrCreateData(hand);
+            lock (data.Lock)
             {
-                strategy[a] = cfr[a] > 0 ? cfr[a] : 0;
-                normalizingSum += strategy[a];
-            }
-
-            for (int a = 0; a < Children.Length; a++)
-            {
-                if (normalizingSum > 0)
+                float normalizingSum = 0;
+                // Compute the current strategy from CFR values.
+                for (int a = 0; a < Children.Length; a++)
                 {
-                    strategy[a] /= normalizingSum;
-                }
-                else
-                {
-                    strategy[a] = 1.0f / Children.Length;
+                    data.Strategy[a] = data.Cfr[a] > 0 ? data.Cfr[a] : 0;
+                    normalizingSum += data.Strategy[a];
                 }
 
-                strategySum[a] += realizationWeight * strategy[a];
-            }
+                // Normalize and update the cumulative strategy sum.
+                for (int a = 0; a < Children.Length; a++)
+                {
+                    data.Strategy[a] = normalizingSum > 0
+                        ? data.Strategy[a] / normalizingSum
+                        : 1.0f / Children.Length;
+                    data.StrategySum[a] += realizationWeight * data.Strategy[a];
+                }
 
-            return strategy;
+                // Return a copy so the caller doesn't modify the internal array.
+                float[] result = new float[Children.Length];
+                Array.Copy(data.Strategy, result, Children.Length);
+                return result;
+            }
         }
 
+        /// <summary>
+        /// Gets the average strategy for the specified hand.
+        /// </summary>
         public float[] GetAverageStrategy(int hand)
         {
-            float[] strategySum = StrategySum(hand);
-            float[] avgStrategy = new float[Children.Length];
-            float normalizingSum = 0;
-
-            for (int a = 0; a < Children.Length; a++)
+            NodeData data = GetOrCreateData(hand);
+            lock (data.Lock)
             {
-                normalizingSum += strategySum[a];
-            }
-
-            for (int a = 0; a < Children.Length; a++)
-            {
-                if (normalizingSum > 0)
+                float normalizingSum = 0;
+                float[] avgStrategy = new float[Children.Length];
+                for (int a = 0; a < Children.Length; a++)
                 {
-                    avgStrategy[a] = strategySum[a] / normalizingSum;
+                    normalizingSum += data.StrategySum[a];
                 }
-                else
+                for (int a = 0; a < Children.Length; a++)
                 {
-                    avgStrategy[a] = 1.0f / Children.Length;
+                    avgStrategy[a] = normalizingSum > 0
+                        ? data.StrategySum[a] / normalizingSum
+                        : 1.0f / Children.Length;
                 }
+                return avgStrategy;
             }
-            return avgStrategy;
         }
 
-        public void UpdateCfr(int hand, int i, float delta)
+        /// <summary>
+        /// Updates the CFR (counterfactual regret) for the specified action.
+        /// </summary>
+        public void UpdateCfr(int hand, int actionIndex, float delta)
         {
-            hand = GetHand(hand);
-            _cfr[hand][i] += delta;
-            //plus
-            _cfr[hand][i] = Math.Max(0, _cfr[hand][i]);
-            _strategy[hand][i] = _cfr[hand][i];
-        }
-
-        private float[] Cfr(int hand)
-        {
-            hand = GetHand(hand);
-
-            if (!_cfr.ContainsKey(hand))
+            NodeData data = GetOrCreateData(hand);
+            lock (data.Lock)
             {
-                _cfr[hand] = new float[Children.Length];
+                data.Cfr[actionIndex] += delta;
+                // Ensure regret values remain non-negative (CFR+)
+                data.Cfr[actionIndex] = Math.Max(0, data.Cfr[actionIndex]);
+                // Update the corresponding strategy value.
+                data.Strategy[actionIndex] = data.Cfr[actionIndex];
             }
-
-            return _cfr[hand];
         }
 
-        private float[] Strategy(int hand)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private int GetMaskedHand(int hand)
         {
-            hand = GetHand(hand);
-
-            if (!_strategy.ContainsKey(hand))
-            {
-                _strategy[hand] = new float[Children.Length];
-            }
-
-            return _strategy[hand];
+            return hand & _cachedMask;
         }
 
-        private float[] StrategySum(int hand)
+        /// <summary>
+        /// Retrieves or creates the NodeData for the given hand.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private NodeData GetOrCreateData(int hand)
         {
-            hand = GetHand(hand);
-
-            if (!_strategySum.ContainsKey(hand))
-            {
-                _strategySum[hand] = new float[Children.Length];
-            }
-
-            return _strategySum[hand];
+            int maskedHand = GetMaskedHand(hand);
+            return _data.GetOrAdd(maskedHand, _ => new NodeData(Children.Length));
         }
 
-        private int GetHand(int hand)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private int ComputeMask()
         {
-            return hand & ((16 << (4 * (int)Round)) - 1);
+            // The bitmask ((16 << (4 * (int)Round)) - 1) determines how many bits to keep.
+            return ((16 << (4 * (int)Round)) - 1);
         }
     }
 }
