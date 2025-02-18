@@ -20,11 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommandLineParser" Version="2.9.1" />
-    <PackageReference Include="Microsoft.VisualBasic" Version="10.3.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="emulog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -32,6 +27,5 @@
 
   <ItemGroup>
     <Folder Include="CfrSolver.Graphgen\" />
-    <Folder Include="CfrSolver.Player\" />
   </ItemGroup>
 </Project>

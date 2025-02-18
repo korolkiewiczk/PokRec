@@ -79,7 +79,7 @@ namespace CfrSolver
 
         private static int GetHandBucket(PokerMark mark)
         {
-            return (int) mark.PokerLayout - 1; //Math.Min((int)mark.PokerLayout / 2, 4);
+            return int.Min((int) mark.PokerLayout - 1, 7);
         }
 
         private int EvaluateFlop(Card[] playerFlop)

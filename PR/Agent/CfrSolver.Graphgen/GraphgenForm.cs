@@ -10,6 +10,7 @@ using CfrSolver.Utils;
 using System.Diagnostics;
 using Newtonsoft.Json;
 using System.Linq;
+using CfrSolver.Model;
 
 namespace Agent.CfrSolver.Graphgen
 {
@@ -91,19 +92,12 @@ namespace Agent.CfrSolver.Graphgen
 
         private async void BtnStart_Click(object sender, EventArgs e)
         {
-            btnStart.Enabled = false;
-            progressBar.Value = 0;
-
+            var prevBtnText = btnStart.Text;
             try
             {
-                var options = new Options
-                {
-                    Iterations = (int) numIterations.Value,
-                    TableName = txtTableName.Text,
-                    Silent = chkSilent.Checked
-                };
-
-                await System.Threading.Tasks.Task.Run(() => ProcessMain(options));
+                progressBar.Value = 0;
+                btnStart.Text = "Stop";
+                await System.Threading.Tasks.Task.Run(ProcessMain);
             }
             catch (Exception ex)
             {
@@ -111,7 +105,7 @@ namespace Agent.CfrSolver.Graphgen
             }
             finally
             {
-                btnStart.Enabled = true;
+                btnStart.Text = prevBtnText;
             }
         }
 
@@ -146,7 +140,7 @@ namespace Agent.CfrSolver.Graphgen
             };
         }
 
-        private void ProcessMain(Options options)
+        private void ProcessMain()
         {
             try
             {
@@ -154,7 +148,7 @@ namespace Agent.CfrSolver.Graphgen
                 var nodeGen = new NodeGen(GetConfigFromControls());
                 txtLog.Text = string.Empty;
 
-                TrainAndWriteToDb(nodeGen, options);
+                TrainAndWriteToDb(nodeGen);
             }
             finally
             {
@@ -162,25 +156,30 @@ namespace Agent.CfrSolver.Graphgen
             }
         }
 
-        private void TrainAndWriteToDb(NodeGen nodeGen, Options options)
+        private void TrainAndWriteToDb(NodeGen nodeGen)
         {
             Stopwatch sw = new Stopwatch();
 
+            int iterations = (int) numIterations.Value;
             sw.Start();
-            var trainer = new TrainerParallel(nodeGen, options.Iterations, new HandGenerator(MaxHandResolution),
+            var trainer = new TrainerParallel(nodeGen, iterations, new HandGenerator(MaxHandResolution),
                 new CfrPlusFactory());
-            float eq;
 
             Log("Generating game tree...");
 
-            var rootNode = trainer.Train(out eq, out var possibleHands,
-                options.Silent ? null : x => { UpdateProgress(x + 1, options.Iterations); });
+            var rootNode = trainer.Train(out var eq, out var possibleHands,
+                x => { UpdateProgress(x + 1, iterations); });
             sw.Stop();
 
             Log($"\nElapsed seconds on training: {(double) sw.ElapsedMilliseconds / 1000:0.##}");
             Log($"Equity: {eq}");
 
-            var dbWriter = new DbWriter(options.TableName, () =>
+            SaveNodesToDatabase(possibleHands, rootNode);
+        }
+
+        private void SaveNodesToDatabase(HashSet<int> possibleHands, Node rootNode)
+        {
+            var dbWriter = new DbWriter(txtTableName.Text, () =>
                 MessageBox.Show("Remove existing DB? (Y/N). If No, new table with random name will be generated.",
                     "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes);
 
@@ -190,7 +189,7 @@ namespace Agent.CfrSolver.Graphgen
             {
                 var hand = possibleHands.ElementAt(i);
                 Log($"Hand {hand:X4}");
-                dbWriter.WriteToDb(hand, rootNode, options.Silent ? null : x => Log($"Written {x} entries"));
+                dbWriter.WriteToDb(hand, rootNode, x => Log($"Written {x} entries"));
                 UpdateProgress((i + 1), possibleHands.Count);
             }
 

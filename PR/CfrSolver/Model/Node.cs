@@ -12,19 +12,12 @@ namespace CfrSolver.Model
     public class Node
     {
         // Private class that holds the per-masked-hand data.
-        private class NodeData
+        private class NodeData(int actions)
         {
-            public readonly float[] Cfr;
-            public readonly float[] Strategy;
-            public readonly float[] StrategySum;
-            public readonly object Lock = new object();
-
-            public NodeData(int actions)
-            {
-                Cfr = new float[actions];
-                Strategy = new float[actions];
-                StrategySum = new float[actions];
-            }
+            public readonly float[] Cfr = new float[actions];
+            public readonly float[] Strategy = new float[actions];
+            public readonly float[] StrategySum = new float[actions];
+            public readonly object Lock = new();
         }
 
         // Dictionary mapping the masked hand value to its NodeData.
@@ -49,7 +42,7 @@ namespace CfrSolver.Model
         public Node[] Children { get; }
         public short PayOff { get; }
 
-        public static bool IsTerminal(Round round) => round == Round.Fold || round == Round.Showdown;
+        public static bool IsTerminal(Round round) => round is Round.Fold or Round.Showdown;
         public bool IsTerminal() => IsTerminal(Round);
 
         public override string ToString()

@@ -6,6 +6,6 @@
         public int OppHand { get; set; }
         public int WinningPlayer { get; set; }
 
-        public int[] Hands => new[] { Hand, OppHand };
+        public int[] Hands => [Hand, OppHand];
     }
 }

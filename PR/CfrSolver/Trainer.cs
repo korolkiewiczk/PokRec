@@ -34,7 +34,7 @@ namespace CfrSolver
                 possibleHands.Add(handInfo.Hand);
 
                 var eq1 = _cfrFactory.Create(0, handInfo.Hand, handInfo.WinningPlayer).Compute(rootNode, 1);
-                var eq2 = _cfrFactory.Create(1, handInfo.Hand, 1 - handInfo.WinningPlayer).Compute(rootNode, 1);
+                var eq2 = _cfrFactory.Create(1, handInfo.Hand, handInfo.WinningPlayer == -1 ? -1 :1 - handInfo.WinningPlayer).Compute(rootNode, 1);
                 eq += eq1 + eq2;
 
                 progress?.Invoke(i);

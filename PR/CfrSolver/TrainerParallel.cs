@@ -12,21 +12,16 @@ public class TrainerParallel : ITrainer
     private readonly IHandGenerator _handGenerator;
     private readonly ICfrFactory _cfrFactory;
 
-    // Dictionary to hold a lock object for each masked key.
-    private readonly ConcurrentDictionary<int, object> _maskLocks;
-
     public TrainerParallel(NodeGen nodeGen, int trainIterations, IHandGenerator handGenerator, ICfrFactory cfrFactory)
     {
         _nodeGen = nodeGen;
         _trainIterations = trainIterations;
         _handGenerator = handGenerator;
         _cfrFactory = cfrFactory;
-        _maskLocks = new ConcurrentDictionary<int, object>();
     }
 
     /// <summary>
-    /// Runs training in parallel. For each training iteration, we compute a masked key based on the hand.
-    /// If many iterations share the same masked key, they will be serialized; otherwise, they can update concurrently.
+    /// Runs training in parallel.
     /// </summary>
     /// <param name="eq">The accumulated equity from training.</param>
     /// <param name="possibleHands">A set of all hand identifiers encountered.</param>
@@ -53,7 +48,7 @@ public class TrainerParallel : ITrainer
             float eq1 = 0, eq2 = 0;
 
             eq1 = _cfrFactory.Create(0, handInfo.Hand, handInfo.WinningPlayer).Compute(rootNode, 1);
-            eq2 = _cfrFactory.Create(1, handInfo.Hand, 1 - handInfo.WinningPlayer).Compute(rootNode, 1);
+            eq2 = _cfrFactory.Create(1, handInfo.Hand, handInfo.WinningPlayer == -1 ? -1 : 1 - handInfo.WinningPlayer).Compute(rootNode, 1);
 
             // Update the cumulative equity in a thread-safe manner.
             lock (eqLock)

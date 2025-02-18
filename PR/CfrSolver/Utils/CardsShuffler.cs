@@ -8,7 +8,7 @@ namespace CfrSolver.Utils
         {
             for (int i = 51; i > 0; i--)
             {
-                int j = random.Next(i);
+                int j = random.Next(i + 1);
                 Card tmp = myCards[i];
                 myCards[i] = myCards[j];
                 myCards[j] = tmp;

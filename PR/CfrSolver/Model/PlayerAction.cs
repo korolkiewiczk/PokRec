@@ -1,6 +1,6 @@
 ﻿namespace CfrSolver.Model
 {
-    public record struct PlayerAction
+    public readonly record struct PlayerAction
     {
         public OpType OpType { get; }
         public short Bet { get; }
