@@ -217,5 +217,11 @@ namespace Agent
             var cfrForm = new CfrSolver.Graphgen.GraphgenForm();
             cfrForm.Show();
         }
+        
+        private void buttonOpenCfrManage_Click(object sender, EventArgs e)
+        {
+            var cfrForm = new ManageTrainingData();
+            cfrForm.Show();
+        }
     }
 }

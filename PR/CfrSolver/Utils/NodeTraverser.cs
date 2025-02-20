@@ -16,7 +16,16 @@ namespace CfrSolver.Utils
 
         public static void TraverseToXml(XElement xElement, Node node)
         {
-            xElement.Add(new XAttribute("value", node.ToString()));
+            xElement.Add(
+                new XAttribute("player", node.Pos),
+                new XAttribute("action", node.Action.ToShortString()),
+                new XAttribute("round", node.Round)
+            );
+
+            if (node.PayOff != 0)
+            {
+                xElement.Add(new XAttribute("payoff", node.PayOff));
+            }
 
             foreach (var nodeChild in node.Children)
             {

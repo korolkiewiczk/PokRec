@@ -17,6 +17,10 @@ namespace Agent.CfrSolver.Graphgen
     public partial class GraphgenForm
     {
         private const int MaxHandResolution = 16;
+        private System.Threading.CancellationTokenSource _cancellationTokenSource;
+        private DateTime _lastMeasureTime;
+        private int _lastMeasureValue;
+        private double _averageTimePerThousand;
 
         private void LoadConfigValues(NodeGenConfig config)
         {
@@ -65,15 +69,41 @@ namespace Agent.CfrSolver.Graphgen
                 return;
             }
 
-            var percent = (value * 100) / max;
+            var percent = value * 100 / max;
             progressBar.Value = percent;
+
+            // Measure time every 1000 operations
+            if (value % 1000 == 0)
+            {
+                if (_lastMeasureTime != default)
+                {
+                    var timeDiff = (DateTime.Now - _lastMeasureTime).TotalSeconds;
+                    var valueDiff = value - _lastMeasureValue;
+                    _averageTimePerThousand = (timeDiff / valueDiff) * 1000;
+                }
+                _lastMeasureTime = DateTime.Now;
+                _lastMeasureValue = value;
+            }
+
             if (value < max)
             {
-                lblProgress.Text = $"{value}/{max}";
+                var remainingOperations = max - value;
+                var estimatedSeconds = (_averageTimePerThousand * remainingOperations) / 1000;
+                var timeToComplete = TimeSpan.FromSeconds(estimatedSeconds);
+                
+                string timeInfo = _averageTimePerThousand > 0 
+                    ? $"\n({timeToComplete:hh\\:mm\\:ss} to complete, {_averageTimePerThousand:F1}s/1000 ops)"
+                    : "";
+                    
+                lblProgress.Text = $"{value}/{max}{timeInfo}";
             }
             else
             {
                 lblProgress.Text = string.Empty;
+                // Reset measurement values
+                _lastMeasureTime = default;
+                _lastMeasureValue = 0;
+                _averageTimePerThousand = 0;
             }
         }
 
@@ -92,12 +122,23 @@ namespace Agent.CfrSolver.Graphgen
 
         private async void BtnStart_Click(object sender, EventArgs e)
         {
+            if (btnStart.Text == "Stop")
+            {
+                _cancellationTokenSource?.Cancel();
+                return;
+            }
+
             var prevBtnText = btnStart.Text;
             try
             {
                 progressBar.Value = 0;
                 btnStart.Text = "Stop";
-                await System.Threading.Tasks.Task.Run(ProcessMain);
+                _cancellationTokenSource = new System.Threading.CancellationTokenSource();
+                await System.Threading.Tasks.Task.Run(() => ProcessMain(_cancellationTokenSource.Token));
+            }
+            catch (OperationCanceledException)
+            {
+                Log("Process cancelled by user");
             }
             catch (Exception ex)
             {
@@ -105,6 +146,8 @@ namespace Agent.CfrSolver.Graphgen
             }
             finally
             {
+                _cancellationTokenSource?.Dispose();
+                _cancellationTokenSource = null;
                 btnStart.Text = prevBtnText;
             }
         }
@@ -140,27 +183,36 @@ namespace Agent.CfrSolver.Graphgen
             };
         }
 
-        private void ProcessMain()
+        private void ProcessMain(System.Threading.CancellationToken cancellationToken)
         {
+            var config = GetConfigFromControls();
+            var nodeGen = new NodeGen(config);
+            txtLog.Text = string.Empty;
+
+            var rootNode = TrainAndWriteToDb(nodeGen, cancellationToken);
+            
+            // Save training data
             try
             {
-                btnStart.Enabled = false;
-                var nodeGen = new NodeGen(GetConfigFromControls());
-                txtLog.Text = string.Empty;
-
-                TrainAndWriteToDb(nodeGen);
+                TrainingDataSerializer.SaveTrainingData(
+                    txtTableName.Text,
+                    rootNode,
+                    config,
+                    (int)numIterations.Value
+                );
+                Log($"Training data saved to {txtTableName.Text}.traindata");
             }
-            finally
+            catch (Exception ex)
             {
-                btnStart.Enabled = true;
+                Log($"Error saving training data: {ex.Message}");
             }
         }
 
-        private void TrainAndWriteToDb(NodeGen nodeGen)
+        private Node TrainAndWriteToDb(NodeGen nodeGen, System.Threading.CancellationToken cancellationToken)
         {
             Stopwatch sw = new Stopwatch();
 
-            int iterations = (int) numIterations.Value;
+            int iterations = (int)numIterations.Value;
             sw.Start();
             var trainer = new TrainerParallel(nodeGen, iterations, new HandGenerator(MaxHandResolution),
                 new CfrPlusFactory());
@@ -168,16 +220,27 @@ namespace Agent.CfrSolver.Graphgen
             Log("Generating game tree...");
 
             var rootNode = trainer.Train(out var eq, out var possibleHands,
-                x => { UpdateProgress(x + 1, iterations); });
+                x =>
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    UpdateProgress(x + 1, iterations);
+                },
+                cancellationToken);
             sw.Stop();
 
-            Log($"\nElapsed seconds on training: {(double) sw.ElapsedMilliseconds / 1000:0.##}");
+            Log($"\nElapsed seconds on training: {(double)sw.ElapsedMilliseconds / 1000:0.##}");
             Log($"Equity: {eq}");
 
-            SaveNodesToDatabase(possibleHands, rootNode);
+            if (chkIncludeDb.Checked) 
+            {
+                SaveNodesToDatabase(possibleHands, rootNode, cancellationToken);
+            }
+            
+            return rootNode; // Return rootNode for serialization
         }
 
-        private void SaveNodesToDatabase(HashSet<int> possibleHands, Node rootNode)
+        private void SaveNodesToDatabase(HashSet<int> possibleHands, Node rootNode,
+            System.Threading.CancellationToken cancellationToken)
         {
             var dbWriter = new DbWriter(txtTableName.Text, () =>
                 MessageBox.Show("Remove existing DB? (Y/N). If No, new table with random name will be generated.",
@@ -187,13 +250,16 @@ namespace Agent.CfrSolver.Graphgen
 
             for (var i = 0; i < possibleHands.Count; i++)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 var hand = possibleHands.ElementAt(i);
                 Log($"Hand {hand:X4}");
                 dbWriter.WriteToDb(hand, rootNode, x => Log($"Written {x} entries"));
-                UpdateProgress((i + 1), possibleHands.Count);
+                UpdateProgress(i + 1, possibleHands.Count);
+                lblProgress.Text = "Saving to db " + lblProgress.Text;
             }
 
-            Log("Completed");
+            Log("Completed. Checkout cfr.db");
         }
 
         private void GenerateXml(NodeGen nodeGen, string xmlFileName)
@@ -211,18 +277,43 @@ namespace Agent.CfrSolver.Graphgen
 
         private void btnBrowseConfig_Click(object sender, EventArgs e)
         {
-            BrowseFile(txtConfigFile, "JSON files|*.json");
-            if (!string.IsNullOrEmpty(txtConfigFile.Text))
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
-                try
+                openFileDialog.Filter = "Config files (*.json;*.traindata)|*.json;*.traindata|All files (*.*)|*.*";
+                openFileDialog.FilterIndex = 1;
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    var config = JsonConvert.DeserializeObject<NodeGenConfig>(File.ReadAllText(txtConfigFile.Text));
-                    LoadConfigValues(config);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Error loading config file: {ex.Message}", "Error", MessageBoxButtons.OK,
-                        MessageBoxIcon.Error);
+                    try
+                    {
+                        txtConfigFile.Text = openFileDialog.FileName;
+                        NodeGenConfig config;
+                        string extension = Path.GetExtension(openFileDialog.FileName).ToLower();
+
+                        if (extension == ".traindata")
+                        {
+                            var (_, loadedConfig, _) = TrainingDataSerializer.LoadTrainingData(
+                                openFileDialog.FileName, 
+                                TrainingDataSerializer.DeserializeFlags.Config
+                            );
+                            config = loadedConfig;
+                        }
+                        else
+                        {
+                            // Original JSON loading logic
+                            string jsonString = File.ReadAllText(openFileDialog.FileName);
+                            config = JsonConvert.DeserializeObject<NodeGenConfig>(jsonString);
+                        }
+
+                        if (config != null)
+                        {
+                            LoadConfigValues(config);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error loading config: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
         }
@@ -277,6 +368,18 @@ namespace Agent.CfrSolver.Graphgen
 
             // Load default config values
             LoadConfigValues(DefaultConfig(chkRelativeBetting.Checked));
+            
+            // Set initial table name
+            UpdateTableName();
+            
+            // Add event handlers for numeric controls
+            numBankroll.ValueChanged += (s, ev) => UpdateTableName();
+            numBbValue.ValueChanged += (s, ev) => UpdateTableName();
+        }
+
+        private void UpdateTableName()
+        {
+            txtTableName.Text = $"nodes_{(int)Math.Floor(numBankroll.Value/numBbValue.Value)}BB";
         }
 
         private void btnGenXml_Click(object sender, EventArgs e)

@@ -28,4 +28,10 @@
   <ItemGroup>
     <Folder Include="CfrSolver.Graphgen\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="ManageTrainingData.cs">
+      <SubType>Form</SubType>
+    </Compile>
+  </ItemGroup>
 </Project>

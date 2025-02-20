@@ -45,6 +45,7 @@
             tabSettings = new System.Windows.Forms.TabPage();
             tabCfr = new System.Windows.Forms.TabPage();
             buttonOpenCfrGraphgen = new System.Windows.Forms.Button();
+            buttonOpenCfrManage = new System.Windows.Forms.Button();
             tabControl1.SuspendLayout();
             pageDesign.SuspendLayout();
             tabPlay.SuspendLayout();
@@ -230,6 +231,7 @@
             // 
             tabCfr.BackColor = System.Drawing.Color.Transparent;
             tabCfr.Controls.Add(buttonOpenCfrGraphgen);
+            tabCfr.Controls.Add(buttonOpenCfrManage);
             tabCfr.Location = new System.Drawing.Point(4, 29);
             tabCfr.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             tabCfr.Name = "tabCfr";
@@ -247,6 +249,17 @@
             buttonOpenCfrGraphgen.Text = "Open CFR Graphgen";
             buttonOpenCfrGraphgen.UseVisualStyleBackColor = true;
             buttonOpenCfrGraphgen.Click += buttonOpenCfrGraphgen_Click;
+            // 
+            // buttonOpenCfrManage
+            // 
+            buttonOpenCfrManage.Location = new System.Drawing.Point(5, 80);
+            buttonOpenCfrManage.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            buttonOpenCfrManage.Name = "buttonOpenCfrManage";
+            buttonOpenCfrManage.Size = new System.Drawing.Size(187, 62);
+            buttonOpenCfrManage.TabIndex = 0;
+            buttonOpenCfrManage.Text = "Open CFR Manager";
+            buttonOpenCfrManage.UseVisualStyleBackColor = true;
+            buttonOpenCfrManage.Click += buttonOpenCfrManage_Click;
             // 
             // Form1
             // 
@@ -289,6 +302,7 @@
         private System.Windows.Forms.TabPage tabSettings;
         private System.Windows.Forms.TabPage tabCfr;
         private System.Windows.Forms.Button buttonOpenCfrGraphgen;
+        private System.Windows.Forms.Button buttonOpenCfrManage;
         private System.Windows.Forms.Button buttonFixWindow;
     }
 }

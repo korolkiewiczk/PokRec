@@ -26,8 +26,10 @@ public class TrainerParallel : ITrainer
     /// <param name="eq">The accumulated equity from training.</param>
     /// <param name="possibleHands">A set of all hand identifiers encountered.</param>
     /// <param name="progress">An optional callback to report progress.</param>
+    /// <param name="cancellationToken">Token to support cancellation of the operation.</param>
     /// <returns>The root node of the trained game tree.</returns>
-    public Node Train(out float eq, out HashSet<int> possibleHands, Action<int> progress = null)
+    public Node Train(out float eq, out HashSet<int> possibleHands, Action<int> progress = null, 
+        CancellationToken cancellationToken = default)
     {
         // Generate the initial game tree.
         var rootNode = _nodeGen.Generate();
@@ -39,8 +41,16 @@ public class TrainerParallel : ITrainer
         object eqLock = new object();
 
         int iterations = 0;
-        Parallel.For(0, _trainIterations, i =>
+        var parallelOptions = new ParallelOptions 
+        { 
+            CancellationToken = cancellationToken,
+            MaxDegreeOfParallelism = Environment.ProcessorCount 
+        };
+
+        Parallel.For(0, _trainIterations, parallelOptions, i =>
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             // Generate a random hand.
             HandInfo handInfo = _handGenerator.GenerateRandomHand();
             concurrentHands.Add(handInfo.Hand);
@@ -60,7 +70,7 @@ public class TrainerParallel : ITrainer
             progress?.Invoke(iterations++);
         });
 
-        possibleHands = [..concurrentHands];
+        possibleHands = new HashSet<int>(concurrentHands);
         eq = eqC;
         return rootNode;
     }

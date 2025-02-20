@@ -9,20 +9,17 @@ namespace Agent.CfrSolver.Graphgen
     {
         private IContainer components = null;
 
-        // Kontrolki dla zakładki General (dotychczasowe)
         private System.Windows.Forms.TextBox txtConfigFile;
         private System.Windows.Forms.NumericUpDown numIterations;
         private System.Windows.Forms.TextBox txtTableName;
-        private System.Windows.Forms.CheckBox chkSilent;
+        private System.Windows.Forms.CheckBox chkIncludeDb;
         private System.Windows.Forms.Button btnGenConfig;
         private System.Windows.Forms.Button btnStart;
         private System.Windows.Forms.ProgressBar progressBar;
         private System.Windows.Forms.TextBox txtLog;
 
-        // Dodatkowe przyciski wykorzystywane przy wyborze plików
         private System.Windows.Forms.Button btnBrowseConfig;
 
-        // Kontrolki dla konfiguracji zaawansowanej
         private System.Windows.Forms.TabControl tabControlMain;
         private TabPage tabPageGeneral;
         private TabPage tabPageAdvanced;
@@ -41,8 +38,6 @@ namespace Agent.CfrSolver.Graphgen
         public GraphgenForm()
         {
             InitializeComponent();
-
-            
         }
 
         protected override void Dispose(bool disposing)
@@ -75,8 +70,8 @@ namespace Agent.CfrSolver.Graphgen
             numIterations = new System.Windows.Forms.NumericUpDown();
             lblTableName = new System.Windows.Forms.Label();
             txtTableName = new System.Windows.Forms.TextBox();
-            lblSilent = new System.Windows.Forms.Label();
-            chkSilent = new System.Windows.Forms.CheckBox();
+            lblIncludeDb = new System.Windows.Forms.Label();
+            chkIncludeDb = new System.Windows.Forms.CheckBox();
             buttonPanel = new System.Windows.Forms.FlowLayoutPanel();
             btnStart = new System.Windows.Forms.Button();
             progressBar = new System.Windows.Forms.ProgressBar();
@@ -152,8 +147,8 @@ namespace Agent.CfrSolver.Graphgen
             generalLayout.Controls.Add(numIterations, 1, 2);
             generalLayout.Controls.Add(lblTableName, 0, 3);
             generalLayout.Controls.Add(txtTableName, 1, 3);
-            generalLayout.Controls.Add(lblSilent, 0, 4);
-            generalLayout.Controls.Add(chkSilent, 1, 4);
+            generalLayout.Controls.Add(lblIncludeDb, 0, 4);
+            generalLayout.Controls.Add(chkIncludeDb, 1, 4);
             generalLayout.Controls.Add(buttonPanel, 1, 5);
             generalLayout.Controls.Add(progressBar, 1, 6);
             generalLayout.Controls.Add(txtLog, 1, 7);
@@ -169,8 +164,8 @@ namespace Agent.CfrSolver.Graphgen
             generalLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
             generalLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
             generalLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 66F));
-            generalLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
-            generalLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 122F));
+            generalLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 64F));
+            generalLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 92F));
             generalLayout.Size = new System.Drawing.Size(792, 626);
             generalLayout.TabIndex = 0;
             // 
@@ -278,7 +273,7 @@ namespace Agent.CfrSolver.Graphgen
             lblTableName.Name = "lblTableName";
             lblTableName.Size = new System.Drawing.Size(91, 20);
             lblTableName.TabIndex = 6;
-            lblTableName.Text = "Table Name:";
+            lblTableName.Text = "Name:";
             // 
             // txtTableName
             // 
@@ -287,24 +282,24 @@ namespace Agent.CfrSolver.Graphgen
             txtTableName.Name = "txtTableName";
             txtTableName.Size = new System.Drawing.Size(633, 27);
             txtTableName.TabIndex = 7;
-            txtTableName.Text = "nodes1";
+            txtTableName.Text = "data";
             // 
             // lblSilent
             // 
-            lblSilent.AutoSize = true;
-            lblSilent.Location = new System.Drawing.Point(13, 162);
-            lblSilent.Name = "lblSilent";
-            lblSilent.Size = new System.Drawing.Size(92, 20);
-            lblSilent.TabIndex = 8;
-            lblSilent.Text = "Silent Mode:";
+            lblIncludeDb.AutoSize = true;
+            lblIncludeDb.Location = new System.Drawing.Point(13, 162);
+            lblIncludeDb.Name = "lblIncludeDb";
+            lblIncludeDb.Size = new System.Drawing.Size(92, 20);
+            lblIncludeDb.TabIndex = 8;
+            lblIncludeDb.Text = "Save nodes to SqlLiteDb";
             // 
             // chkSilent
             // 
-            chkSilent.Dock = System.Windows.Forms.DockStyle.Fill;
-            chkSilent.Location = new System.Drawing.Point(146, 165);
-            chkSilent.Name = "chkSilent";
-            chkSilent.Size = new System.Drawing.Size(633, 26);
-            chkSilent.TabIndex = 9;
+            chkIncludeDb.Dock = System.Windows.Forms.DockStyle.Fill;
+            chkIncludeDb.Location = new System.Drawing.Point(146, 165);
+            chkIncludeDb.Name = "chkSilent";
+            chkIncludeDb.Size = new System.Drawing.Size(633, 26);
+            chkIncludeDb.TabIndex = 9;
             // 
             // buttonPanel
             // 
@@ -611,7 +606,7 @@ namespace Agent.CfrSolver.Graphgen
         private System.Windows.Forms.FlowLayoutPanel xmlFlow;
         private System.Windows.Forms.Label lblIterations;
         private System.Windows.Forms.Label lblTableName;
-        private System.Windows.Forms.Label lblSilent;
+        private System.Windows.Forms.Label lblIncludeDb;
         private System.Windows.Forms.FlowLayoutPanel buttonPanel;
         private System.Windows.Forms.Label lblReraiseAmount;
         private System.Windows.Forms.Label lblNumPlayers;

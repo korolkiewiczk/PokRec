@@ -19,7 +19,7 @@ namespace CfrSolver
             _cfrFactory = cfrFactory;
         }
 
-        public Node Train(out float eq, out HashSet<int> possibleHands, Action<int> progress = null)
+        public Node Train(out float eq, out HashSet<int> possibleHands, Action<int> progress = null, CancellationToken cancellationToken = default)
         {
             var rootNode = _nodeGen.Generate();
 
@@ -29,6 +29,10 @@ namespace CfrSolver
 
             for (int i = 0; i < _trainIterations; i++)
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return rootNode;
+                }
                 HandInfo handInfo = _handGenerator.GenerateRandomHand();
 
                 possibleHands.Add(handInfo.Hand);

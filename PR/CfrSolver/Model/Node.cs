@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 
 namespace CfrSolver.Model
 {
@@ -12,11 +13,12 @@ namespace CfrSolver.Model
     public class Node
     {
         // Private class that holds the per-masked-hand data.
-        private class NodeData(int actions)
+        public class NodeData(int actions)
         {
             public readonly float[] Cfr = new float[actions];
             public readonly float[] Strategy = new float[actions];
             public readonly float[] StrategySum = new float[actions];
+            [JsonIgnore]
             public readonly object Lock = new();
         }
 
@@ -41,6 +43,8 @@ namespace CfrSolver.Model
         public Round Round { get; }
         public Node[] Children { get; }
         public short PayOff { get; }
+
+        public ConcurrentDictionary<int, NodeData> Data => _data;
 
         public static bool IsTerminal(Round round) => round is Round.Fold or Round.Showdown;
         public bool IsTerminal() => IsTerminal(Round);
