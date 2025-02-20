@@ -214,7 +214,7 @@ namespace Agent.CfrSolver.Graphgen
 
             int iterations = (int)numIterations.Value;
             sw.Start();
-            var trainer = new TrainerParallel(nodeGen, iterations, new HandGenerator(MaxHandResolution),
+            var trainer = new TrainerParallel(nodeGen, iterations, new BoardGenerator(MaxHandResolution),
                 new CfrPlusFactory());
 
             Log("Generating game tree...");

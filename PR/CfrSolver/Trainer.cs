@@ -7,15 +7,15 @@ namespace CfrSolver
     {
         private readonly NodeGen _nodeGen;
         private readonly int _trainIterations;
-        private readonly IHandGenerator _handGenerator;
+        private readonly IBoardGenerator _boardGenerator;
         private readonly ICfrFactory _cfrFactory;
 
-        public Trainer(NodeGen nodeGen, int trainIterations, IHandGenerator handGenerator, ICfrFactory cfrFactory)
+        public Trainer(NodeGen nodeGen, int trainIterations, IBoardGenerator boardGenerator, ICfrFactory cfrFactory)
         {
             _nodeGen = nodeGen;
             _trainIterations = trainIterations;
 
-            _handGenerator = handGenerator;
+            _boardGenerator = boardGenerator;
             _cfrFactory = cfrFactory;
         }
 
@@ -33,12 +33,12 @@ namespace CfrSolver
                 {
                     return rootNode;
                 }
-                HandInfo handInfo = _handGenerator.GenerateRandomHand();
+                BoardInfo boardInfo = _boardGenerator.GenerateBoardAbstraction();
 
-                possibleHands.Add(handInfo.Hand);
+                possibleHands.Add(boardInfo.Hand);
 
-                var eq1 = _cfrFactory.Create(0, handInfo.Hand, handInfo.WinningPlayer).Compute(rootNode, 1);
-                var eq2 = _cfrFactory.Create(1, handInfo.Hand, handInfo.WinningPlayer == -1 ? -1 :1 - handInfo.WinningPlayer).Compute(rootNode, 1);
+                var eq1 = _cfrFactory.Create(0, boardInfo.Hand, boardInfo.WinningPlayer).Compute(rootNode, 1);
+                var eq2 = _cfrFactory.Create(1, boardInfo.Hand, boardInfo.WinningPlayer == -1 ? -1 :1 - boardInfo.WinningPlayer).Compute(rootNode, 1);
                 eq += eq1 + eq2;
 
                 progress?.Invoke(i);

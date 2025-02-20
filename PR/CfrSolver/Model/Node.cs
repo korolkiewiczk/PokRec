@@ -12,39 +12,53 @@ namespace CfrSolver.Model
     /// </summary>
     public class Node
     {
-        // Private class that holds the per-masked-hand data.
-        public class NodeData(int actions)
+        public class NodeData
         {
-            public readonly float[] Cfr = new float[actions];
-            public readonly float[] Strategy = new float[actions];
-            public readonly float[] StrategySum = new float[actions];
-            [JsonIgnore]
-            public readonly object Lock = new();
-        }
+            public float[] Cfr;
+            public float[] Strategy;
+            public float[] StrategySum;
+            [JsonIgnore] public readonly object Lock = new();
 
-        // Dictionary mapping the masked hand value to its NodeData.
-        private readonly ConcurrentDictionary<int, NodeData> _data = new();
+            public NodeData()
+            {
+            }
+
+            public NodeData(int actions)
+            {
+                Cfr = new float[actions];
+                Strategy = new float[actions];
+                StrategySum = new float[actions];
+            }
+
+            public NodeData(float[] cfr, float[] strategy, float[] strategySum)
+            {
+                Cfr = cfr;
+                Strategy = strategy;
+                StrategySum = strategySum;
+            }
+        }
 
         // Cache the mask for this node (assuming Round doesn't change)
         private readonly int _cachedMask;
 
-        public Node(byte pos, PlayerAction action, Round round, Node[] children, int payOff = 0)
+        public Node(int pos, PlayerAction action, Round round, Node[] children, int payOff)
         {
             Pos = pos;
             Action = action;
             Round = round;
             Children = children;
-            PayOff = (short)payOff;
+            PayOff = payOff;
             _cachedMask = ComputeMask();
+            Data = new();
         }
 
-        public byte Pos { get; }
-        public PlayerAction Action { get; }
-        public Round Round { get; }
-        public Node[] Children { get; }
-        public short PayOff { get; }
+        public int Pos { get; set; }
+        public PlayerAction Action { get; set; }
+        public Round Round { get; set; }
+        public Node[] Children { get; set; }
+        public int PayOff { get; set; }
 
-        public ConcurrentDictionary<int, NodeData> Data => _data;
+        public ConcurrentDictionary<int, NodeData> Data { get; set; }
 
         public static bool IsTerminal(Round round) => round is Round.Fold or Round.Showdown;
         public bool IsTerminal() => IsTerminal(Round);
@@ -52,13 +66,6 @@ namespace CfrSolver.Model
         public override string ToString()
         {
             return $"P={Pos} A={Action} S={Round}" + (IsTerminal() ? $" PAY={PayOff}" : "");
-        }
-
-        public string ToStringFull(int hand)
-        {
-            string part1 = ToString();
-            string part2 = string.Join(";", GetAverageStrategy(hand));
-            return $"{part1} [{part2}]";
         }
 
         /// <summary>
@@ -93,29 +100,6 @@ namespace CfrSolver.Model
             }
         }
 
-        /// <summary>
-        /// Gets the average strategy for the specified hand.
-        /// </summary>
-        public float[] GetAverageStrategy(int hand)
-        {
-            NodeData data = GetOrCreateData(hand);
-            lock (data.Lock)
-            {
-                float normalizingSum = 0;
-                float[] avgStrategy = new float[Children.Length];
-                for (int a = 0; a < Children.Length; a++)
-                {
-                    normalizingSum += data.StrategySum[a];
-                }
-                for (int a = 0; a < Children.Length; a++)
-                {
-                    avgStrategy[a] = normalizingSum > 0
-                        ? data.StrategySum[a] / normalizingSum
-                        : 1.0f / Children.Length;
-                }
-                return avgStrategy;
-            }
-        }
 
         /// <summary>
         /// Updates the CFR (counterfactual regret) for the specified action.
@@ -133,6 +117,12 @@ namespace CfrSolver.Model
             }
         }
 
+        public int ComputeMask()
+        {
+            // The bitmask ((16 << (4 * (int)Round)) - 1) determines how many bits to keep.
+            return ((16 << (4 * (int) Round)) - 1);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int GetMaskedHand(int hand)
         {
@@ -146,14 +136,7 @@ namespace CfrSolver.Model
         private NodeData GetOrCreateData(int hand)
         {
             int maskedHand = GetMaskedHand(hand);
-            return _data.GetOrAdd(maskedHand, _ => new NodeData(Children.Length));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int ComputeMask()
-        {
-            // The bitmask ((16 << (4 * (int)Round)) - 1) determines how many bits to keep.
-            return ((16 << (4 * (int)Round)) - 1);
+            return Data.GetOrAdd(maskedHand, _ => new NodeData(Children.Length));
         }
     }
 }

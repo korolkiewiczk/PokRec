@@ -1,6 +1,6 @@
 ﻿namespace CfrSolver.Model
 {
-    public struct HandInfo
+    public struct BoardInfo
     {
         public int Hand { get; set; }
         public int OppHand { get; set; }

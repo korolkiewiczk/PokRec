@@ -119,9 +119,38 @@ namespace Agent
         /// </summary>
         private void btnOpen_Click(object sender, EventArgs e)
         {
-            // Future implementation: Open a new form to display nodes.json data.
-            MessageBox.Show("Open functionality is not implemented yet.", "Info", MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
+            if (listBoxFiles.SelectedItem == null)
+            {
+                MessageBox.Show("Please select a training data file first.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            string file = listBoxFiles.SelectedItem.ToString();
+            try
+            {
+                // Load the full training data including the RootNode
+                var result = TrainingDataSerializer.LoadTrainingData(
+                    file,
+                    TrainingDataSerializer.DeserializeFlags.All);
+
+                if (result.RootNode == null)
+                {
+                    MessageBox.Show("No strategy tree found in the training data.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Create and show the PokerStrategyForm
+                var strategyForm = new PokerStrategyForm
+                {
+                    RootNode = result.RootNode
+                };
+                strategyForm.Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading training data:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                throw;
+            }
         }
 
         /// <summary>

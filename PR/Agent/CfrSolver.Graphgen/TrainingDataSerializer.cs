@@ -10,7 +10,10 @@ using System.Collections.Concurrent;
 using System.Text.Json.Serialization;
 using System.Linq;
 using System.Collections.Generic;
+using System.Reflection;
+using Newtonsoft.Json.Linq;
 using static CfrSolver.Model.Node;
+using JsonSerializer = Newtonsoft.Json.JsonSerializer;
 
 namespace Agent.CfrSolver.Graphgen
 {
@@ -51,15 +54,22 @@ namespace Agent.CfrSolver.Graphgen
             {
                 // Save node tree
                 using (var fs = File.Create(Path.Combine(tempDir, NodesFileName)))
+                using (var writer = new StreamWriter(fs))
                 {
-                    var options = new JsonSerializerOptions 
-                    { 
-                        IncludeFields = true,
-                        WriteIndented = false,
-                        ReferenceHandler = ReferenceHandler.Preserve
+                    var settings = new JsonSerializerSettings
+                    {
+                        TypeNameHandling = TypeNameHandling.Auto,
+                        PreserveReferencesHandling = PreserveReferencesHandling.Objects,
+                        ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+                        ObjectCreationHandling = ObjectCreationHandling.Replace,
+                        Formatting = Formatting.None,
+                        ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver
+                        {
+                            IgnoreSerializableInterface = true
+                        }
                     };
-                    options.Converters.Add(new ConcurrentDictionaryConverter<int, NodeData>());
-                    System.Text.Json.JsonSerializer.Serialize(fs, rootNode, options);
+                    var json = JsonConvert.SerializeObject(rootNode, settings);
+                    writer.Write(json);
                 }
 
                 // Save config
@@ -120,15 +130,19 @@ namespace Agent.CfrSolver.Graphgen
                     var nodesPath = Path.Combine(tempDir, NodesFileName);
                     if (File.Exists(nodesPath))
                     {
-                        var options = new JsonSerializerOptions 
-                        { 
-                            IncludeFields = true,
-                            WriteIndented = false,
-                            ReferenceHandler = ReferenceHandler.Preserve
-                        };
-                        options.Converters.Add(new ConcurrentDictionaryConverter<int, NodeData>());
                         var jsonString = File.ReadAllText(nodesPath);
-                        rootNode = System.Text.Json.JsonSerializer.Deserialize<Node>(jsonString, options);
+                        var settings = new JsonSerializerSettings
+                        {
+                            TypeNameHandling = TypeNameHandling.Auto,
+                            PreserveReferencesHandling = PreserveReferencesHandling.Objects,
+                            ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+                            ObjectCreationHandling = ObjectCreationHandling.Replace,
+                            ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver
+                            {
+                                IgnoreSerializableInterface = true
+                            }
+                        };
+                        rootNode = JsonConvert.DeserializeObject<Node>(jsonString, settings);
                     }
                 }
 
@@ -177,4 +191,4 @@ namespace Agent.CfrSolver.Graphgen
             }
         }
     }
-} 
+}

@@ -1,9 +1,9 @@
 ﻿namespace CfrSolver.Model
 {
-    public readonly record struct PlayerAction
+    public record struct PlayerAction
     {
-        public OpType OpType { get; }
-        public short Bet { get; }
+        public OpType OpType { get; set; }
+        public int Bet { get; set; }
 
         public static PlayerAction Initial(int b) => b == 0 ? new PlayerAction(OpType.Call) : new PlayerAction(OpType.Raise, (short) b);
         public static PlayerAction Invalid => new PlayerAction(OpType.Fold, -1);
@@ -22,7 +22,7 @@
         public PlayerAction(OpType opType, int bet)
         {
             OpType = opType;
-            Bet = (short)bet;
+            Bet = bet;
         }
 
         public override string ToString()
