@@ -36,9 +36,12 @@ namespace Agent
         private System.Windows.Forms.GroupBox groupBoxActions;
         private System.Windows.Forms.Button btnCalculate;
         
+        private System.Windows.Forms.GroupBox groupBoxState;
+        private System.Windows.Forms.Label lblState;
+        
         // Right panel controls.
         private Panel rightPanel;
-        private DataGridView dataGridViewStrategy;
+        private System.Windows.Forms.DataGridView dataGridViewStrategy;
 
         /// <summary>
         /// Clean up any resources being used.
@@ -63,6 +66,8 @@ namespace Agent
         {
             tableLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
             leftPanel = new System.Windows.Forms.Panel();
+            groupBoxState = new System.Windows.Forms.GroupBox();
+            lblState = new System.Windows.Forms.Label();
             groupBoxCards = new System.Windows.Forms.GroupBox();
             cardLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
             lblPlayerHand = new System.Windows.Forms.Label();
@@ -85,6 +90,7 @@ namespace Agent
             dataGridViewStrategy = new System.Windows.Forms.DataGridView();
             tableLayoutPanel.SuspendLayout();
             leftPanel.SuspendLayout();
+            groupBoxState.SuspendLayout();
             groupBoxCards.SuspendLayout();
             cardLayoutPanel.SuspendLayout();
             panelPlayerHand.SuspendLayout();
@@ -106,11 +112,12 @@ namespace Agent
             tableLayoutPanel.Name = "tableLayoutPanel";
             tableLayoutPanel.RowCount = 1;
             tableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-            tableLayoutPanel.Size = new System.Drawing.Size(800, 600);
+            tableLayoutPanel.Size = new System.Drawing.Size(800, 700);
             tableLayoutPanel.TabIndex = 0;
             // 
             // leftPanel
             // 
+            leftPanel.Controls.Add(groupBoxState);
             leftPanel.Controls.Add(groupBoxCards);
             leftPanel.Controls.Add(groupBoxActions);
             leftPanel.Controls.Add(btnCalculate);
@@ -120,13 +127,33 @@ namespace Agent
             leftPanel.Size = new System.Drawing.Size(394, 594);
             leftPanel.TabIndex = 0;
             // 
+            // groupBoxState
+            // 
+            groupBoxState.Controls.Add(lblState);
+            groupBoxState.Dock = System.Windows.Forms.DockStyle.Fill;
+            groupBoxState.Location = new System.Drawing.Point(0, 319);
+            groupBoxState.Name = "groupBoxState";
+            groupBoxState.Size = new System.Drawing.Size(394, 275);
+            groupBoxState.TabIndex = 0;
+            groupBoxState.TabStop = false;
+            groupBoxState.Text = "State";
+            // 
+            // lblState
+            // 
+            lblState.Dock = System.Windows.Forms.DockStyle.Fill;
+            lblState.Font = new System.Drawing.Font("Segoe UI", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte) 238));
+            lblState.Location = new System.Drawing.Point(3, 23);
+            lblState.Name = "lblState";
+            lblState.Size = new System.Drawing.Size(388, 249);
+            lblState.TabIndex = 0;
+            // 
             // groupBoxCards
             // 
             groupBoxCards.Controls.Add(cardLayoutPanel);
             groupBoxCards.Dock = System.Windows.Forms.DockStyle.Top;
             groupBoxCards.Location = new System.Drawing.Point(0, 119);
             groupBoxCards.Name = "groupBoxCards";
-            groupBoxCards.Size = new System.Drawing.Size(394, 200);
+            groupBoxCards.Size = new System.Drawing.Size(394, 170);
             groupBoxCards.TabIndex = 0;
             groupBoxCards.TabStop = false;
             groupBoxCards.Text = "Card Setup";
@@ -309,14 +336,16 @@ namespace Agent
             dataGridViewStrategy.RowHeadersWidth = 51;
             dataGridViewStrategy.Size = new System.Drawing.Size(394, 594);
             dataGridViewStrategy.TabIndex = 0;
+            dataGridViewStrategy.CellDoubleClick += dataGridViewStrategy_CellDoubleClick;
             // 
             // PokerStrategyForm
             // 
-            ClientSize = new System.Drawing.Size(800, 600);
+            ClientSize = new System.Drawing.Size(800, 700);
             Controls.Add(tableLayoutPanel);
             Text = "Poker Strategy CFR Explorer";
             tableLayoutPanel.ResumeLayout(false);
             leftPanel.ResumeLayout(false);
+            groupBoxState.ResumeLayout(false);
             groupBoxCards.ResumeLayout(false);
             cardLayoutPanel.ResumeLayout(false);
             panelPlayerHand.ResumeLayout(false);

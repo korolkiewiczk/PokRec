@@ -14,10 +14,11 @@ namespace CfrSolver.Model
     {
         public class NodeData
         {
-            public float[] Cfr;
-            public float[] Strategy;
-            public float[] StrategySum;
-            [JsonIgnore] public readonly object Lock = new();
+            public float[] Cfr { get; set; }
+            public float[] Strategy { get; set; }
+            public float[] StrategySum { get; set; }
+            
+            internal readonly object Lock = new();
 
             public NodeData()
             {
@@ -28,13 +29,6 @@ namespace CfrSolver.Model
                 Cfr = new float[actions];
                 Strategy = new float[actions];
                 StrategySum = new float[actions];
-            }
-
-            public NodeData(float[] cfr, float[] strategy, float[] strategySum)
-            {
-                Cfr = cfr;
-                Strategy = strategy;
-                StrategySum = strategySum;
             }
         }
 

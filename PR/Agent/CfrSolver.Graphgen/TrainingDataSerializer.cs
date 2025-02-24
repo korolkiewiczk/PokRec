@@ -2,29 +2,19 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using Newtonsoft.Json;
-using System.Runtime.Serialization.Formatters.Binary;
 using CfrSolver.Model;
 using CfrSolver;
-using System.Text.Json;
-using System.Collections.Concurrent;
-using System.Text.Json.Serialization;
-using System.Linq;
-using System.Collections.Generic;
-using System.Reflection;
-using Newtonsoft.Json.Linq;
-using static CfrSolver.Model.Node;
-using JsonSerializer = Newtonsoft.Json.JsonSerializer;
 
 namespace Agent.CfrSolver.Graphgen
 {
-    public class TrainingDataSerializer
+    public static class TrainingDataSerializer
     {
         private const string NodesFileName = "nodes.json";
         private const string ConfigFileName = "config.json";
         private const string MetadataFileName = "metadata.json";
-        
-        public const string Folder = "traindata";
-        public const string Extension = ".traindata";
+
+        private const string Folder = "traindata";
+        private const string Extension = ".traindata";
         
         [Flags]
         public enum DeserializeFlags
@@ -174,20 +164,6 @@ namespace Agent.CfrSolver.Graphgen
                 {
                     Directory.Delete(tempDir, true);
                 }
-            }
-        }
-
-        public class ConcurrentDictionaryConverter<TKey, TValue> : System.Text.Json.Serialization.JsonConverter<ConcurrentDictionary<TKey, TValue>>
-        {
-            public override ConcurrentDictionary<TKey, TValue> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-            {
-                var dictionary = System.Text.Json.JsonSerializer.Deserialize<Dictionary<TKey, TValue>>(ref reader, options);
-                return new ConcurrentDictionary<TKey, TValue>(dictionary);
-            }
-
-            public override void Write(Utf8JsonWriter writer, ConcurrentDictionary<TKey, TValue> value, JsonSerializerOptions options)
-            {
-                System.Text.Json.JsonSerializer.Serialize(writer, value.ToDictionary(kvp => kvp.Key, kvp => kvp.Value), options);
             }
         }
     }

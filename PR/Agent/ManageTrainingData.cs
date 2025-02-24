@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using CfrSolver;
 using Agent.CfrSolver.Graphgen; // Contains TrainingDataSerializer
@@ -117,7 +118,7 @@ namespace Agent
         /// <summary>
         /// Click handler for the Open button – stubbed for future functionality.
         /// </summary>
-        private void btnOpen_Click(object sender, EventArgs e)
+        private async void btnOpen_Click(object sender, EventArgs e)
         {
             if (listBoxFiles.SelectedItem == null)
             {
@@ -126,16 +127,20 @@ namespace Agent
             }
 
             string file = listBoxFiles.SelectedItem.ToString();
+            var prevText = btnOpen.Text;
             try
             {
+                btnOpen.Enabled = false;
+                btnOpen.Text = "Wait...";
                 // Load the full training data including the RootNode
-                var result = TrainingDataSerializer.LoadTrainingData(
+                var result = await Task.Run(() => TrainingDataSerializer.LoadTrainingData(
                     file,
-                    TrainingDataSerializer.DeserializeFlags.All);
+                    TrainingDataSerializer.DeserializeFlags.Nodes));
 
                 if (result.RootNode == null)
                 {
-                    MessageBox.Show("No strategy tree found in the training data.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("No strategy tree found in the training data.", "Error", MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
                     return;
                 }
 
@@ -148,8 +153,14 @@ namespace Agent
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading training data:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error loading training data:\n{ex.Message}", "Error", MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
                 throw;
+            }
+            finally
+            {
+                btnOpen.Enabled = true;
+                btnOpen.Text = prevText;
             }
         }
 

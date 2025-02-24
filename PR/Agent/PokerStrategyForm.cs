@@ -5,6 +5,7 @@ using CfrSolver.Model;    // Contains Node and related classes.
 using CfrSolver;          // Contains BoardGenerator.
 using PT.Poker.Model;
 using System.Collections.Generic;
+using System.Text;
 using CfrSolver.Utils; // Contains Card, CardType, CardColor.
 
 namespace Agent
@@ -103,12 +104,18 @@ namespace Agent
             return new Card(color, type);
         }
         
+        
+        private void btnCalculate_Click(object sender, EventArgs e)
+        {
+            CalculateStrategy();
+        }
+        
         /// <summary>
         /// Handles the Calculate Strategy button click.
         /// Gathers card selections, builds the board abstraction, traverses the CFR tree based on selected actions,
         /// and displays the average strategy as percentages.
         /// </summary>
-        private void btnCalculate_Click(object sender, EventArgs e)
+        private void CalculateStrategy()
         {
             try
             {
@@ -160,9 +167,9 @@ namespace Agent
 
                 // Check for duplicates
                 var duplicates = allCards.GroupBy(x => x)
-                                       .Where(g => g.Count() > 1)
-                                       .Select(g => g.Key)
-                                       .ToList();
+                    .Where(g => g.Count() > 1)
+                    .Select(g => g.Key)
+                    .ToList();
 
                 if (duplicates.Any())
                 {
@@ -173,10 +180,24 @@ namespace Agent
                 BoardGenerator generator = new BoardGenerator(16);
                 var boardInfo = generator.GenerateBoardAbstraction(playerHand, flop, turn, river);
                 int handAbstraction = boardInfo.Hand;
+
+                string rootPreffix = RootNode.Action.ToShortString();
+                if (RootNode.Children.Length == 1)
+                {
+                    rootPreffix = $"{rootPreffix},{RootNode.Children[0].Action.ToShortString()}";
+                }
                 
                 // Get action sequence from listBoxActions.
                 var selectedItems = txtActions.Text;
-                string[] actions = selectedItems.Split(",");
+                if (string.IsNullOrWhiteSpace(selectedItems))
+                {
+                    selectedItems = rootPreffix;
+                }
+                else
+                {
+                    selectedItems = $"{rootPreffix},{selectedItems}";
+                }
+                string[] actions = selectedItems.Split(",").Skip(1).ToArray();
 
                 if (RootNode == null)
                 {
@@ -204,30 +225,106 @@ namespace Agent
                     string percent = (strategy[i] * 100).ToString("0.00") + "%";
                     dataGridViewStrategy.Rows.Add(actionStr, percent);
                 }
+
+                // Generate a detailed description of the current game state.
+                var stateDescription = new StringBuilder();
+
+// Add information about the current position and round.
+                stateDescription.AppendLine($"Last Player: {selectedNode.Pos}");
+                stateDescription.AppendLine($"Last Round: {selectedNode.Round}");
+
+// Add information about the actions taken before reaching this node.
+                stateDescription.AppendLine("Actions leading to this state:");
+                if (selectedItems.Length > 0)
+                {
+                    stateDescription.AppendLine(selectedItems);
+                }
+
+// Add information about the hand abstraction.
+                stateDescription.AppendLine($"Hand Abstraction: 0x{handAbstraction:X4}");
+
+// Add information about the pay-off if it’s a terminal state.
+                if (selectedNode.IsTerminal())
+                {
+                    stateDescription.AppendLine($"Terminal State: {selectedNode.Round}");
+                    stateDescription.AppendLine($"Payoff: {selectedNode.PayOff}");
+                }
+                else
+                {
+                    stateDescription.AppendLine("Non-terminal state. Next possible actions:");
+                    if (selectedNode.Children is {Length: > 0})
+                    {
+                        foreach (var child in selectedNode.Children)
+                        {
+                            stateDescription.AppendLine($"- Action: {child.Action.ToShortString()} (Player: {child.Pos}, Round: {child.Round})");
+                        }
+                    }
+                    else
+                    {
+                        stateDescription.AppendLine("No further actions available.");
+                    }
+                }
+
+                stateDescription.AppendLine();
+                stateDescription.AppendLine("LEGEND:");
+                stateDescription.AppendLine("Pos: The player’s position in the game tree.");
+                stateDescription.AppendLine("Round: The current stage of the game (PreFlop, Flop, Turn, River, Showdown, Fold).");
+                stateDescription.AppendLine("Actions: The available moves a player can make: Fold (F), Call (C), Raise N (R{N}), All-In N (A{N}). N is what is additionally added to current stack.");
+                if (RootNode.Children.Length == 1)
+                {
+                    stateDescription.AppendLine("First two actions are Raise SB, Raise (BB-SB).");
+                }
+                stateDescription.AppendLine("Hand Abstraction: A hexadecimal value representing the hand state (e.g., 0x4321 means 4 for River, 3 for Turn, 2 for Flop, and 1 for Player Cards).");
+                stateDescription.AppendLine("Payoff: The numerical outcome (gain/loss) when a terminal state is reached.");
+                stateDescription.AppendLine();
+                stateDescription.AppendLine("HINT: Double click on table with possible actions to select action and compute");
+
+                // Assign the generated description to the label.
+                lblState.Text = stateDescription.ToString();
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error: " + ex.Message);
             }
         }
-        
+
         /// <summary>
         /// Recursively traverses the CFR tree according to the provided action sequence.
         /// </summary>
         private Node GetNodeForActionSequence(Node currentNode, string[] actions)
         {
             if (actions.Length == 0)
+            {
                 return currentNode;
-            
+            }
+
             foreach (var child in currentNode.Children)
             {
                 if (child.Action.ToShortString().Equals(actions[0], StringComparison.OrdinalIgnoreCase))
                 {
                     string[] remaining = actions.Skip(1).ToArray();
-                    return GetNodeForActionSequence(child, remaining);
+                    var result = GetNodeForActionSequence(child, remaining);
+                    return result;
                 }
             }
-            return currentNode;
+            return null;
+        }
+
+        private void dataGridViewStrategy_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            try
+            {
+                var item = dataGridViewStrategy.Rows[e.RowIndex].Cells[0].Value.ToString()!;
+                if (string.IsNullOrWhiteSpace(txtActions.Text))
+                    txtActions.Text = item;
+                else
+                    txtActions.Text += $",{item}";
+                CalculateStrategy();
+            }
+            catch
+            {
+                // ignored
+            }
         }
     }
 }
