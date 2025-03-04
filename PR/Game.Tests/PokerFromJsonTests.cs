@@ -99,6 +99,22 @@ public class PokerFromJsonTests : PokerTestsBase
         foreach (var a in gameActions)
             _testOutputHelper.WriteLine(a.ToString());
 
+        // Group actions into heads-up matchups between Player1 and other players
+        for (int playerN = 2; playerN <= numPlayers; playerN++)
+        {
+            var pos = PokerActionExtraction.DeterminePosition(gameActions, playerN);
+            var filteredActions = PokerActionExtraction.ExtractActions(gameActions, playerN, pos);
+            
+            _testOutputHelper.WriteLine($"Player1 with Player{playerN}. Player1 as {pos}");
+            if (filteredActions.Count != 0)
+            {
+                foreach (var a in filteredActions)
+                    _testOutputHelper.WriteLine(a.ToString());
+                _testOutputHelper.WriteLine($"Player1 with Player{playerN}: {PokerActionFormatter.FormatActions(filteredActions, poker.StartingBets.SmallBlind)}");
+            }
+        }
+
+        //_testOutputHelper.WriteLine(PokerActionFormatter.FormatActions(gameActions, poker.StartingBets.SmallBlind));
         //Assert.True(results?.IsCorrectPot);
     }
 }

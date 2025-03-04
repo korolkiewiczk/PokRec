@@ -205,7 +205,7 @@ namespace Agent
                     return;
                 }
                 // Traverse the CFR tree using the action sequence.
-                Node selectedNode = GetNodeForActionSequence(RootNode, actions);
+                Node selectedNode = RootNode.GetNodeForActionSequence(actions);
                 if (selectedNode == null)
                 {
                     MessageBox.Show("No matching node found for the selected actions.");
@@ -286,28 +286,6 @@ namespace Agent
             {
                 MessageBox.Show("Error: " + ex.Message);
             }
-        }
-
-        /// <summary>
-        /// Recursively traverses the CFR tree according to the provided action sequence.
-        /// </summary>
-        private Node GetNodeForActionSequence(Node currentNode, string[] actions)
-        {
-            if (actions.Length == 0)
-            {
-                return currentNode;
-            }
-
-            foreach (var child in currentNode.Children)
-            {
-                if (child.Action.ToShortString().Equals(actions[0], StringComparison.OrdinalIgnoreCase))
-                {
-                    string[] remaining = actions.Skip(1).ToArray();
-                    var result = GetNodeForActionSequence(child, remaining);
-                    return result;
-                }
-            }
-            return null;
         }
 
         private void dataGridViewStrategy_CellDoubleClick(object sender, DataGridViewCellEventArgs e)

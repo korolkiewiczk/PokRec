@@ -428,6 +428,7 @@ namespace Game.Games.TexasHoldem.Solving
                     var newGameActionsAmounts = _gameActions.Select(x => x.Amount).ToList();
                     if (newGameActionsAmounts.Count != 0)
                     {
+                        var prevInvalidAmount = newGameActionsAmounts[^1];
                         newGameActionsAmounts[^1] = potDiff.Value;
                         var totalContributions2 = newGameActionsAmounts.Sum(x => x);
                         if (matchResults.Pot != null)
@@ -439,6 +440,12 @@ namespace Game.Games.TexasHoldem.Solving
                                     Phase: _gameActions[^1].Phase,
                                     ActionType: potDiff == 0 ? PokerActionType.Check : _gameActions[^1].ActionType,
                                     PlayerIndex: _gameActions[^1].PlayerIndex);
+                                if (Math.Abs(_currentStreetHighestBet - prevInvalidAmount) < 0.01m)
+                                {
+                                    _currentStreetHighestBet = potDiff.Value;
+                                    _currentStreetContributions[_gameActions[^1].PlayerIndex - 1] -=
+                                        prevInvalidAmount - potDiff.Value;
+                                }
                             }
                         }
                     }
