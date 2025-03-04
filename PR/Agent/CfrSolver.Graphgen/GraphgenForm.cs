@@ -269,7 +269,7 @@ namespace Agent.CfrSolver.Graphgen
             var rootNode0 = nodeGen.Generate();
             XElement xElement = new XElement("Node");
 
-            NodeTraverser.TraverseToXml(xElement, rootNode0);
+            rootNode0.TraverseToXml(xElement);
 
             XDocument doc = new XDocument(xElement);
             doc.Save(xmlFileName);

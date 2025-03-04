@@ -1,7 +1,10 @@
-﻿using CfrSolver.Interfaces;
+﻿using System.Collections.Generic;
+using System.Linq;
+using CfrSolver.Interfaces;
+using CfrSolver.Model;
 using Common;
 
-namespace CfrSolver.AdaptivePokerStrategy;
+namespace Game.Games.TexasHoldem.Solving.AdaptivePokerStrategy;
 
 /// <summary>
 /// MultiPlayerStrategyEngine generalizes the heads-up CFR-based decision process to a multi-player context.
@@ -13,7 +16,7 @@ namespace CfrSolver.AdaptivePokerStrategy;
 public class MultiPlayerStrategyEngine
 {
     // The heads-up decision engine (from previous solutions).
-    private readonly AdaptivePokerStrategy.PokerDecisionEngine _headsUpEngine;
+    private readonly PokerDecisionEngine _headsUpEngine;
     // Board generator used by the heads-up engine.
     private readonly IBoardGenerator _boardGenerator;
     // Configuration for multi-player scaling.
@@ -25,7 +28,7 @@ public class MultiPlayerStrategyEngine
     /// <param name="headsUpEngine">An instance of the heads-up PokerDecisionEngine.</param>
     /// <param name="boardGenerator">The board generator used to obtain board abstractions.</param>
     /// <param name="scalingConfig">Configuration for multi-player adjustments.</param>
-    public MultiPlayerStrategyEngine(AdaptivePokerStrategy.PokerDecisionEngine headsUpEngine, IBoardGenerator boardGenerator, MultiPlayerScalingConfig scalingConfig)
+    public MultiPlayerStrategyEngine(PokerDecisionEngine headsUpEngine, IBoardGenerator boardGenerator, MultiPlayerScalingConfig scalingConfig)
     {
         _headsUpEngine = headsUpEngine;
         _boardGenerator = boardGenerator;
@@ -87,7 +90,7 @@ public class MultiPlayerStrategyEngine
         double multiwayAggressiveFactor = 1.0 / (1.0 + (numOpponents - 1) * _scalingConfig.AggressiveScalingCoefficient);
         foreach (var action in blendedStrategy.Keys.ToList())
         {
-            if (action.StartsWith("R") || action.StartsWith("A"))
+            if (action.StartsWith(nameof(OpType.Raise)[0]) || action.StartsWith(nameof(OpType.All)[0]))
             {
                 blendedStrategy[action] = (float)(blendedStrategy[action] * multiwayAggressiveFactor);
             }

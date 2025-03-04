@@ -1,10 +1,12 @@
-﻿using CfrSolver.Interfaces;
+﻿using System.Collections.Generic;
+using System.Linq;
+using CfrSolver.Interfaces;
 using CfrSolver.Model;
 using CfrSolver.Utils;
 using Common;
 using PT.Poker.Model;
 
-namespace CfrSolver.AdaptivePokerStrategy
+namespace Game.Games.TexasHoldem.Solving.AdaptivePokerStrategy
 {
     /// <summary>
     /// PokerDecisionEngine blends strategies from multiple GTO databases and adjusts them based on opponent tendencies.
@@ -15,20 +17,20 @@ namespace CfrSolver.AdaptivePokerStrategy
     {
         private readonly IBoardGenerator _boardGenerator;
         private readonly Node[] _gtoRootNodes; // Multiple GTO databases
-        private readonly OpponentAdjustmentConfig _adjustmentConfig;
+        private readonly OpponentAdjustmentConfig _opponentAdjustmentConfig;
 
         /// <summary>
         /// Initializes a new instance of the PokerDecisionEngine.
         /// </summary>
         /// <param name="boardGenerator">Provides board abstraction generation.</param>
         /// <param name="gtoRootNodes">An array of GTO root nodes representing different GTO databases.</param>
-        /// <param name="adjustmentConfig">Configuration for opponent adjustment superparameters.</param>
+        /// <param name="opponentAdjustmentConfig">Configuration for opponent adjustment superparameters.</param>
         public PokerDecisionEngine(IBoardGenerator boardGenerator, Node[] gtoRootNodes,
-            OpponentAdjustmentConfig adjustmentConfig)
+            OpponentAdjustmentConfig opponentAdjustmentConfig)
         {
             _boardGenerator = boardGenerator;
             _gtoRootNodes = gtoRootNodes;
-            _adjustmentConfig = adjustmentConfig;
+            _opponentAdjustmentConfig = opponentAdjustmentConfig;
         }
 
         /// <summary>
@@ -38,11 +40,11 @@ namespace CfrSolver.AdaptivePokerStrategy
         {
             public int CurrentPlayer { get; set; }
             public int Round { get; set; }
-            public List<string> ActionHistory { get; set; } = new List<string>();
+            public List<string> ActionHistory { get; set; } = [];
             public float Pay { get; set; }
-            public List<string> PossibleActions { get; set; } = new List<string>();
+            public List<string> PossibleActions { get; set; } = [];
             public Card[] PlayerHoleCards { get; set; }
-            public BoardInfo? Board { get; set; }
+            public BoardInfo Board { get; set; }
         }
 
         /// <summary>
@@ -55,9 +57,7 @@ namespace CfrSolver.AdaptivePokerStrategy
         public Dictionary<string, float> DecideAction(GameState gameState, PlayerStatsRelative opponentStats)
         {
             // Step 1: Obtain (or generate) the board abstraction.
-            var board = gameState.Board.HasValue
-                ? gameState.Board.Value
-                : _boardGenerator.GenerateBoardAbstraction(gameState.PlayerHoleCards);
+            var board = gameState.Board ?? _boardGenerator.GenerateBoardAbstraction(gameState.PlayerHoleCards);
 
             int handAbstraction = board.Hand;
             string[] actionsArray = gameState.ActionHistory.ToArray();
@@ -135,24 +135,24 @@ namespace CfrSolver.AdaptivePokerStrategy
             // --- Aggressive actions (Raise/All-in: "R"/"A") ---
             // Use FoldToThreeBet, WTSD, and ThreeBet.
             double foldTo3BetFactor = Lerp(1.0, 1.2, opponentStats.FoldToThreeBet / 100.0) *
-                                      _adjustmentConfig.FoldToThreeBetWeight;
+                                      _opponentAdjustmentConfig.FoldToThreeBetWeight;
             double wtsdFactor = opponentStats.WTSD >= 50.0
-                ? Lerp(1.0, 0.8, (opponentStats.WTSD - 50.0) / 10.0) * _adjustmentConfig.WTSDWeight
-                : Lerp(1.0, 1.1, (50.0 - opponentStats.WTSD) / 10.0) * _adjustmentConfig.WTSDWeight;
-            double threeBetFactor = Lerp(1.0, 0.95, opponentStats.ThreeBet / 100.0) * _adjustmentConfig.ThreeBetWeight;
+                ? Lerp(1.0, 0.8, (opponentStats.WTSD - 50.0) / 10.0) * _opponentAdjustmentConfig.WTSDWeight
+                : Lerp(1.0, 1.1, (50.0 - opponentStats.WTSD) / 10.0) * _opponentAdjustmentConfig.WTSDWeight;
+            double threeBetFactor = Lerp(1.0, 0.95, opponentStats.ThreeBet / 100.0) * _opponentAdjustmentConfig.ThreeBetWeight;
             double aggressiveAdjustment = foldTo3BetFactor * wtsdFactor * threeBetFactor;
 
             // --- Calling actions ("C") ---
             // Use VPIP and CBetFlop.
-            double vpipFactor = Lerp(1.0, 0.9, opponentStats.VPIP / 100.0) * _adjustmentConfig.VPIPWeight;
-            double cbetFlopFactor = Lerp(1.0, 1.05, opponentStats.CBetFlop / 100.0) * _adjustmentConfig.CBetFlopWeight;
+            double vpipFactor = Lerp(1.0, 0.9, opponentStats.VPIP / 100.0) * _opponentAdjustmentConfig.VPIPWeight;
+            double cbetFlopFactor = Lerp(1.0, 1.05, opponentStats.CBetFlop / 100.0) * _opponentAdjustmentConfig.CBetFlopWeight;
             double callAdjustment = vpipFactor * cbetFlopFactor;
 
             // --- Folding actions ("F") ---
             // Use PFR and FoldToCBetFlop.
-            double pfrFactor = Lerp(1.0, 1.05, opponentStats.PFR / 100.0) * _adjustmentConfig.PFRWeight;
+            double pfrFactor = Lerp(1.0, 1.05, opponentStats.PFR / 100.0) * _opponentAdjustmentConfig.PFRWeight;
             double foldToCBetFlopFactor = Lerp(1.0, 1.1, opponentStats.FoldToCBetFlop / 100.0) *
-                                          _adjustmentConfig.FoldToCBetFlopWeight;
+                                          _opponentAdjustmentConfig.FoldToCBetFlopWeight;
             double foldAdjustment = pfrFactor * foldToCBetFlopFactor;
 
             // Create a new dictionary to hold adjusted probabilities.
@@ -161,15 +161,15 @@ namespace CfrSolver.AdaptivePokerStrategy
             foreach (var action in adjustedStrategy.Keys.ToList())
             {
                 // Adjust based on action type.
-                if (action.StartsWith("R") || action.StartsWith("A"))
+                if (action.StartsWith(nameof(OpType.Raise)[0]) || action.StartsWith(nameof(OpType.All)[0]))
                 {
                     adjustedStrategy[action] = (float) (adjustedStrategy[action] * aggressiveAdjustment);
                 }
-                else if (action.StartsWith("C"))
+                else if (action.StartsWith(nameof(OpType.Call)[0]))
                 {
                     adjustedStrategy[action] = (float) (adjustedStrategy[action] * callAdjustment);
                 }
-                else if (action.StartsWith("F"))
+                else if (action.StartsWith(nameof(OpType.Fold)[0]))
                 {
                     adjustedStrategy[action] = (float) (adjustedStrategy[action] * foldAdjustment);
                 }

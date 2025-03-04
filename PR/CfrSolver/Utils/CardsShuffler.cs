@@ -2,16 +2,14 @@
 
 namespace CfrSolver.Utils
 {
-    internal class CardsShuffler
+    internal static class CardsShuffler
     {
         public static void ShuffleCards(Card[] myCards, Random random)
         {
             for (int i = 51; i > 0; i--)
             {
                 int j = random.Next(i + 1);
-                Card tmp = myCards[i];
-                myCards[i] = myCards[j];
-                myCards[j] = tmp;
+                (myCards[i], myCards[j]) = (myCards[j], myCards[i]);
             }
         }
     }

@@ -5,45 +5,6 @@ using Game.Games.TexasHoldem.Model;
 
 namespace Game.Games.TexasHoldem.Solving;
 
-public record PlayerStats(
-    int Hands = 0,
-    int VPIP = 0,
-    int PFR = 0,
-    int ThreeBet = 0,
-    int FoldToThreeBet = 0,
-    int CBetFlop = 0,
-    int FoldToCBetFlop = 0,
-    int WTSD = 0
-);
-
-public static class PlayerStatsExtensions
-{
-    public static PlayerStatsRelative ToRelativeStats(this PlayerStats stats)
-    {
-        if (stats.Hands == 0)
-        {
-            return new PlayerStatsRelative(0,0, 0, 0, 0, 0, 0, 0);
-        }
-
-        return new PlayerStatsRelative(
-            stats.Hands,
-            VPIP: (double) stats.VPIP / stats.Hands * 100,
-            PFR: (double) stats.PFR / stats.Hands * 100,
-            ThreeBet: (double) stats.ThreeBet / stats.Hands * 100,
-            FoldToThreeBet: (double) stats.FoldToThreeBet / stats.Hands * 100,
-            CBetFlop: (double) stats.CBetFlop / stats.Hands * 100,
-            FoldToCBetFlop: (double) stats.FoldToCBetFlop / stats.Hands * 100,
-            WTSD: (double) stats.WTSD / stats.Hands * 100
-        );
-    }
-
-    public static string ToDebugString(this Dictionary<string, PlayerStats> playersStats)
-    {
-        return string.Join("\n", playersStats.Select(x =>
-            $"{x.Key} = {string.Join("|", ToRelativeStats(x.Value))}"));
-    }
-}
-
 public static class PlayerStatistics
 {
     public static PlayerStats AddToStats(PlayerStats currentStats, int playerIndex, List<PlayerAction> actions)

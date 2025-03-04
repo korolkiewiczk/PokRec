@@ -4,8 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using CfrSolver;
-using Agent.CfrSolver.Graphgen; // Contains TrainingDataSerializer
+using CfrSolver.Datalayer;
 
 namespace Agent
 {

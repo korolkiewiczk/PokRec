@@ -1,6 +1,7 @@
-﻿using Common;
+﻿using System.Collections.Generic;
+using Common;
 
-namespace CfrSolver.AdaptivePokerStrategy;
+namespace Game.Games.TexasHoldem.Solving.AdaptivePokerStrategy;
 
 /// <summary>
 /// Game state for a multi-player situation.

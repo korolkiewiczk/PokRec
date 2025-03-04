@@ -1,11 +1,11 @@
-﻿namespace CfrSolver.AdaptivePokerStrategy;
+﻿namespace Game.Games.TexasHoldem.Solving.AdaptivePokerStrategy;
 
 /// <summary>
 /// Configuration for multi-player strategy adjustments.
 /// These parameters control how pairwise and composite strategies are blended
 /// and how aggressive actions are scaled based on the number of opponents.
 /// </summary>
-public class MultiPlayerScalingConfig
+public record MultiPlayerScalingConfig
 {
     /// <summary>
     /// Coefficient used to downscale aggressive actions as the number of opponents increases.

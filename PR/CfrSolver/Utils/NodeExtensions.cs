@@ -127,7 +127,7 @@ public static class NodeExtensions
             return MaxPenalty; // Very different actions incur a high penalty.
         }
 
-        if (typeActual == 'R' || typeActual == 'A')
+        if (typeActual == nameof(OpType.Raise)[0] || typeActual == nameof(OpType.All)[0])
         {
             if (actual.Length > 1 && target.Length > 1 &&
                 int.TryParse(actual.Substring(1), out int numberActual) &&
@@ -136,7 +136,7 @@ public static class NodeExtensions
                 return CalculatePenalty(numberActual, numberTarget, MaxPenalty);
             }
 
-            return 5.0f;
+            return MaxPenalty;
         }
 
         // For actions like "F" or "C", if not an exact match, assign a high penalty.
@@ -145,6 +145,7 @@ public static class NodeExtensions
     
     private static float CalculatePenalty(float numberActual, float numberTarget, float maxPenalty)
     {
+        if (numberActual == 0) return 1;
         // Ograniczamy wynik do MaxPenalty, jeśli numberActual jest poza zakresem [0.5 * numberTarget, 2 * numberTarget]
         if (numberActual < 0.5 * numberTarget || numberActual > 2 * numberTarget)
         {

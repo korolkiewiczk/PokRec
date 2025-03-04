@@ -1,10 +1,10 @@
-﻿namespace CfrSolver.AdaptivePokerStrategy;
+﻿namespace Game.Games.TexasHoldem.Solving.AdaptivePokerStrategy;
 
 /// <summary>
 /// Configuration class for opponent adjustment superparameters.
 /// These weights allow fine tuning of how each opponent statistic influences our strategy.
 /// </summary>
-public class OpponentAdjustmentConfig
+public record OpponentAdjustmentConfig
 {
     public double VPIPWeight { get; set; } = 1.0;
     public double PFRWeight { get; set; } = 1.0;

@@ -3,18 +3,9 @@ using CfrSolver.Model;
 
 namespace CfrSolver.Utils
 {
-    public class NodeTraverser
+    public static class NodeTraverser
     {
-        public static void Traverse(Node node, Action<Node, int> nodeAction, int depth = 0)
-        {
-            nodeAction(node, depth);
-            foreach (var nodeChild in node.Children)
-            {
-                Traverse(nodeChild, nodeAction, depth + 1);
-            }
-        }
-
-        public static void TraverseToXml(XElement xElement, Node node)
+        public static void TraverseToXml(this Node node, XElement xElement)
         {
             xElement.Add(
                 new XAttribute("player", node.Pos),
@@ -30,19 +21,19 @@ namespace CfrSolver.Utils
             foreach (var nodeChild in node.Children)
             {
                 XElement newxElement = new XElement("Node");
-                TraverseToXml(newxElement, nodeChild);
+                TraverseToXml(nodeChild, newxElement);
                 xElement.Add(newxElement);
             }
         }
 
-        public static void TraverseWithAction(Node node, Action<Node, string> nodeAction, string action = "")
+        public static void TraverseWithAction(this Node node, Action<Node, string> nodeAction, string action = "")
         {
             var shortActionName = node.Action.ToShortString();
-            var newaction = action == "" ? shortActionName : action + "," + shortActionName;
-            nodeAction(node, newaction);
+            var actionName = action == "" ? shortActionName : action + "," + shortActionName;
+            nodeAction(node, actionName);
             foreach (var nodeChild in node.Children)
             {
-                TraverseWithAction(nodeChild, nodeAction, newaction);
+                TraverseWithAction(nodeChild, nodeAction, actionName);
             }
         }
     }

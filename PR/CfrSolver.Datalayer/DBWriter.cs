@@ -13,7 +13,7 @@ namespace CfrSolver.Datalayer
             Batteries_V2.Init();
         }
 
-        const string connectionString = "Data Source=cfr.db;";
+        private const string ConnectionString = "Data Source=cfr.db;";
 
         private const int MaxInsertsPerQuery = 500;
 
@@ -50,7 +50,7 @@ namespace CfrSolver.Datalayer
                 cmd.CommandText = "BEGIN TRANSACTION;";
                 cmd.ExecuteNonQuery();
 
-                NodeTraverser.TraverseWithAction(rootNode, (node, actions) =>
+                rootNode.TraverseWithAction((node, actions) =>
                 {
                     string nextPlayer = node.Children.Length > 0 ? node.Children[0].Pos.ToString() : "NULL";
                     string pay = node.IsTerminal() ? node.PayOff.ToString() : "NULL";
@@ -148,7 +148,7 @@ namespace CfrSolver.Datalayer
 
         private static SqliteConnection ConnectToDatabase()
         {
-            var mySqlConnection = new SqliteConnection(connectionString);
+            var mySqlConnection = new SqliteConnection(ConnectionString);
             mySqlConnection.Open();
             return mySqlConnection;
         }

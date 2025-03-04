@@ -1,11 +1,8 @@
-using System;
-using System.IO;
 using System.IO.Compression;
-using Newtonsoft.Json;
 using CfrSolver.Model;
-using CfrSolver;
+using Newtonsoft.Json;
 
-namespace Agent.CfrSolver.Graphgen
+namespace CfrSolver.Datalayer
 {
     public static class TrainingDataSerializer
     {

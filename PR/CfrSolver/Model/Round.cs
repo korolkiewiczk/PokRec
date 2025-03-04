@@ -1,6 +1,6 @@
 ﻿namespace CfrSolver.Model
 {
-    public enum Round : byte
+    public enum Round
     {
         PreFlop,
         Flop,

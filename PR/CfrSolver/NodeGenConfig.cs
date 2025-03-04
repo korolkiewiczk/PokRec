@@ -28,7 +28,7 @@
         public int BbValue { get; set; }
 
         /// <summary>
-        /// Total bankrol of both players (we assume they are equal)
+        /// Total bankroll of both players (we assume they are equal)
         /// </summary>
         public int Bankroll { get; set; }
 
