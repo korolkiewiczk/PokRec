@@ -1,8 +1,8 @@
 ﻿using System.Text.Json;
 using Common;
-using Game.Games.TexasHoldem.Model;
-using Game.Games.TexasHoldem.Solving;
-using Game.Games.TexasHoldem.Utils;
+using Game.Common.Model;
+using Game.Solving;
+using Game.Utils;
 using Xunit.Abstractions;
 
 namespace Game.Tests;

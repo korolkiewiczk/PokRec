@@ -10,10 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CfrSolver\CfrSolver.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\Game.Presentation\Game.Presentation.csproj" />
     <ProjectReference Include="..\PT\PT.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
   </ItemGroup>
 </Project>

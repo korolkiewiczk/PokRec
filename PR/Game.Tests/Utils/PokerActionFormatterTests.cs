@@ -1,5 +1,5 @@
-﻿using Game.Games.TexasHoldem.Model;
-using Game.Games.TexasHoldem.Utils;
+﻿using Game.Common.Model;
+using Game.Utils;
 
 namespace Game.Tests.Utils;
 

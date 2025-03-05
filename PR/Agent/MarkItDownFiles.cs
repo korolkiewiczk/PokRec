@@ -2,9 +2,9 @@ using System.Text;
 using Common;
 using System.IO;
 using System;
+using Game.Common.MultiRegionMatchers;
+using Game.Common.RegionMatchers;
 using PT.Poker.Model;
-using Game.RegionMatchers;
-using Game.MultiRegionMatchers;
 
 namespace Agent;
 

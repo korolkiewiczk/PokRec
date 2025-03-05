@@ -2,9 +2,9 @@
 using System.Drawing;
 using System.Windows.Forms;
 using Common;
-using Game.Games.TexasHoldem.Presenters;
-using Game.Games.TexasHoldem.Solving;
-using Environment = Game.Common.Environment;
+using Game.Common;
+using Game.Presentation;
+using Game.Solving;
 
 namespace Agent
 {
@@ -12,8 +12,7 @@ namespace Agent
     {
         private Bitmap _backbuffer;
 
-        private readonly Board _board;
-        private readonly PokerPresenter _pokerPresenter;
+        private readonly Poker _poker;
         private readonly GameProcessing _gameProcessing;
 
         private Game()
@@ -23,8 +22,7 @@ namespace Agent
 
         public Game(Poker poker, GameProcessing gameProcessing) : this()
         {
-            _board = poker.Board;
-            _pokerPresenter = new PokerPresenter(poker);
+            _poker = poker;
             _gameProcessing = gameProcessing;
 
             _gameProcessing.ProcessingCompleted += GameProcessing_ProcessingCompleted;
@@ -43,7 +41,7 @@ namespace Agent
         {
             if (InvokeRequired)
             {
-                BeginInvoke(new Action(() => Render()));
+                BeginInvoke(Render);
                 return;
             }
             Render();
@@ -56,7 +54,9 @@ namespace Agent
             using (var g = Graphics.FromImage(_backbuffer))
             {
                 g.Clear(BackColor);
-                _pokerPresenter.Show(new Environment(g, new Rectangle(0, 0, Width, Height), _board));
+                var pokerResults = _poker.Solve();
+                PokerPresenter.Show(new GameEnvironment(g, new Rectangle(0, 0, Width, Height), _poker.Board),
+                    pokerResults, _poker.GameActions, _poker.StartingBets, _poker.PlayerStats);
             }
 
             Invalidate();

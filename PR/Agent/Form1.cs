@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-using Agent.Properties;
 using Common;
-using Game.Games;
-using Game.Games.TexasHoldem.Model;
-using Game.Games.TexasHoldem.Solving;
-using Game.Games.TexasHoldem.Utils;
+using Game.Common.Model;
+using Game.Solving;
+using Game.Utils;
 using scr;
 
 namespace Agent
@@ -214,7 +212,7 @@ namespace Agent
 
         private void buttonOpenCfrGraphgen_Click(object sender, EventArgs e)
         {
-            var cfrForm = new CfrSolver.Graphgen.GraphgenForm();
+            var cfrForm = new GraphgenForm();
             cfrForm.Show();
         }
         

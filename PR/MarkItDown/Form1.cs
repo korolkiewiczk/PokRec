@@ -5,6 +5,7 @@ using scr;
 using Common;
 using System.IO;
 using emu.lib;
+using Environment = System.Environment;
 
 namespace MarkItDown
 {

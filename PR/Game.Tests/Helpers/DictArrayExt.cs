@@ -1,8 +1,10 @@
 ﻿using System.Drawing;
 using System.Globalization;
 using Common;
-using Game.MultiRegionMatchers;
-using Game.RegionMatchers;
+using Game.Common;
+using Game.Common.MultiRegionMatchers;
+using Game.Common.RegionMatchers;
+using Game.Common.Utils;
 
 namespace Game.Tests;
 

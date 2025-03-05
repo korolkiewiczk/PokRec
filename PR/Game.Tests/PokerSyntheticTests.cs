@@ -1,9 +1,9 @@
 using Common;
-using Game.Games.TexasHoldem.Model;
-using Game.Games.TexasHoldem.Solving;
-using Game.Games.TexasHoldem.Utils;
-using Game.MultiRegionMatchers;
-using Game.RegionMatchers;
+using Game.Common.Model;
+using Game.Common.MultiRegionMatchers;
+using Game.Common.RegionMatchers;
+using Game.Solving;
+using Game.Utils;
 using Xunit.Abstractions;
 
 namespace Game.Tests;
