@@ -71,6 +71,7 @@ namespace Game.Solving.AdaptivePokerStrategy
             foreach (var rootNode in _gtoRootNodes)
             {
                 var (node, penalty) = rootNode.GetInterpolatedNodeForActionSequence(actionsArray);
+                if (penalty >= NodeExtensions.MaxPenalty + 1) continue;
                 float weight = 1.0f / penalty;
                 float[] baseStrategy =
                     node.GetAverageStrategy(handAbstraction);
@@ -97,6 +98,12 @@ namespace Game.Solving.AdaptivePokerStrategy
                 {
                     combinedStrategy[i] /= totalWeight;
                 }
+            }
+            else
+            {
+                // TODO we need fallback to another method - GTO not provide valid strategy
+                // we can use for example EV computation
+                return null;
             }
 
             // Map combined strategy to the current legal actions.

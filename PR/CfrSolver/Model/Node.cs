@@ -113,8 +113,8 @@ namespace CfrSolver.Model
 
         public int ComputeMask()
         {
-            // The bitmask ((16 << (4 * (int)Round)) - 1) determines how many bits to keep.
-            return ((16 << (4 * (int) Round)) - 1);
+            var round = (int)(Children.FirstOrDefault(x => (int) x.Round - 1 == (int) Round)?.Round ?? Round);
+            return (16 << (round << 2)) - 1;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

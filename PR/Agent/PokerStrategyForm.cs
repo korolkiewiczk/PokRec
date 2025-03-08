@@ -205,7 +205,7 @@ namespace Agent
                     return;
                 }
                 // Traverse the CFR tree using the action sequence.
-                Node selectedNode = RootNode.GetNodeForActionSequence(actions);
+                (Node selectedNode, float penalty) = RootNode.GetInterpolatedNodeForActionSequence(actions);
                 if (selectedNode == null)
                 {
                     MessageBox.Show("No matching node found for the selected actions.");
@@ -258,6 +258,8 @@ namespace Agent
                         {
                             stateDescription.AppendLine($"- Action: {child.Action.ToShortString()} (Player: {child.Pos}, Round: {child.Round})");
                         }
+
+                        stateDescription.AppendLine($"Penalty {penalty}");
                     }
                     else
                     {

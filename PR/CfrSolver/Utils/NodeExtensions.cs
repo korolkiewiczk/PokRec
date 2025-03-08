@@ -82,7 +82,7 @@ public static class NodeExtensions
         }
 
         // No exact match: find the child with minimal distance.
-        float bestDistance = MaxPenalty;
+        float bestDistance = float.MaxValue;
         Node bestChild = null;
         foreach (var child in currentNode.Children)
         {
@@ -106,7 +106,8 @@ public static class NodeExtensions
         return childResult with {Penalty = combinedPenalty};
     }
 
-    private const float MaxPenalty = 10.0f;
+    private const float PenaltyBase = 1.0f;
+    public const float MaxPenalty = 7.0f;
 
     /// <summary>
     /// Computes a distance between two action strings.
@@ -133,10 +134,10 @@ public static class NodeExtensions
                 int.TryParse(actual.Substring(1), out int numberActual) &&
                 int.TryParse(target.Substring(1), out int numberTarget))
             {
-                return CalculatePenalty(numberActual, numberTarget, MaxPenalty);
+                return CalculatePenalty(numberActual, numberTarget, PenaltyBase);
             }
 
-            return MaxPenalty;
+            return PenaltyBase;
         }
 
         // For actions like "F" or "C", if not an exact match, assign a high penalty.
