@@ -11,6 +11,7 @@
     <ProjectReference Include="..\CfrSolver\CfrSolver.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\Game.Presentation\Game.Presentation.csproj" />
+    <ProjectReference Include="..\Game.Datalayer\Game.Datalayer.csproj" />
     <ProjectReference Include="..\PT\PT.csproj" />
   </ItemGroup>
 </Project>

@@ -13,6 +13,7 @@ using PT.Algorithm;
 using PT.Algorithm.Model;
 using PT.Poker.Model;
 using PT.Poker.Resolving;
+using Game.Datalayer;
 
 namespace Game.Solving
 {
@@ -54,6 +55,7 @@ namespace Game.Solving
         {
             Board = board;
             InitializeMatchers();
+            InitializePlayerStatsFromDatabase();
         }
 
         public void SetState(IDictionary<string, ReconResult> state)
@@ -409,6 +411,35 @@ namespace Game.Solving
 
             if (DebugFlags.HasFlag(PokerDebugFlags.PlayerStatistics))
                 Log.Debug(_playerStats.ToDebugString());
+                
+            // Save player statistics to the database
+            SavePlayerStatsToDatabase();
+        }
+        
+        /// <summary>
+        /// Saves the current player statistics to the database
+        /// </summary>
+        private void SavePlayerStatsToDatabase()
+        {
+            try
+            {
+                // Skip if there are no player stats to save
+                if (_playerStats.Count == 0)
+                    return;
+                    
+                // Create a new repository instance
+                var repository = new Game.Datalayer.GameRepository();
+                
+                // Update player stats in the database
+                repository.UpdateStats(_playerStats);
+                
+                if (DebugFlags.HasFlag(PokerDebugFlags.PlayerStatistics))
+                    Log.Debug("Player statistics saved to database successfully");
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Error saving player statistics to database", ex);
+            }
         }
 
         private bool IsCorrectPotWithFixActions(MatchResults matchResults)
@@ -802,5 +833,54 @@ namespace Game.Solving
         }
 
         #endregion
+
+        /// <summary>
+        /// Initializes player statistics from the database
+        /// </summary>
+        private void InitializePlayerStatsFromDatabase()
+        {
+            try
+            {
+                // Create a new repository instance
+                var repository = new GameRepository();
+                
+                // Get all player stats from the database
+                var dbPlayerStats = repository.GetAllStats();
+                
+                if (dbPlayerStats != null && dbPlayerStats.Count > 0)
+                {
+                    // Convert database stats to in-memory PlayerStats objects
+                    foreach (var kvp in dbPlayerStats)
+                    {
+                        _playerStats[kvp.Nickname.Name] = ConvertToPlayerStats(kvp.ToStatsRelative());
+                    }
+                    
+                    if (DebugFlags.HasFlag(PokerDebugFlags.PlayerStatistics))
+                        Log.Debug($"Loaded {_playerStats.Count} player statistics from database");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Error loading player statistics from database", ex);
+            }
+        }
+        
+        /// <summary>
+        /// Converts PlayerStatsRelative from database to PlayerStats for in-memory use
+        /// </summary>
+        private PlayerStats ConvertToPlayerStats(PlayerStatsRelative relativeStats)
+        {
+            return new PlayerStats
+            {
+                Hands = relativeStats.Hands,
+                VPIP = (int)(relativeStats.VPIP * relativeStats.Hands / 100),
+                PFR = (int)(relativeStats.PFR * relativeStats.Hands / 100),
+                ThreeBet = (int)(relativeStats.ThreeBet * relativeStats.Hands / 100),
+                FoldToThreeBet = (int)(relativeStats.FoldToThreeBet * relativeStats.Hands / 100),
+                CBetFlop = (int)(relativeStats.CBetFlop * relativeStats.Hands / 100),
+                FoldToCBetFlop = (int)(relativeStats.FoldToCBetFlop * relativeStats.Hands / 100),
+                WTSD = (int)(relativeStats.WTSD * relativeStats.Hands / 100)
+            };
+        }
     }
 }
