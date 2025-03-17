@@ -528,10 +528,8 @@ namespace Game.Solving
                 NumOfPlayers = numOfPlayers,
                 Board = boardCards.ToArray()
             };
-            MonteCarlo<CardSet, RandomSetDefinition> monteCarlo =
-                new MonteCarlo<CardSet, RandomSetDefinition>(250, arg);
 
-            MonteCarloResult result = monteCarlo.Solve();
+            var result = EquityCalculator.CalculateTwoStageEquity(arg, 250);
             return result;
         }
 

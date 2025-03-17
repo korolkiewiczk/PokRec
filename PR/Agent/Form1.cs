@@ -7,6 +7,7 @@ using Common;
 using Game.Common.Model;
 using Game.Solving;
 using Game.Utils;
+using PT.Poker.Model;
 using scr;
 
 namespace Agent
@@ -129,6 +130,8 @@ namespace Agent
             tabPlay.Enabled = false;
 
             MarkItDownFiles.GenerateMarkItDownFiles();
+            
+            EquityCalculator.PrecomputeHandEquitiesInBackground(250);
         }
 
         private void buttonBoards_Click(object sender, EventArgs e)
