@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Common;
-using Game.Common;
 using Game.Common.Model;
 using Game.Common.MultiRegionMatchers;
 using Game.Common.RegionMatchers;
 using Game.Common.Utils;
 using Game.Utils;
-using PT.Algorithm;
 using PT.Algorithm.Model;
 using PT.Poker.Model;
 using PT.Poker.Resolving;
@@ -203,9 +201,11 @@ namespace Game.Solving
                     position, opponents, nicknames, stack, isDecision, pot);
 
             var opponentsInGame = opponents.Places(numPlayers - 1);
+            
+            var statsRelative = GetPlayerStatsRelative(opponentsInGame);
 
             var (monteCarloResult, bestLayout) =
-                SolvePlayerLayout(playerCards, opponents, flopCards, turnCards, riverCards);
+                SolvePlayerLayout(playerCards, opponents, flopCards, turnCards, riverCards, statsRelative);
             var playerFold =
                 _gameActions.FirstOrDefault(x => x.PlayerIndex == 1 && x.ActionType == PokerActionType.Fold);
             if (bestLayout == null && playerFold == null)
@@ -291,6 +291,41 @@ namespace Game.Solving
             _previousOpponentsInGame = opponentsInGame.ToList();
 
             return pokerResult;
+        }
+
+        private List<PlayerStatsRelative> GetPlayerStatsRelative(List<bool> opponentsInGame)
+        {
+            var statsRelative = new List<PlayerStatsRelative>();
+            
+            // Add stats for each opponent still in the game
+            for (int i = 0; i < opponentsInGame.Count; i++)
+            {
+                if (opponentsInGame[i])
+                {
+                    var normalizedNickName = string.Empty;
+                    if (_nickNamesAtPos.ContainsKey(i + 1) && _nickNamesAtPos[i + 1].Count > 0)
+                    {
+                        normalizedNickName = NormalizedInputSelector.GetNormalizedFromInputs(_nickNamesAtPos[i + 1]);
+                        
+                        // Try to find similar nickname in player stats
+                        var similarKey = FuzzyKeyFinder.FindSimilarKey(_playerStats.Keys, normalizedNickName, maxDistance: 2);
+                        if (similarKey != null)
+                        {
+                            normalizedNickName = similarKey;
+                        }
+                    }
+                    
+                    // Get player stats or use default values if not found
+                    PlayerStats playerStats = new PlayerStats();
+                    if (!string.IsNullOrEmpty(normalizedNickName) && _playerStats.TryGetValue(normalizedNickName, out var stat))
+                    {
+                        // Convert PlayerStats to PlayerStatsRelative
+                        statsRelative.Add(stat.ToRelativeStats());
+                    }
+                }
+            }
+
+            return statsRelative;
         }
 
         private static List<int> FilterActiveIndices(IEnumerable<decimal?> stack)
@@ -489,7 +524,7 @@ namespace Game.Solving
 
         private static (MonteCarloResult? monteCarloResult, PokerLayouts? bestLayout) SolvePlayerLayout(
             List<Card> playerCards,
-            Place opponents, IList<Card> flopCards, IList<Card> turnCards, IList<Card> riverCards)
+            Place opponents, IList<Card> flopCards, IList<Card> turnCards, IList<Card> riverCards, List<PlayerStatsRelative> stats)
         {
             MonteCarloResult? monteCarloResult = null;
             PokerLayouts? bestLayout = null;
@@ -498,7 +533,7 @@ namespace Game.Solving
                 int countPlayers = opponents.Count + 1; // +1 for the player
                 monteCarloResult = ComputeMonteCarloResult(playerCards,
                     flopCards.Union(turnCards).Union(riverCards).ToList(),
-                    countPlayers);
+                    countPlayers, stats);
                 var allCards = playerCards.Union(flopCards).Union(turnCards).Union(riverCards).ToArray();
                 var layoutResolver = new LayoutResolver(new CardLayout(allCards));
                 bestLayout = layoutResolver.PokerLayout;
@@ -520,7 +555,7 @@ namespace Game.Solving
         }
 
         private static MonteCarloResult ComputeMonteCarloResult(IEnumerable<Card> myCards, IEnumerable<Card> boardCards,
-            int numOfPlayers)
+            int numOfPlayers, List<PlayerStatsRelative> stats)
         {
             RandomSetDefinition arg = new RandomSetDefinition
             {
@@ -529,7 +564,7 @@ namespace Game.Solving
                 Board = boardCards.ToArray()
             };
 
-            var result = EquityCalculator.CalculateTwoStageEquity(arg, 250);
+            var result = EquityCalculator.CalculateTwoStageEquityWithStats(arg, 250, stats);
             return result;
         }
 
