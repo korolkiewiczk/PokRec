@@ -8,9 +8,6 @@ using Game.Common.MultiRegionMatchers;
 using Game.Common.RegionMatchers;
 using Game.Common.Utils;
 using Game.Utils;
-using PT.Algorithm.Model;
-using PT.Poker.Model;
-using PT.Poker.Resolving;
 using Game.Datalayer;
 
 namespace Game.Solving
@@ -71,24 +68,6 @@ namespace Game.Solving
 
         public Dictionary<string, PlayerStats> PlayerStats => _playerStats;
 
-        private void InitializeMatchers()
-        {
-            var settings = new PokerBoardSettingsParser(Board);
-            _numPlayers = settings.Players;
-
-            _flop = new Flop(Board);
-            _turn = new Turn(Board);
-            _river = new River(Board);
-            _playerCards = new PlayerCards(Board);
-            _position = new Position(Board, _numPlayers);
-            _opponent = new Opponent(Board, _numPlayers - 1);
-            _stack = new Stack(_numPlayers);
-            _nickname = new Nickname(_numPlayers);
-            _decision = new Decision(Board);
-            _pot = new Pot();
-            _currentStreetContributions = new decimal[_numPlayers];
-        }
-
         public List<RegionSpec> GetRegionSpecs()
         {
             List<RegionSpec> regionSpecs =
@@ -107,34 +86,6 @@ namespace Game.Solving
             return regionSpecs;
         }
 
-        private ReconResults GetReconResults()
-        {
-            var playerResult = GetResult(nameof(PlayerCards));
-            var flopResult = GetResult(nameof(Flop));
-            var turnResult = GetResult(nameof(Turn));
-            var riverResult = GetResult(nameof(River));
-            var positionResults = GetResultsPrefixed(nameof(Position)).ToList();
-            var opponentResults = GetResultsPrefixed(nameof(Opponent)).ToList();
-            var stackResults = GetResultsPrefixed(nameof(Stack)).ToList();
-            var nicknameResults = GetResultsPrefixed(nameof(Nickname)).ToList();
-            var decisionResult = GetResult(nameof(Decision));
-            var potResult = GetResult(nameof(Pot));
-
-            return new ReconResults(playerResult, flopResult, turnResult, riverResult, positionResults,
-                opponentResults, stackResults, nicknameResults, decisionResult, potResult);
-        }
-
-        private PokerPhase DeterminePokerPhase(List<Card> flopCards, List<Card> turnCards, List<Card> riverCards)
-        {
-            if (riverCards.Count != 0)
-                return PokerPhase.River;
-            if (turnCards.Count != 0)
-                return PokerPhase.Turn;
-            if (flopCards.Count != 0)
-                return PokerPhase.Flop;
-            return PokerPhase.Preflop;
-        }
-
         public PokerResults Solve()
         {
             var reconResults = GetReconResults();
@@ -149,7 +100,7 @@ namespace Game.Solving
             var isDecision = _decision.Match(reconResults.DecisionResult);
             var pot = _pot.Match([reconResults.PotResult]);
 
-            var phase = DeterminePokerPhase(flopCards, turnCards, riverCards);
+            var phase = PokerHelper.DeterminePokerPhase(flopCards, turnCards, riverCards);
             if (_previousPhase == PokerPhase.None)
             {
                 _previousPhase = phase;
@@ -162,16 +113,13 @@ namespace Game.Solving
             }
 
             _lastPosition = position;
-
-            _activeIndices ??= FilterActiveIndices(stack);
-
+            _activeIndices ??= PokerHelper.FilterActiveIndices(stack);
             var numPlayers = _activeIndices.Count;
-
             stack = _activeIndices.Select(i => stack[i]).ToList();
 
             if (_prevPokerResults != null)
             {
-                var remappedStacks = RemapPreviousStacks(stack, _activeIndices, _prevActiveIndices,
+                var remappedStacks = PokerHelper.RemapPreviousStacks(stack, _activeIndices, _prevActiveIndices,
                     _prevPokerResults.MatchResults.Stacks);
                 _prevPokerResults = _prevPokerResults with
                 {
@@ -190,8 +138,8 @@ namespace Game.Solving
                 _nickNamesAtPos[i].Add(nicknames[i]);
             }
 
-            position = RemapPlace(position, _activeIndices, _numPlayers);
-            opponents = RemapPlace(opponents, _activeIndices.Where(x => x != 0).Select(x => x - 1).ToList(),
+            position = PokerHelper.RemapPlace(position, _activeIndices, _numPlayers);
+            opponents = PokerHelper.RemapPlace(opponents, _activeIndices.Where(x => x != 0).Select(x => x - 1).ToList(),
                 _numPlayers - 1);
 
             PokerPosition? pokerPosition = position.GetPokerPosition(numPlayers);
@@ -204,8 +152,7 @@ namespace Game.Solving
             
             var statsRelative = GetPlayerStatsRelative(opponentsInGame);
 
-            var (monteCarloResult, bestLayout) =
-                SolvePlayerLayout(playerCards, opponents, flopCards, turnCards, riverCards, statsRelative);
+            var (monteCarloResult, bestLayout) = PokerHelper.SolvePlayerLayout(playerCards, opponents, flopCards, turnCards, riverCards, statsRelative);
             var playerFold =
                 _gameActions.FirstOrDefault(x => x.PlayerIndex == 1 && x.ActionType == PokerActionType.Fold);
             if (bestLayout == null && playerFold == null)
@@ -225,7 +172,7 @@ namespace Game.Solving
                 pokerPosition,
                 opponentsInGame.ToImmutableList(),
                 phase,
-                true, null);
+                true, null!);
 
             // Initialize snapshots if they're not set
             _prevPokerResults ??= pokerResult;
@@ -241,7 +188,7 @@ namespace Game.Solving
                 // Always infer actions since the start of the phase
                 if (_prevPokerResults != pokerResult)
                 {
-                    var gameBets = InferActions(
+                    var gameBets = PokerHelper.InferActions(
                         _previousPhase,
                         _prevPokerResults.MatchResults.Stacks,
                         matchResults.Stacks,
@@ -272,8 +219,8 @@ namespace Game.Solving
             if (isDecision && monteCarloResult.HasValue && pot.HasValue)
             {
                 var evResult = EvCalculator.CalculateEv(_gameActions, monteCarloResult.Value, pot.Value);
-                Log.Debug(evResult);
-                        
+                DebuggingLogs(evResult);
+
                 pokerResult = pokerResult with {EvResult = evResult};
             }
 
@@ -292,49 +239,40 @@ namespace Game.Solving
 
             return pokerResult;
         }
-
-        private List<PlayerStatsRelative> GetPlayerStatsRelative(List<bool> opponentsInGame)
+        
+        private void InitializeMatchers()
         {
-            var statsRelative = new List<PlayerStatsRelative>();
-            
-            // Add stats for each opponent still in the game
-            for (int i = 0; i < opponentsInGame.Count; i++)
-            {
-                if (opponentsInGame[i])
-                {
-                    var normalizedNickName = string.Empty;
-                    if (_nickNamesAtPos.ContainsKey(i + 1) && _nickNamesAtPos[i + 1].Count > 0)
-                    {
-                        normalizedNickName = NormalizedInputSelector.GetNormalizedFromInputs(_nickNamesAtPos[i + 1]);
-                        
-                        // Try to find similar nickname in player stats
-                        var similarKey = FuzzyKeyFinder.FindSimilarKey(_playerStats.Keys, normalizedNickName, maxDistance: 2);
-                        if (similarKey != null)
-                        {
-                            normalizedNickName = similarKey;
-                        }
-                    }
-                    
-                    // Get player stats or use default values if not found
-                    PlayerStats playerStats = new PlayerStats();
-                    if (!string.IsNullOrEmpty(normalizedNickName) && _playerStats.TryGetValue(normalizedNickName, out var stat))
-                    {
-                        // Convert PlayerStats to PlayerStatsRelative
-                        statsRelative.Add(stat.ToRelativeStats());
-                    }
-                }
-            }
+            var settings = new PokerBoardSettingsParser(Board);
+            _numPlayers = settings.Players;
 
-            return statsRelative;
+            _flop = new Flop(Board);
+            _turn = new Turn(Board);
+            _river = new River(Board);
+            _playerCards = new PlayerCards(Board);
+            _position = new Position(Board, _numPlayers);
+            _opponent = new Opponent(Board, _numPlayers - 1);
+            _stack = new Stack(_numPlayers);
+            _nickname = new Nickname(_numPlayers);
+            _decision = new Decision(Board);
+            _pot = new Pot();
+            _currentStreetContributions = new decimal[_numPlayers];
         }
 
-        private static List<int> FilterActiveIndices(IEnumerable<decimal?> stack)
+        private ReconResults GetReconResults()
         {
-            return stack
-                .Select((s, index) => new {StackValue = s, Index = index})
-                .Where(x => x.StackValue.HasValue)
-                .Select(x => x.Index)
-                .ToList();
+            var playerResult = GetResult(nameof(PlayerCards));
+            var flopResult = GetResult(nameof(Flop));
+            var turnResult = GetResult(nameof(Turn));
+            var riverResult = GetResult(nameof(River));
+            var positionResults = GetResultsPrefixed(nameof(Position)).ToList();
+            var opponentResults = GetResultsPrefixed(nameof(Opponent)).ToList();
+            var stackResults = GetResultsPrefixed(nameof(Stack)).ToList();
+            var nicknameResults = GetResultsPrefixed(nameof(Nickname)).ToList();
+            var decisionResult = GetResult(nameof(Decision));
+            var potResult = GetResult(nameof(Pot));
+
+            return new ReconResults(playerResult, flopResult, turnResult, riverResult, positionResults,
+                opponentResults, stackResults, nicknameResults, decisionResult, potResult);
         }
 
         private void ClearPropertiesOnNewPhase(int numPlayers)
@@ -343,7 +281,6 @@ namespace Game.Solving
             _currentStreetHighestBet = 0;
             _lastActionThisStreet = new PokerActionType[numPlayers];
         }
-
 
         private GameBets FillWithId(GameBets gameBets)
         {
@@ -357,32 +294,6 @@ namespace Game.Solving
             }
 
             return gameBets;
-        }
-
-        private static List<decimal?> RemapPreviousStacks(
-            List<decimal?> stack,
-            List<int> activeIndices,
-            List<int> prevActiveIndices,
-            List<decimal?> prevStacks)
-        {
-            if (prevStacks == null)
-            {
-                return stack.ToList();
-            }
-
-            if (stack.Count < prevStacks.Count)
-            {
-                return activeIndices.Select(i => i < prevStacks.Count ? prevStacks[i] : 0).ToList();
-            }
-
-            if (stack.Count > prevStacks.Count && prevActiveIndices != null)
-            {
-                return activeIndices
-                    .Select(activeIndex => prevActiveIndices.IndexOf(activeIndex))
-                    .Select((prevIndex, i) => prevIndex != -1 ? prevStacks[prevIndex] : stack[i]).ToList();
-            }
-
-            return prevStacks;
         }
 
         private void RemoveRedundantChecks(IEnumerable<PlayerAction> gameBetsActions, PokerPhase phase)
@@ -444,10 +355,7 @@ namespace Game.Solving
                     playerIndex, _gameActions);
             }
 
-            if (DebugFlags.HasFlag(PokerDebugFlags.PlayerStatistics))
-                Log.Debug(_playerStats.ToDebugString());
-                
-            // Save player statistics to the database
+            DebuggingLogsForPlayerStats();
             SavePlayerStatsToDatabase();
         }
         
@@ -463,13 +371,10 @@ namespace Game.Solving
                     return;
                     
                 // Create a new repository instance
-                var repository = new Game.Datalayer.GameRepository();
+                var repository = new GameRepository();
                 
                 // Update player stats in the database
                 repository.UpdateStats(_playerStats);
-                
-                if (DebugFlags.HasFlag(PokerDebugFlags.PlayerStatistics))
-                    Log.Debug("Player statistics saved to database successfully");
             }
             catch (Exception ex)
             {
@@ -522,27 +427,7 @@ namespace Game.Solving
             return isCorrectPot;
         }
 
-        private static (MonteCarloResult? monteCarloResult, PokerLayouts? bestLayout) SolvePlayerLayout(
-            List<Card> playerCards,
-            Place opponents, IList<Card> flopCards, IList<Card> turnCards, IList<Card> riverCards, List<PlayerStatsRelative> stats)
-        {
-            MonteCarloResult? monteCarloResult = null;
-            PokerLayouts? bestLayout = null;
-            if (playerCards.Count != 0)
-            {
-                int countPlayers = opponents.Count + 1; // +1 for the player
-                monteCarloResult = ComputeMonteCarloResult(playerCards,
-                    flopCards.Union(turnCards).Union(riverCards).ToList(),
-                    countPlayers, stats);
-                var allCards = playerCards.Union(flopCards).Union(turnCards).Union(riverCards).ToArray();
-                var layoutResolver = new LayoutResolver(new CardLayout(allCards));
-                bestLayout = layoutResolver.PokerLayout;
-            }
-
-            return (monteCarloResult, bestLayout);
-        }
-        
-        private IEnumerable<ReconResult> GetResultsPrefixed(string name)
+        private List<ReconResult> GetResultsPrefixed(string name)
         {
             return _state.Where(x => x.Key.StartsWith(name)).OrderBy(x => x.Key)
                 .Select(x => x.Value).ToList();
@@ -553,260 +438,59 @@ namespace Game.Solving
             _state.TryGetValue(name, out var result);
             return result;
         }
-
-        private static MonteCarloResult ComputeMonteCarloResult(IEnumerable<Card> myCards, IEnumerable<Card> boardCards,
-            int numOfPlayers, List<PlayerStatsRelative> stats)
+        
+        private void InitializePlayerStatsFromDatabase()
         {
-            RandomSetDefinition arg = new RandomSetDefinition
+            try
             {
-                MyLayout = new CardLayout(myCards.ToArray()),
-                NumOfPlayers = numOfPlayers,
-                Board = boardCards.ToArray()
-            };
-
-            var result = EquityCalculator.CalculateTwoStageEquityWithStats(arg, 250, stats);
-            return result;
+                var repository = new GameRepository();
+                
+                var dbPlayerStats = repository.GetAllStats();
+                
+                if (dbPlayerStats is {Count: > 0})
+                {
+                    foreach (var kvp in dbPlayerStats)
+                    {
+                        _playerStats[kvp.Nickname.Name] = kvp.ToStatsRelative().ToStats();
+                    }
+                    
+                    Log.Info($"Loaded {_playerStats.Count} player statistics from database");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Error loading player statistics from database", ex);
+            }
         }
 
-        private static GameBets InferActions(
-            PokerPhase phase,
-            IList<decimal?> previousStacks,
-            IList<decimal?> currentStacks,
-            IList<bool> opponentsInGame,
-            IList<bool> previousOpponentsInGame,
-            int dealerPosition,
-            int numPlayers,
-            StartingBets startingBets,
-            IList<decimal> currentStreetContributions,
-            ref decimal currentStreetHighestBet,
-            PokerActionType[] lastActionThisStreet)
+        private List<PlayerStatsRelative> GetPlayerStatsRelative(List<bool> opponentsInGame)
         {
-            if (previousStacks.Count == 0) return new GameBets([], new StartingBets(0, 0, 0));
-            var actions = new List<PlayerAction>();
-
-            // Calculate stack differences
-            var contributions = new decimal[previousStacks.Count];
-            for (int i = 0; i < previousStacks.Count; i++)
+            var statsRelative = new List<PlayerStatsRelative>();
+            
+            // Add stats for each opponent still in the game
+            for (var i = 0; i < opponentsInGame.Count; i++)
             {
-                if (previousStacks[i].HasValue && currentStacks[i].HasValue)
-                    contributions[i] = previousStacks[i].Value - currentStacks[i].Value;
-            }
-
-            // First pass - identify ante amount from players not in game and blind amounts
-
-            if (startingBets == null)
-            {
-                var (ante, smallBlind, bigBlind) = DeduceBlindsBasingOnPosition(dealerPosition, contributions);
-
-                if (smallBlind < 0 || bigBlind < 0)
+                if (!opponentsInGame[i]) continue;
+                var normalizedNickName = string.Empty;
+                if (_nickNamesAtPos.ContainsKey(i + 1) && _nickNamesAtPos[i + 1].Count > 0)
                 {
-                    (ante, smallBlind, bigBlind) = DeduceBlindsBasingOnContributions(contributions);
-                    startingBets = new StartingBets(ante, smallBlind, bigBlind);
-                    actions.AddRange(contributions.Select((x, i) =>
-                        new PlayerAction(i + 1, PokerActionType.Put, x, PokerPhase.None)));
-                }
-                else
-                {
-                    startingBets = new StartingBets(ante, smallBlind, bigBlind);
-
-                    actions.Add(new PlayerAction(dealerPosition % numPlayers + 1, PokerActionType.Put,
-                        smallBlind + ante,
-                        phase));
-                    actions.Add(new PlayerAction((dealerPosition + 1) % numPlayers + 1, PokerActionType.Put,
-                        bigBlind + ante,
-                        phase));
-                    for (int i = 0; i < numPlayers - 2; i++)
+                    normalizedNickName = NormalizedInputSelector.GetNormalizedFromInputs(_nickNamesAtPos[i + 1]);
+                        
+                    // Try to find similar nickname in player stats
+                    var similarKey = FuzzyKeyFinder.FindSimilarKey(_playerStats.Keys, normalizedNickName, maxDistance: 2);
+                    if (similarKey != null)
                     {
-                        actions.Add(new PlayerAction((dealerPosition + 2 + i) % numPlayers + 1,
-                            PokerActionType.Put, ante, phase));
+                        normalizedNickName = similarKey;
                     }
                 }
-            }
-
-            if (phase == PokerPhase.Preflop && currentStreetHighestBet < startingBets.BigBlind)
-            {
-                currentStreetHighestBet = startingBets.BigBlind;
-            }
-
-            // Process actions for active players
-            if (phase != PokerPhase.None)
-            {
-                for (int k = 0; k < numPlayers; k++)
+                    
+                if (!string.IsNullOrEmpty(normalizedNickName) && _playerStats.TryGetValue(normalizedNickName, out var stat))
                 {
-                    var i = (dealerPosition + k) % numPlayers;
-                    bool wasInGame = (i == 0) || (previousOpponentsInGame?[i - 1] ?? false);
-                    bool isInGame = (i == 0) || opponentsInGame[i - 1];
-
-                    // 1) FOLD: if seat was in but now is out
-                    if (wasInGame && !isInGame)
-                    {
-                        actions.Add(new PlayerAction(i + 1, PokerActionType.Fold, 0, phase));
-                        lastActionThisStreet[i] = PokerActionType.Fold;
-                        continue;
-                    }
-
-                    // 2) STILL IN
-                    if (wasInGame)
-                    {
-                        decimal amountPutIn = contributions[i];
-                        bool isAllIn = currentStacks[i] == 0;
-
-                        if (amountPutIn > 0)
-                        {
-                            // Existing logic: Bet/Call/Raise/AllIn
-                            currentStreetContributions[i] += amountPutIn;
-
-                            var actionType = DetermineActionType(
-                                currentStreetHighestBet,
-                                currentStreetContributions[i],
-                                isAllIn
-                            );
-
-                            actions.Add(new PlayerAction(i + 1, actionType, amountPutIn, phase));
-                            lastActionThisStreet[i] = actionType;
-
-                            // Possibly update the highest bet
-                            if (currentStreetContributions[i] > currentStreetHighestBet)
-                                currentStreetHighestBet = currentStreetContributions[i];
-                        }
-                        else
-                        {
-                            bool alreadyChecked = lastActionThisStreet[i] != PokerActionType.None;
-
-                            bool noOutstandingBet = currentStreetContributions[i] >= currentStreetHighestBet;
-
-                            if (!alreadyChecked && noOutstandingBet)
-                            {
-                                actions.Add(new PlayerAction(i + 1, PokerActionType.Check, 0, phase));
-                                lastActionThisStreet[i] = PokerActionType.Check;
-                            }
-                        }
-                    }
+                    statsRelative.Add(stat.ToRelativeStats());
                 }
             }
 
-            return new GameBets(actions.ToImmutableList(), startingBets);
-        }
-
-        private static PokerActionType DetermineActionType(
-            decimal currentStreetHighestBet,
-            decimal playerContributionInThisStreet,
-            bool isAllIn
-        )
-        {
-            if (isAllIn)
-                return PokerActionType.AllIn;
-
-            if (currentStreetHighestBet == 0)
-            {
-                return PokerActionType.Bet;
-            }
-
-            if (playerContributionInThisStreet <= currentStreetHighestBet)
-            {
-                return PokerActionType.Call;
-            }
-
-            if (playerContributionInThisStreet > currentStreetHighestBet)
-            {
-                return PokerActionType.Raise;
-            }
-
-            throw new InvalidOperationException("Unable to determine action type.");
-        }
-
-        private static Place RemapPlace(Place p, IList<int> active, int originalNumPlayers)
-        {
-            var remappedPlace = new Place();
-            var origPlaceBooleans = p.Places(originalNumPlayers);
-
-            for (int i = 0; i < origPlaceBooleans.Count; i++)
-            {
-                if (origPlaceBooleans[i] && active.Contains(i))
-                {
-                    var newIndex = active.IndexOf(i);
-                    remappedPlace.Add(newIndex);
-                }
-            }
-
-            return remappedPlace;
-        }
-
-        private static (decimal ante, decimal smallBlind, decimal bigBlind) DeduceBlindsBasingOnPosition(
-            int dealerPosition,
-            decimal[] contributions)
-        {
-            int sbPos = (dealerPosition + 1) % contributions.Length;
-            int bbPos = (dealerPosition + 2) % contributions.Length;
-            decimal ante = 0;
-            decimal smallBlind = 0;
-            decimal bigBlind = 0;
-            for (int i = 0; i < contributions.Length; i++)
-            {
-                var playerPos = (i + 1) % contributions.Length;
-                var isSmallBlind = playerPos == sbPos;
-                var isBigBlind = playerPos == bbPos;
-                var contribution = contributions[i];
-                if (!isSmallBlind && !isBigBlind && ante == 0 && contribution > 0)
-                {
-                    ante = contribution;
-                }
-
-                if (isSmallBlind)
-                {
-                    smallBlind = contribution;
-                }
-
-                if (isBigBlind)
-                {
-                    bigBlind = contribution;
-                }
-            }
-
-            smallBlind -= ante;
-            bigBlind -= ante;
-
-            if (smallBlind <= 0)
-            {
-                smallBlind = bigBlind / 2;
-            }
-
-            if (bigBlind <= 0)
-            {
-                bigBlind = smallBlind * 2;
-            }
-
-            return (ante, smallBlind, bigBlind);
-        }
-
-        private static (decimal Ante, decimal SmallBlind, decimal BigBlind) DeduceBlindsBasingOnContributions(
-            decimal[] contributions)
-        {
-            var validContribs = (contributions.Any(x => x > 0)
-                ? contributions.Where(x => x > 0)
-                : contributions).ToArray();
-
-            var groups = validContribs.GroupBy(x => x).ToList();
-            decimal ante = groups
-                .Where(g => g.Key > 0 && g.Count() > 1)
-                .OrderByDescending(g => g.Count())
-                .ThenBy(g => g.Key)
-                .Select(g => g.Key)
-                .FirstOrDefault();
-
-            var extras = validContribs.Distinct()
-                .Where(x => x > ante)
-                .Select(x => x - ante)
-                .OrderBy(x => x)
-                .ToList();
-
-            var (smallBlind, bigBlind) = extras.Count switch
-            {
-                0 => (0m, 0m),
-                _ => (extras.First(), 2 * extras.First())
-            };
-
-            return (ante, smallBlind, bigBlind);
+            return statsRelative;
         }
 
         #region Debbuging methods
@@ -864,56 +548,23 @@ namespace Game.Solving
                 }
             }
         }
-
-        #endregion
-
-        /// <summary>
-        /// Initializes player statistics from the database
-        /// </summary>
-        private void InitializePlayerStatsFromDatabase()
+        
+        private void DebuggingLogs(EvResult evResult)
         {
-            try
+            if (DebugFlags.HasFlag(PokerDebugFlags.Ev))
             {
-                // Create a new repository instance
-                var repository = new GameRepository();
-                
-                // Get all player stats from the database
-                var dbPlayerStats = repository.GetAllStats();
-                
-                if (dbPlayerStats != null && dbPlayerStats.Count > 0)
-                {
-                    // Convert database stats to in-memory PlayerStats objects
-                    foreach (var kvp in dbPlayerStats)
-                    {
-                        _playerStats[kvp.Nickname.Name] = ConvertToPlayerStats(kvp.ToStatsRelative());
-                    }
-                    
-                    if (DebugFlags.HasFlag(PokerDebugFlags.PlayerStatistics))
-                        Log.Debug($"Loaded {_playerStats.Count} player statistics from database");
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error("Error loading player statistics from database", ex);
+                Log.Debug(evResult);
             }
         }
         
-        /// <summary>
-        /// Converts PlayerStatsRelative from database to PlayerStats for in-memory use
-        /// </summary>
-        private PlayerStats ConvertToPlayerStats(PlayerStatsRelative relativeStats)
+        private void DebuggingLogsForPlayerStats()
         {
-            return new PlayerStats
+            if (DebugFlags.HasFlag(PokerDebugFlags.PlayerStatistics))
             {
-                Hands = relativeStats.Hands,
-                VPIP = (int)(relativeStats.VPIP * relativeStats.Hands / 100),
-                PFR = (int)(relativeStats.PFR * relativeStats.Hands / 100),
-                ThreeBet = (int)(relativeStats.ThreeBet * relativeStats.Hands / 100),
-                FoldToThreeBet = (int)(relativeStats.FoldToThreeBet * relativeStats.Hands / 100),
-                CBetFlop = (int)(relativeStats.CBetFlop * relativeStats.Hands / 100),
-                FoldToCBetFlop = (int)(relativeStats.FoldToCBetFlop * relativeStats.Hands / 100),
-                WTSD = (int)(relativeStats.WTSD * relativeStats.Hands / 100)
-            };
+                Log.Debug(_playerStats.ToDebugString());
+            }
         }
+
+        #endregion
     }
 }

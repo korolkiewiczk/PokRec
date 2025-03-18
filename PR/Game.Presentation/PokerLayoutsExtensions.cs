@@ -1,7 +1,7 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
+using PT.Poker.Model;
 
-namespace PT.Poker.Model;
+namespace Game.Presentation;
 
 public static class PokerLayoutsExtensions
 {

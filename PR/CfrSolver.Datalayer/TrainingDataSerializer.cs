@@ -25,7 +25,7 @@ namespace CfrSolver.Datalayer
 
         public class TrainingMetadata
         {
-            public int Iterations { get; set; }
+            public int Iterations { get; init; }
         }
 
         public static void SaveTrainingData(string tableName, Node rootNode, NodeGenConfig config, int iterations)

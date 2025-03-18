@@ -8,5 +8,6 @@ public enum PokerDebugFlags
     MatchResults = 2,
     ActionRecognition = 4,
     PlayerStatistics = 8,
-    All = StateResults | MatchResults | ActionRecognition | PlayerStatistics
+    Ev = 16,
+    All = StateResults | MatchResults | ActionRecognition | PlayerStatistics | Ev
 }

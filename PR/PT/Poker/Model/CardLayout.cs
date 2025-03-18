@@ -21,9 +21,7 @@ namespace PT.Poker.Model
         public IMark GetMark()
         {
             var resolver = new LayoutResolver(this);
-
-            var cardPowerResolver = new CardPowerResolver(resolver.BestLayout);
-            var layoutPower = cardPowerResolver.Resolve();
+            var layoutPower = CardPowerResolver.Resolve(resolver.BestLayout);
 
             return new PokerMark(resolver.PokerLayout, layoutPower);
         }

@@ -22,6 +22,24 @@ public static class PlayerStatsExtensions
             WTSD: (double) stats.WTSD / stats.Hands * 100
         );
     }
+    
+    /// <summary>
+    /// Converts PlayerStatsRelative from database to PlayerStats for in-memory use
+    /// </summary>
+    public static PlayerStats ToStats(this PlayerStatsRelative relativeStats)
+    {
+        return new PlayerStats
+        {
+            Hands = relativeStats.Hands,
+            VPIP = (int)(relativeStats.VPIP * relativeStats.Hands / 100),
+            PFR = (int)(relativeStats.PFR * relativeStats.Hands / 100),
+            ThreeBet = (int)(relativeStats.ThreeBet * relativeStats.Hands / 100),
+            FoldToThreeBet = (int)(relativeStats.FoldToThreeBet * relativeStats.Hands / 100),
+            CBetFlop = (int)(relativeStats.CBetFlop * relativeStats.Hands / 100),
+            FoldToCBetFlop = (int)(relativeStats.FoldToCBetFlop * relativeStats.Hands / 100),
+            WTSD = (int)(relativeStats.WTSD * relativeStats.Hands / 100)
+        };
+    }
 
     public static string ToDebugString(this Dictionary<string, PlayerStats> playersStats)
     {

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Game.Common.Model;
 
+namespace Game.Utils;
+
 public static class PlayerHandEquityAdjuster
 {
     // Constants for stat baselines and adjustment factors
@@ -22,8 +24,11 @@ public static class PlayerHandEquityAdjuster
 
     // Constants for weighting based on hands played
     private const int MIN_HANDS_FOR_ADJUSTMENT = 10;
-    private const int MAX_HANDS_FOR_WEIGHT = 100; // Reference for convergence target
-    private const double HANDS_EXP_GROWTH_RATE = 0.05117; // Derived so that at 100 hands weight ~ 0.99
+    private const int MAX_HANDS_FOR_WEIGHT = 100;
+    private const double TARGET_WEIGHT_AT_MAX = 0.99; // 99% weight at MAX_HANDS_FOR_WEIGHT
+
+    private static readonly double HANDS_EXP_GROWTH_RATE =
+        -Math.Log(1 - TARGET_WEIGHT_AT_MAX) / (MAX_HANDS_FOR_WEIGHT - MIN_HANDS_FOR_ADJUSTMENT);
 
     /// <summary>
     /// Adjusts a dictionary of base hand equities using the player's statistical profile.
@@ -76,7 +81,7 @@ public static class PlayerHandEquityAdjuster
             return new PlayerStatsRelative(0, 0, 0, 0, 0, 0, 0, 0);
 
         return new PlayerStatsRelative(
-            Hands: (int)(stats.Sum(s => s.Hands) / stats.Count), // Optional averaging for total hands
+            Hands: stats.Sum(s => s.Hands) / stats.Count, // Optional averaging for total hands
             VPIP: weightedVPIP / totalWeight,
             PFR: weightedPFR / totalWeight,
             ThreeBet: weightedThreeBet / totalWeight,

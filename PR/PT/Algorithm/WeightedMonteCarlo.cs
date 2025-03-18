@@ -26,7 +26,8 @@ namespace PT.Algorithm
             double smallerWeighted = 0;
             double totalWeight = 0;
 
-            Parallel.For(0, _n, new ParallelOptions() {MaxDegreeOfParallelism = Environment.ProcessorCount}, () => (betterLocal: 0.0, smallerLocal: 0.0, weightLocal: 0.0),
+            Parallel.For(0, _n, new ParallelOptions() {MaxDegreeOfParallelism = Environment.ProcessorCount}, 
+                () => (betterLocal: 0.0, smallerLocal: 0.0, weightLocal: 0.0),
                 (i, _, local) =>
                 {
                     var item = new T();

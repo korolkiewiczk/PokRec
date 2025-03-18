@@ -19,5 +19,5 @@ public class MultiPlayerGameState
     /// <summary>
     /// A list of statistics for each opponent currently in the hand.
     /// </summary>
-    public List<PlayerStatsRelative> OpponentStats { get; set; } = new List<PlayerStatsRelative>();
+    public List<PlayerStatsRelative> OpponentStats { get; set; } = new();
 }

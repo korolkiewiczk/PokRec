@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using PT.Algorithm.Model;
@@ -23,7 +24,8 @@ namespace PT.Algorithm
             var better = 0;
             var smaller = 0;
 
-            Parallel.For(0, _n, () => (betterLocal: 0, smallerLocal: 0),
+            Parallel.For(0, _n,  new ParallelOptions() {MaxDegreeOfParallelism = Environment.ProcessorCount}, 
+                () => (betterLocal: 0, smallerLocal: 0),
                 (i, _, local) =>
                 {
                     var item = new T();

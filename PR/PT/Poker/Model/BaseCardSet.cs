@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using PT.Interfaces;
 
 namespace PT.Poker.Model
@@ -8,8 +7,8 @@ namespace PT.Poker.Model
     public abstract class BaseCardSet<T> : IEncounter, IRandomGenerated<T>
     {
         protected CardLayout[] _cardLayouts;
-        protected int _compareMyLayout;
-        protected static readonly Random RandomGenerator = new();
+        private int _compareMyLayout;
+        private readonly Random _randomGenerator = new();
 
         protected BaseCardSet()
         {
@@ -33,13 +32,13 @@ namespace PT.Poker.Model
             Set(array, card.CardColor, card.CardType);
         }
 
-        protected static Card RandomCard(byte[,] array)
+        protected Card RandomCard(byte[,] array)
         {
             var attempts = 1000;
             do
             {
-                var color = RandomGenerator.Next(4);
-                var type = RandomGenerator.Next(13);
+                var color = _randomGenerator.Next(4);
+                var type = _randomGenerator.Next(13);
                 if (array[color, type] == 0)
                 {
                     var result = new Card((CardColor)color, (CardType)type);

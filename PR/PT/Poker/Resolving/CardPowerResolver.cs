@@ -3,18 +3,11 @@ using PT.Poker.Model;
 
 namespace PT.Poker.Resolving
 {
-    public class CardPowerResolver
+    public static class CardPowerResolver
     {
-        private readonly CardLayout _layout;
-
-        public CardPowerResolver(CardLayout layout)
+        public static int Resolve(CardLayout layout)
         {
-            _layout = layout;
-        }
-
-        public int Resolve()
-        {
-            return _layout.Cards.Sum(x => x.Power);
+            return layout.Cards.Sum(x => x.Power);
         }
     }
 }

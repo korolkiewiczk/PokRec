@@ -1,4 +1,3 @@
-using Common;
 using Game.Common.Model;
 
 namespace Game.Utils
@@ -8,8 +7,8 @@ namespace Game.Utils
         // Define the “middle” positions, in the order you want them to appear
         // after seat #1 (Button) but before last two seats (BB, SB).
         // You can extend this list if you want more UTG+X seats for >10 handed, etc.
-        private static readonly PokerPosition[] MiddlePositions = new[]
-        {
+        private static readonly PokerPosition[] MiddlePositions =
+        [
             PokerPosition.CO,
             PokerPosition.HJ,
             PokerPosition.LJ,
@@ -20,7 +19,7 @@ namespace Game.Utils
             PokerPosition.UTG4,
             PokerPosition.UTG5
             // etc. Add more if needed for very large tables.
-        };
+        ];
 
         public static PokerPosition GetPokerPosition(this Place place, int totalPlayers)
         {

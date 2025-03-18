@@ -92,7 +92,7 @@ public class MultiPlayerStrategyEngine
         {
             if (action.StartsWith(nameof(OpType.Raise)[0]) || action.StartsWith(nameof(OpType.All)[0]))
             {
-                blendedStrategy[action] = (float)(blendedStrategy[action] * multiwayAggressiveFactor);
+                blendedStrategy[action] = (float)(blendedStrategy[action] * multiwayAggressiveFactor); // what about other actions - sum to 1.0
             }
         }
 

@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using PT.Algorithm.Model;
 using PT.Interfaces;
-using PT.Poker.Resolving;
 
 namespace PT.Poker.Model
 {
@@ -67,7 +65,7 @@ namespace PT.Poker.Model
             Update();
         }
 
-        private static (CardLayout, double) GenerateWeightedOpponentHand(byte[,] usedCards,
+        private (CardLayout, double) GenerateWeightedOpponentHand(byte[,] usedCards,
             Dictionary<string, double> handEquities)
         {
             var card1 = RandomCard(usedCards);
