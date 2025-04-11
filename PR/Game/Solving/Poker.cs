@@ -152,7 +152,7 @@ namespace Game.Solving
             
             var statsRelative = GetPlayerStatsRelative(opponentsInGame);
 
-            var (monteCarloResult, bestLayout) = PokerHelper.SolvePlayerLayout(playerCards, opponents, flopCards, turnCards, riverCards, statsRelative);
+            var (monteCarloResult, bestLayout) = PokerHelper.SolvePlayerLayout(playerCards, opponents, flopCards, turnCards, riverCards, statsRelative, 250);
             var playerFold =
                 _gameActions.FirstOrDefault(x => x.PlayerIndex == 1 && x.ActionType == PokerActionType.Fold);
             if (bestLayout == null && playerFold == null)

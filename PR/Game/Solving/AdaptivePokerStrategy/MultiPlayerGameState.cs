@@ -14,7 +14,7 @@ public class MultiPlayerGameState
     /// The base game state for our decision engine.
     /// This should be the same type as used by the heads-up PokerDecisionEngine.
     /// </summary>
-    public PokerDecisionEngine.GameState BaseGameState { get; set; }
+    public GameState BaseGameState { get; set; }
 
     /// <summary>
     /// A list of statistics for each opponent currently in the hand.

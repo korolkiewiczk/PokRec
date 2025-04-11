@@ -48,8 +48,9 @@ public static class PokerHelper
     }
 
     public static (MonteCarloResult? monteCarloResult, PokerLayouts? bestLayout) SolvePlayerLayout(
-        List<Card> playerCards,
-        Place opponents, IList<Card> flopCards, IList<Card> turnCards, IList<Card> riverCards, List<PlayerStatsRelative> stats)
+        IList<Card> playerCards,
+        Place opponents, IList<Card> flopCards, IList<Card> turnCards, IList<Card> riverCards, List<PlayerStatsRelative> stats, 
+        int monteCarloIterations = 250)
     {
         MonteCarloResult? monteCarloResult = null;
         PokerLayouts? bestLayout = null;
@@ -58,7 +59,7 @@ public static class PokerHelper
             int countPlayers = opponents.Count + 1; // +1 for the player
             monteCarloResult = ComputeEquityWithStats(playerCards,
                 flopCards.Union(turnCards).Union(riverCards).ToList(),
-                countPlayers, stats);
+                countPlayers, stats, monteCarloIterations);
             var allCards = playerCards.Union(flopCards).Union(turnCards).Union(riverCards).ToArray();
             var layoutResolver = new LayoutResolver(new CardLayout(allCards));
             bestLayout = layoutResolver.PokerLayout;
@@ -68,7 +69,7 @@ public static class PokerHelper
     }
 
     private static MonteCarloResult ComputeEquityWithStats(IEnumerable<Card> myCards, IEnumerable<Card> boardCards,
-        int numOfPlayers, List<PlayerStatsRelative> stats)
+        int numOfPlayers, List<PlayerStatsRelative> stats, int monteCarloIterations = 250)
     {
         RandomSetDefinition arg = new RandomSetDefinition
         {
@@ -77,7 +78,7 @@ public static class PokerHelper
             Board = boardCards.ToArray()
         };
 
-        var result = EquityCalculator.CalculateTwoStageEquityWithStats(arg, 250, stats);
+        var result = EquityCalculator.CalculateTwoStageEquityWithStats(arg, monteCarloIterations, stats);
         return result;
     }
 

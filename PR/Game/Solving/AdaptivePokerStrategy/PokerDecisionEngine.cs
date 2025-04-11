@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using CfrSolver.Interfaces;
 using CfrSolver.Model;
 using CfrSolver.Utils;
 using Game.Common.Model;
-using PT.Poker.Model;
+using Game.Solving;
+using PlayerAction = Game.Common.Model.PlayerAction;
 
 namespace Game.Solving.AdaptivePokerStrategy
 {
@@ -16,8 +18,10 @@ namespace Game.Solving.AdaptivePokerStrategy
     public class PokerDecisionEngine
     {
         private readonly IBoardGenerator _boardGenerator;
-        private readonly Node[] _gtoRootNodes; // Multiple GTO databases
+        private readonly Node[] _gtoRootNodes;
         private readonly OpponentAdjustmentConfig _opponentAdjustmentConfig;
+        private readonly List<int> _possibleRaiseValues;
+        private readonly int _monteCarloIterations;
 
         /// <summary>
         /// Initializes a new instance of the PokerDecisionEngine.
@@ -25,26 +29,17 @@ namespace Game.Solving.AdaptivePokerStrategy
         /// <param name="boardGenerator">Provides board abstraction generation.</param>
         /// <param name="gtoRootNodes">An array of GTO root nodes representing different GTO databases.</param>
         /// <param name="opponentAdjustmentConfig">Configuration for opponent adjustment superparameters.</param>
+        /// <param name="possibleRaiseValues"></param>
+        /// <param name="monteCarloIterations"></param>
         public PokerDecisionEngine(IBoardGenerator boardGenerator, Node[] gtoRootNodes,
-            OpponentAdjustmentConfig opponentAdjustmentConfig)
+            OpponentAdjustmentConfig opponentAdjustmentConfig, List<int> possibleRaiseValues, 
+            int monteCarloIterations)
         {
             _boardGenerator = boardGenerator;
             _gtoRootNodes = gtoRootNodes;
             _opponentAdjustmentConfig = opponentAdjustmentConfig;
-        }
-
-        /// <summary>
-        /// Encapsulates the current game state for decision making.
-        /// </summary>
-        public class GameState
-        {
-            public int CurrentPlayer { get; set; }
-            public int Round { get; set; }
-            public List<string> ActionHistory { get; set; } = [];
-            public float Pay { get; set; }
-            public List<string> PossibleActions { get; set; } = [];
-            public Card[] PlayerHoleCards { get; set; }
-            public BoardInfo Board { get; set; }
+            _possibleRaiseValues = possibleRaiseValues;
+            _monteCarloIterations = monteCarloIterations;
         }
 
         /// <summary>
@@ -61,63 +56,51 @@ namespace Game.Solving.AdaptivePokerStrategy
 
             int handAbstraction = board.Hand;
             string[] actionsArray = gameState.ActionHistory.ToArray();
-            int numActions = gameState.PossibleActions.Count;
 
             // Step 2: Interpolate strategies from multiple GTO databases.
             // Each strategy is weighted by 1/penalty.
-            float[] combinedStrategy = new float[numActions];
+            Dictionary<string, float> combinedStrategy = new Dictionary<string, float>();
             float totalWeight = 0.0f;
 
             foreach (var rootNode in _gtoRootNodes)
             {
                 var (node, penalty) = rootNode.GetInterpolatedNodeForActionSequence(actionsArray);
-                if (penalty >= NodeExtensions.MaxPenalty + 1) continue;
+                if (penalty >= NodeExtensions.MaxPenalty) continue;
                 float weight = 1.0f / penalty;
-                float[] baseStrategy =
-                    node.GetAverageStrategy(handAbstraction);
+                Dictionary<string, float> baseStrategy = node.GetAverageStrategyWithActions(handAbstraction);
 
-                // Ensure strategy length matches the legal actions.
-                if (baseStrategy.Length != numActions || baseStrategy.Length == 0)
+                foreach (var kvp in baseStrategy)
                 {
-                    baseStrategy = new float[numActions];
-                    for (int i = 0; i < numActions; i++)
-                        baseStrategy[i] = 1.0f / numActions;
-                }
-
-                for (int i = 0; i < numActions; i++)
-                {
-                    combinedStrategy[i] += baseStrategy[i] * weight;
+                    combinedStrategy.TryAdd(kvp.Key, 0);
+                    combinedStrategy[kvp.Key] += kvp.Value * weight;
                 }
 
                 totalWeight += weight;
             }
 
+            Dictionary<string, float> actionProbabilities;
             if (totalWeight > 0)
             {
-                for (int i = 0; i < combinedStrategy.Length; i++)
-                {
-                    combinedStrategy[i] /= totalWeight;
-                }
+                NormalizeProbabilities(combinedStrategy, totalWeight);
+                actionProbabilities = combinedStrategy;
             }
             else
             {
-                // TODO we need fallback to another method - GTO not provide valid strategy
-                // we can use for example EV computation
-                return null;
-            }
-
-            // Map combined strategy to the current legal actions.
-            Dictionary<string, float> actionProbabilities = new Dictionary<string, float>();
-            for (int i = 0; i < numActions; i++)
-            {
-                actionProbabilities[gameState.PossibleActions[i]] = combinedStrategy[i];
+                actionProbabilities = GetEquityBasedStrategy(gameState, opponentStats, _possibleRaiseValues);
             }
 
             // Step 3: Adjust the strategy based on opponent statistics.
             actionProbabilities = AdjustStrategyForOpponent(actionProbabilities, opponentStats);
 
             // Step 4: Normalize the final distribution.
-            float totalProbability = actionProbabilities.Values.Sum();
+            NormalizeProbabilities(actionProbabilities);
+
+            return actionProbabilities;
+        }
+
+        private static void NormalizeProbabilities(Dictionary<string, float> actionProbabilities, float? totalProbabilities = null)
+        {
+            float totalProbability = totalProbabilities ?? actionProbabilities.Values.Sum();
             if (totalProbability > 0)
             {
                 foreach (var key in actionProbabilities.Keys.ToList())
@@ -125,8 +108,138 @@ namespace Game.Solving.AdaptivePokerStrategy
                     actionProbabilities[key] /= totalProbability;
                 }
             }
+        }
 
-            return actionProbabilities;
+        /// <summary>
+        /// Computes action probabilities based on equity calculation when a full GTO strategy is not available.
+        /// Candidate actions always include: Fold ("F"), Call ("C"), Raise ("R{x}") for each value in possibleRaiseValues, and All–In ("A{amount}").
+        /// </summary>
+        /// <param name="gameState">The current state of the game.</param>
+        /// <param name="opponentStats">The opponent's relative statistics.</param>
+        /// <param name="possibleRaiseValues">
+        /// The list of possible raise amounts. These values are typically computed based on the current pot (gameState.Pay).
+        /// </param>
+        /// <returns>A dictionary mapping each candidate action label to its probability weight.</returns>
+        private Dictionary<string, float> GetEquityBasedStrategy(
+            GameState gameState,
+            PlayerStatsRelative opponentStats,
+            List<int> possibleRaiseValues)
+        {
+            // Convert the historical action strings into PlayerAction objects.
+            var baseActions = ExtractPlayerActions(gameState);
+
+            // Prepare the opponent configuration.
+            var place = new Place();
+            place.Add(0); // Add one opponent position.
+
+            // Compute the Monte Carlo simulation result based on the current board and player's hole cards.
+            var (monteCarloResult, _) = PokerHelper.SolvePlayerLayout(
+                gameState.PlayerHoleCards,
+                place,
+                gameState.FlopCards,
+                gameState.TurnCard,
+                gameState.RiverCard,
+                [opponentStats], _monteCarloIterations);
+
+            // Build the candidate actions list as tuples: (ActionType, Amount, Label)
+            var candidateActionsAndLabels = new List<(PokerActionType ActionType, decimal Amount, string Label)>
+            {
+                // Fold candidate
+                (PokerActionType.Fold, 0, "F"),
+                // Call candidate
+                (PokerActionType.Call, 0, "C")
+            };
+
+            // Raise candidates: one candidate per amount in possibleRaiseValues.
+            if (possibleRaiseValues != null)
+            {
+                foreach (var raise in possibleRaiseValues)
+                {
+                    candidateActionsAndLabels.Add((PokerActionType.Raise, raise, $"R{raise}"));
+                }
+            }
+
+            // All–In candidate: using the player's entire stack.
+            candidateActionsAndLabels.Add((PokerActionType.AllIn, gameState.PlayerStack, $"A{gameState.PlayerStack}"));
+
+            // Evaluate each candidate action by appending it to the base action history.
+            var evBasedProbabilities = new Dictionary<string, float>();
+            float totalProbabilityWeight = 0.0f;
+
+            foreach (var candidate in candidateActionsAndLabels)
+            {
+                // Create a new action history that includes the candidate action.
+                var candidateActionHistory = new List<PlayerAction>(baseActions)
+                {
+                    new(1, candidate.ActionType, candidate.Amount, PokerPhase.Preflop)
+                };
+
+                // Calculate the EV for the candidate action.
+                var evResult = EvCalculator.CalculateEv(
+                    candidateActionHistory,
+                    monteCarloResult.Value,
+                    (decimal)gameState.Pay
+                );
+
+                // Map the EV (specifically netEv) to a probability weight via an exponential function.
+                float probabilityWeight = (float)Math.Exp((double)evResult.NetEv);
+                evBasedProbabilities[candidate.Label] = probabilityWeight;
+                totalProbabilityWeight += probabilityWeight;
+            }
+
+            // Normalize the probabilities.
+            if (totalProbabilityWeight > 0)
+            {
+                NormalizeProbabilities(evBasedProbabilities, totalProbabilityWeight);
+            }
+            else
+            {
+                // If all EVs are negative, fall back to an equal distribution.
+                int totalActions = evBasedProbabilities.Count;
+                foreach (var key in evBasedProbabilities.Keys.ToList())
+                {
+                    evBasedProbabilities[key] = 1.0f / totalActions;
+                }
+            }
+
+            return evBasedProbabilities;
+        }
+
+        private static List<PlayerAction> ExtractPlayerActions(GameState gameState)
+        {
+            var baseActions = new List<PlayerAction>();
+            foreach (var actionStr in gameState.ActionHistory)
+            {
+                if (string.IsNullOrEmpty(actionStr))
+                    continue;
+
+                // The first character represents the action type.
+                char actionChar = actionStr[0];
+
+                // Parse any trailing characters as the amount.
+                decimal amount = 0;
+                if (actionStr.Length > 1)
+                {
+                    var amountPart = actionStr[1..];
+                    if (!decimal.TryParse(amountPart, out amount))
+                    {
+                        amount = 0;
+                    }
+                }
+
+                PokerActionType actionType = actionChar switch
+                {
+                    'F' => PokerActionType.Fold,
+                    'C' => PokerActionType.Call,
+                    'R' => PokerActionType.Raise,
+                    'A' => PokerActionType.AllIn,
+                    _   => PokerActionType.Check
+                };
+
+                baseActions.Add(new PlayerAction(1, actionType, amount, PokerPhase.Preflop));
+            }
+
+            return baseActions;
         }
 
         /// <summary>
@@ -137,7 +250,7 @@ namespace Game.Solving.AdaptivePokerStrategy
             PlayerStatsRelative opponentStats)
         {
             // Helper: Linear interpolation.
-            double Lerp(double a, double b, double t) => a + (b - a) * t;
+            double Lerp(double a, double b, double t) => a + (b - a) * Math.Clamp(t, 0.0, 1.0);
 
             // --- Aggressive actions (Raise/All-in: "R"/"A") ---
             // Use FoldToThreeBet, WTSD, and ThreeBet.
@@ -146,13 +259,15 @@ namespace Game.Solving.AdaptivePokerStrategy
             double wtsdFactor = opponentStats.WTSD >= 50.0
                 ? Lerp(1.0, 0.8, (opponentStats.WTSD - 50.0) / 10.0) * _opponentAdjustmentConfig.WTSDWeight
                 : Lerp(1.0, 1.1, (50.0 - opponentStats.WTSD) / 10.0) * _opponentAdjustmentConfig.WTSDWeight;
-            double threeBetFactor = Lerp(1.0, 0.95, opponentStats.ThreeBet / 100.0) * _opponentAdjustmentConfig.ThreeBetWeight;
+            double threeBetFactor = Lerp(1.0, 0.95, opponentStats.ThreeBet / 100.0) *
+                                    _opponentAdjustmentConfig.ThreeBetWeight;
             double aggressiveAdjustment = foldTo3BetFactor * wtsdFactor * threeBetFactor;
 
             // --- Calling actions ("C") ---
             // Use VPIP and CBetFlop.
             double vpipFactor = Lerp(1.0, 0.9, opponentStats.VPIP / 100.0) * _opponentAdjustmentConfig.VPIPWeight;
-            double cbetFlopFactor = Lerp(1.0, 1.05, opponentStats.CBetFlop / 100.0) * _opponentAdjustmentConfig.CBetFlopWeight;
+            double cbetFlopFactor = Lerp(1.0, 1.05, opponentStats.CBetFlop / 100.0) *
+                                    _opponentAdjustmentConfig.CBetFlopWeight;
             double callAdjustment = vpipFactor * cbetFlopFactor;
 
             // --- Folding actions ("F") ---

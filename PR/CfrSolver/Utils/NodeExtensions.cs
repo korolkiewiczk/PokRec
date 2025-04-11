@@ -5,14 +5,17 @@ namespace CfrSolver.Utils;
 public static class NodeExtensions
 {
     /// <summary>
-    /// Gets the average strategy for the specified hand.
+    /// Computes the average strategy (as probabilities) for the given hand.
     /// </summary>
-    public static float[] GetAverageStrategy(this Node node, int hand)
+    /// <param name="node">The node containing strategy data and children.</param>
+    /// <param name="hand">The hand for which to compute the strategy.</param>
+    /// <returns>An array of probabilities for each child action.</returns>
+    private static float[] ComputeAverageProbabilities(Node node, int hand)
     {
         int maskedHand = hand & node.ComputeMask();
+        // If no data exists, return a default uniform strategy.
         if (!node.Data.TryGetValue(maskedHand, out var data))
         {
-            // Return a default uniform strategy if no data exists.
             float[] uniform = new float[node.Children.Length];
             for (int a = 0; a < uniform.Length; a++)
                 uniform[a] = 1.0f / node.Children.Length;
@@ -27,6 +30,33 @@ public static class NodeExtensions
         }
 
         return avgStrategy;
+    }
+
+    /// <summary>
+    /// Gets the average strategy for the specified hand.
+    /// </summary>
+    public static float[] GetAverageStrategy(this Node node, int hand)
+    {
+        return ComputeAverageProbabilities(node, hand);
+    }
+
+    /// <summary>
+    /// Gets the average strategy for the specified hand as a dictionary where each key is
+    /// the action (obtained via PlayerAction.ToShortString) and each value is the corresponding probability.
+    /// </summary>
+    public static Dictionary<string, float> GetAverageStrategyWithActions(this Node node, int hand)
+    {
+        // Get the computed probabilities.
+        float[] probabilities = ComputeAverageProbabilities(node, hand);
+
+        var strategyWithActions = new Dictionary<string, float>();
+        for (int a = 0; a < node.Children.Length; a++)
+        {
+            string actionKey = node.Children[a].Action.ToShortString();
+            strategyWithActions[actionKey] = probabilities[a];
+        }
+
+        return strategyWithActions;
     }
 
     /// <summary>
@@ -131,8 +161,8 @@ public static class NodeExtensions
         if (typeActual == nameof(OpType.Raise)[0] || typeActual == nameof(OpType.All)[0])
         {
             if (actual.Length > 1 && target.Length > 1 &&
-                int.TryParse(actual.Substring(1), out int numberActual) &&
-                int.TryParse(target.Substring(1), out int numberTarget))
+                int.TryParse(actual[1..], out var numberActual) &&
+                int.TryParse(target[1..], out var numberTarget))
             {
                 return CalculatePenalty(numberActual, numberTarget, PenaltyBase);
             }
@@ -143,15 +173,15 @@ public static class NodeExtensions
         // For actions like "F" or "C", if not an exact match, assign a high penalty.
         return MaxPenalty;
     }
-    
+
     private static float CalculatePenalty(float numberActual, float numberTarget, float maxPenalty)
     {
         if (numberActual == 0) return 1;
-        // Ograniczamy wynik do MaxPenalty, jeśli numberActual jest poza zakresem [0.5 * numberTarget, 2 * numberTarget]
         if (numberActual < 0.5 * numberTarget || numberActual > 2 * numberTarget)
         {
             return maxPenalty;
         }
+
         var ratio = Math.Abs(numberActual - numberTarget) / numberTarget;
         var penalty = ratio * maxPenalty;
         return penalty;

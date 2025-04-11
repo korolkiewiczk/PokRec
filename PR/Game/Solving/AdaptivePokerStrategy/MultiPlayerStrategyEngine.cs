@@ -65,9 +65,12 @@ public class MultiPlayerStrategyEngine
             pairwiseStrategies.Add(strategy);
         }
 
+        // Get all possible actions from the first strategy (they should be the same for all strategies)
+        var possibleActions = pairwiseStrategies[0].Keys.ToList();
+
         // Average the pairwise strategies for each legal action.
         Dictionary<string, float> avgPairwiseStrategy = new Dictionary<string, float>();
-        foreach (var action in baseState.PossibleActions)
+        foreach (var action in possibleActions)
         {
             avgPairwiseStrategy[action] = pairwiseStrategies.Average(s => s[action]);
         }
@@ -78,7 +81,7 @@ public class MultiPlayerStrategyEngine
 
         // 3. Blend composite and pairwise strategies using configured weights.
         Dictionary<string, float> blendedStrategy = new Dictionary<string, float>();
-        foreach (var action in baseState.PossibleActions)
+        foreach (var action in possibleActions)
         {
             blendedStrategy[action] =
                 (float)(_scalingConfig.CompositeWeight * compositeStrategy[action] +
@@ -88,11 +91,22 @@ public class MultiPlayerStrategyEngine
         // 4. Apply a multiway scaling factor for aggressive actions.
         // As the number of opponents increases, reduce aggressive (raise/all-in) actions.
         double multiwayAggressiveFactor = 1.0 / (1.0 + (numOpponents - 1) * _scalingConfig.AggressiveScalingCoefficient);
+        
+        // Calculate total probability of aggressive actions
+        float aggressiveTotal = blendedStrategy
+            .Where(kvp => kvp.Key.StartsWith(nameof(OpType.Raise)[0]) || kvp.Key.StartsWith(nameof(OpType.All)[0]))
+            .Sum(kvp => kvp.Value);
+            
+        float nonAggressiveTotal = blendedStrategy
+            .Where(kvp => !(kvp.Key.StartsWith(nameof(OpType.Raise)[0]) || kvp.Key.StartsWith(nameof(OpType.All)[0])))
+            .Sum(kvp => kvp.Value);
+
+        // Scale aggressive actions and redistribute the difference to non-aggressive actions
         foreach (var action in blendedStrategy.Keys.ToList())
         {
             if (action.StartsWith(nameof(OpType.Raise)[0]) || action.StartsWith(nameof(OpType.All)[0]))
             {
-                blendedStrategy[action] = (float)(blendedStrategy[action] * multiwayAggressiveFactor); // what about other actions - sum to 1.0
+                blendedStrategy[action] = (float)(blendedStrategy[action] * multiwayAggressiveFactor);
             }
         }
 
