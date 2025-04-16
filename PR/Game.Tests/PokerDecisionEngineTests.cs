@@ -344,39 +344,4 @@ public class PokerDecisionEngineTests : PokerTestsBase
         Assert.True(result["F"] > result["C"]);
         Assert.True(result["F"] > result["R2"]);
     }
-
-    private class TestBoardGenerator : IBoardGenerator
-    {
-        public BoardInfo GenerateBoardAbstraction()
-        {
-            return new BoardInfo
-            {
-                Hand = 1,
-                OppHand = 0,
-                WinningPlayer = 0
-            };
-        }
-
-        public BoardInfo GenerateBoardAbstraction(Card[] playerHoleCards, Card[] flopCards, Card[] turnCards,
-            Card[] riverCards)
-        {
-            return new BoardInfo
-            {
-                Hand = 1,
-                OppHand = 0,
-                WinningPlayer = 0
-            };
-        }
-
-        public BoardInfo GenerateBoardAbstractionRandom(Card[] playerHoleCards, Card[] flopCards, Card[] turnCards,
-            Card[] riverCards, Card[] opponentHoleCards)
-        {
-            return new BoardInfo
-            {
-                Hand = 1,
-                OppHand = 0,
-                WinningPlayer = 0
-            };
-        }
-    }
 }

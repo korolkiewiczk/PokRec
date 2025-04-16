@@ -15,8 +15,8 @@ public record GameState
     public float Pay { get; set; }
     public Card[] PlayerHoleCards { get; set; }
     public BoardInfo Board { get; set; }
-    public Card[] FlopCards { get; set; }
-    public Card[] TurnCard { get; set; }
-    public Card[] RiverCard { get; set; }
+    public Card[] FlopCards { get; set; } = [];
+    public Card[] TurnCard { get; set; } = [];
+    public Card[] RiverCard { get; set; } = [];
     public decimal PlayerStack { get; set; }
 }
