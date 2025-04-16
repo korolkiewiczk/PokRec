@@ -17,31 +17,25 @@ namespace Game.Utils
         /// </summary>
         /// <param name="pokerResults">The poker results to convert</param>
         /// <param name="gameActions">The list of player actions in the game</param>
+        /// <param name="startingBets"></param>
         /// <returns>A new GameState instance containing the converted data</returns>
         public static GameState ConvertToGameState(PokerResults pokerResults, List<Common.Model.PlayerAction> gameActions, 
             StartingBets startingBets)
         {
             var gameState = new GameState
             {
-                CurrentPlayer = (int)pokerResults.PokerPosition,
-                Round = (int)pokerResults.Phase,
                 ActionHistory = gameActions.Select(a => a.ActionType.ToString()).ToList(),
-                Pay = (float)pokerResults.EvResult.Pot,
-                PlayerHoleCards = pokerResults.MatchResults.PlayerCards.ToArray(),
-                Board = new BoardInfo
+                Pot = pokerResults.EvResult.Pot,
+                PlayerCards = pokerResults.MatchResults.PlayerCards.ToArray(),
+                BoardInfo = new BoardInfo
                 {
                     Hand = pokerResults.BestLayout != null ? (int)pokerResults.BestLayout : 0
                 },
                 FlopCards = pokerResults.MatchResults.Flop.ToArray(),
                 TurnCard = pokerResults.MatchResults.Turn.ToArray(),
-                RiverCard = pokerResults.MatchResults.River.ToArray()
+                RiverCard = pokerResults.MatchResults.River.ToArray(),
+                PlayerStack = pokerResults.MatchResults.Stacks[0] / startingBets.SmallBlind ?? 0
             };
-
-            // Initialize player stack from match results
-            if (pokerResults.MatchResults.Stacks.Count > 0)
-            {
-                gameState.PlayerStack = pokerResults.MatchResults.Stacks[0] / startingBets.SmallBlind ?? 0;
-            }
 
             return gameState;
         }

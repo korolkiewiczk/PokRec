@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using CfrSolver.Interfaces;
 using CfrSolver.Model;
 using Game.Common.Model;
+using Game.Utils;
 
 namespace Game.Solving.AdaptivePokerStrategy;
 
@@ -18,7 +18,6 @@ public class MultiPlayerStrategyEngine
     // The heads-up decision engine (from previous solutions).
     private readonly PokerDecisionEngine _headsUpEngine;
     // Board generator used by the heads-up engine.
-    private readonly IBoardGenerator _boardGenerator;
     // Configuration for multi-player scaling.
     private readonly MultiPlayerScalingConfig _scalingConfig;
 
@@ -26,12 +25,10 @@ public class MultiPlayerStrategyEngine
     /// Initializes a new instance of the MultiPlayerStrategyEngine.
     /// </summary>
     /// <param name="headsUpEngine">An instance of the heads-up PokerDecisionEngine.</param>
-    /// <param name="boardGenerator">The board generator used to obtain board abstractions.</param>
     /// <param name="scalingConfig">Configuration for multi-player adjustments.</param>
-    public MultiPlayerStrategyEngine(PokerDecisionEngine headsUpEngine, IBoardGenerator boardGenerator, MultiPlayerScalingConfig scalingConfig)
+    public MultiPlayerStrategyEngine(PokerDecisionEngine headsUpEngine, MultiPlayerScalingConfig scalingConfig)
     {
         _headsUpEngine = headsUpEngine;
-        _boardGenerator = boardGenerator;
         _scalingConfig = scalingConfig;
     }
 
@@ -51,57 +48,48 @@ public class MultiPlayerStrategyEngine
         var baseState = mpState.BaseGameState;
         int numOpponents = mpState.OpponentStats.Count;
 
-        // Fallback: If only one opponent exists, use the heads-up engine directly.
         if (numOpponents == 1)
         {
             return _headsUpEngine.DecideAction(baseState, mpState.OpponentStats[0]);
         }
 
-        // 1. For each opponent, get a pairwise heads-up strategy.
-        List<Dictionary<string, float>> pairwiseStrategies = new List<Dictionary<string, float>>();
+        List<Dictionary<string, float>> pairwiseStrategies = [];
         foreach (var oppStats in mpState.OpponentStats)
         {
             var strategy = _headsUpEngine.DecideAction(baseState, oppStats);
             pairwiseStrategies.Add(strategy);
         }
 
-        // Get all possible actions from the first strategy (they should be the same for all strategies)
         var possibleActions = pairwiseStrategies[0].Keys.ToList();
 
-        // Average the pairwise strategies for each legal action.
-        Dictionary<string, float> avgPairwiseStrategy = new Dictionary<string, float>();
+        var avgPairwiseStrategy = new Dictionary<string, float>();
         foreach (var action in possibleActions)
         {
             avgPairwiseStrategy[action] = pairwiseStrategies.Average(s => s[action]);
         }
 
-        // 2. Compute composite opponent stats by aggregating all opponents.
         PlayerStatsRelative compositeStats = ComputeCompositeStats(mpState.OpponentStats);
         var compositeStrategy = _headsUpEngine.DecideAction(baseState, compositeStats);
 
-        // 3. Blend composite and pairwise strategies using configured weights.
         Dictionary<string, float> blendedStrategy = new Dictionary<string, float>();
         foreach (var action in possibleActions)
         {
             blendedStrategy[action] =
-                (float)(_scalingConfig.CompositeWeight * compositeStrategy[action] +
-                        _scalingConfig.PairwiseWeight * avgPairwiseStrategy[action]);
+                _scalingConfig.CompositeWeight * compositeStrategy[action] +
+                _scalingConfig.PairwiseWeight * avgPairwiseStrategy[action];
         }
 
-        // 4. Apply a multiway scaling factor for aggressive actions.
-        // As the number of opponents increases, reduce aggressive (raise/all-in) actions.
-        double multiwayAggressiveFactor = 1.0 / (1.0 + (numOpponents - 1) * _scalingConfig.AggressiveScalingCoefficient);
-        
-        // Calculate total probability of aggressive actions
-        float aggressiveTotal = blendedStrategy
-            .Where(kvp => kvp.Key.StartsWith(nameof(OpType.Raise)[0]) || kvp.Key.StartsWith(nameof(OpType.All)[0]))
-            .Sum(kvp => kvp.Value);
-            
-        float nonAggressiveTotal = blendedStrategy
-            .Where(kvp => !(kvp.Key.StartsWith(nameof(OpType.Raise)[0]) || kvp.Key.StartsWith(nameof(OpType.All)[0])))
-            .Sum(kvp => kvp.Value);
+        ApplyAggressiveFactor(numOpponents, blendedStrategy);
 
-        // Scale aggressive actions and redistribute the difference to non-aggressive actions
+        ProbabilityUtils.NormalizeProbabilities(blendedStrategy);
+
+        return blendedStrategy;
+    }
+
+    private void ApplyAggressiveFactor(int numOpponents, Dictionary<string, float> blendedStrategy)
+    {
+        double multiwayAggressiveFactor = 1.0 / (1.0 + (numOpponents - 1) * _scalingConfig.AggressiveScalingCoefficient);
+
         foreach (var action in blendedStrategy.Keys.ToList())
         {
             if (action.StartsWith(nameof(OpType.Raise)[0]) || action.StartsWith(nameof(OpType.All)[0]))
@@ -109,18 +97,6 @@ public class MultiPlayerStrategyEngine
                 blendedStrategy[action] = (float)(blendedStrategy[action] * multiwayAggressiveFactor);
             }
         }
-
-        // Normalize the final probability distribution.
-        float total = blendedStrategy.Values.Sum();
-        if (total > 0)
-        {
-            foreach (var key in blendedStrategy.Keys.ToList())
-            {
-                blendedStrategy[key] /= total;
-            }
-        }
-
-        return blendedStrategy;
     }
 
     /// <summary>
@@ -129,17 +105,17 @@ public class MultiPlayerStrategyEngine
     /// </summary>
     /// <param name="opponentStatsList">A list of opponent statistics.</param>
     /// <returns>A composite PlayerStatsRelative representing the aggregated opponent.</returns>
-    private PlayerStatsRelative ComputeCompositeStats(List<PlayerStatsRelative> opponentStatsList)
+    private static PlayerStatsRelative ComputeCompositeStats(List<PlayerStatsRelative> opponentStatsList)
     {
-        double totalHands = opponentStatsList.Sum(s => s.Hands);
-        double vpip = opponentStatsList.Sum(s => s.VPIP * s.Hands) / totalHands;
-        double pfr = opponentStatsList.Sum(s => s.PFR * s.Hands) / totalHands;
-        double threeBet = opponentStatsList.Sum(s => s.ThreeBet * s.Hands) / totalHands;
-        double foldToThreeBet = opponentStatsList.Sum(s => s.FoldToThreeBet * s.Hands) / totalHands;
-        double cBetFlop = opponentStatsList.Sum(s => s.CBetFlop * s.Hands) / totalHands;
-        double foldToCBetFlop = opponentStatsList.Sum(s => s.FoldToCBetFlop * s.Hands) / totalHands;
-        double wtsd = opponentStatsList.Sum(s => s.WTSD * s.Hands) / totalHands;
+        var totalHands = opponentStatsList.Sum(s => s.Hands);
+        var vpip = opponentStatsList.Sum(s => s.VPIP * s.Hands) / totalHands;
+        var pfr = opponentStatsList.Sum(s => s.PFR * s.Hands) / totalHands;
+        var threeBet = opponentStatsList.Sum(s => s.ThreeBet * s.Hands) / totalHands;
+        var foldToThreeBet = opponentStatsList.Sum(s => s.FoldToThreeBet * s.Hands) / totalHands;
+        var cBetFlop = opponentStatsList.Sum(s => s.CBetFlop * s.Hands) / totalHands;
+        var foldToCBetFlop = opponentStatsList.Sum(s => s.FoldToCBetFlop * s.Hands) / totalHands;
+        var wtsd = opponentStatsList.Sum(s => s.WTSD * s.Hands) / totalHands;
 
-        return new PlayerStatsRelative((int)totalHands, vpip, pfr, threeBet, foldToThreeBet, cBetFlop, foldToCBetFlop, wtsd);
+        return new PlayerStatsRelative(totalHands, vpip, pfr, threeBet, foldToThreeBet, cBetFlop, foldToCBetFlop, wtsd);
     }
 }

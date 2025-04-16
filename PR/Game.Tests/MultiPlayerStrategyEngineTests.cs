@@ -10,12 +10,11 @@ namespace Game.Tests;
 public class MultiPlayerStrategyEngineTests : PokerTestsBase
 {
     private readonly PokerDecisionEngine _headsUpEngine;
-    private readonly IBoardGenerator _boardGenerator;
     private readonly MultiPlayerScalingConfig _scalingConfig;
 
     public MultiPlayerStrategyEngineTests(ITestOutputHelper testOutputHelper) : base(testOutputHelper)
     {
-        _boardGenerator = new TestBoardGenerator();
+        IBoardGenerator boardGenerator = new TestBoardGenerator();
         Node[] gtoRootNodes =
         [
             new Node(0, new CfrSolver.Model.PlayerAction(OpType.Call, 0), Round.PreFlop, [], 0)
@@ -32,7 +31,7 @@ public class MultiPlayerStrategyEngineTests : PokerTestsBase
             FoldToCBetFlopWeight = 2.0f
         };
 
-        _headsUpEngine = new PokerDecisionEngine(_boardGenerator, gtoRootNodes, opponentAdjustmentConfig, [2, 4, 6, 8], 100);
+        _headsUpEngine = new PokerDecisionEngine(boardGenerator, gtoRootNodes, opponentAdjustmentConfig, [2, 4, 6, 8], 100);
         _scalingConfig = new MultiPlayerScalingConfig
         {
             CompositeWeight = 0.5f,
@@ -47,16 +46,14 @@ public class MultiPlayerStrategyEngineTests : PokerTestsBase
         // Arrange
         var gameState = new GameState
         {
-            CurrentPlayer = 0,
-            Round = 0,
             ActionHistory = ["R1", "R1"],
-            Pay = 100,
-            PlayerHoleCards =
+            Pot = 100,
+            PlayerCards =
             [
                 new Card(CardColor.Hearts, CardType.A),
                 new Card(CardColor.Spades, CardType.K)
             ],
-            Board = new BoardInfo()
+            BoardInfo = new BoardInfo()
         };
 
         var opponentStats = new PlayerStatsRelative(100, 25, 20, 8, 65, 45, 70, 35);
@@ -66,7 +63,7 @@ public class MultiPlayerStrategyEngineTests : PokerTestsBase
             OpponentStats = [opponentStats]
         };
 
-        var multiPlayerEngine = new MultiPlayerStrategyEngine(_headsUpEngine, _boardGenerator, _scalingConfig);
+        var multiPlayerEngine = new MultiPlayerStrategyEngine(_headsUpEngine, _scalingConfig);
 
         // Act
         var result = multiPlayerEngine.DecideActionMultiPlayer(mpState);
@@ -84,16 +81,15 @@ public class MultiPlayerStrategyEngineTests : PokerTestsBase
         // Arrange
         var gameState = new GameState
         {
-            CurrentPlayer = 0,
-            Round = 0,
             ActionHistory = ["R1", "R1"],
-            Pay = 100,
-            PlayerHoleCards =
+            Pot = 50,
+            PlayerCards =
             [
                 new Card(CardColor.Hearts, CardType.A),
                 new Card(CardColor.Spades, CardType.K)
             ],
-            Board = new BoardInfo()
+            BoardInfo = new BoardInfo(),
+            PlayerStack = 10
         };
 
         // Create two opponents with different playing styles
@@ -106,7 +102,7 @@ public class MultiPlayerStrategyEngineTests : PokerTestsBase
             OpponentStats = [tightOpponent, looseOpponent]
         };
 
-        var multiPlayerEngine = new MultiPlayerStrategyEngine(_headsUpEngine, _boardGenerator, _scalingConfig);
+        var multiPlayerEngine = new MultiPlayerStrategyEngine(_headsUpEngine, _scalingConfig);
 
         // Act
         var result = multiPlayerEngine.DecideActionMultiPlayer(mpState);
@@ -128,16 +124,14 @@ public class MultiPlayerStrategyEngineTests : PokerTestsBase
         // Arrange
         var gameState = new GameState
         {
-            CurrentPlayer = 0,
-            Round = 0,
             ActionHistory = ["R1", "R1"],
-            Pay = 100,
-            PlayerHoleCards =
+            Pot = 100,
+            PlayerCards =
             [
                 new Card(CardColor.Hearts, CardType.A),
                 new Card(CardColor.Spades, CardType.K)
             ],
-            Board = new BoardInfo()
+            BoardInfo = new BoardInfo()
         };
 
         var mpState = new MultiPlayerGameState
@@ -146,7 +140,7 @@ public class MultiPlayerStrategyEngineTests : PokerTestsBase
             OpponentStats = []
         };
 
-        var multiPlayerEngine = new MultiPlayerStrategyEngine(_headsUpEngine, _boardGenerator, _scalingConfig);
+        var multiPlayerEngine = new MultiPlayerStrategyEngine(_headsUpEngine, _scalingConfig);
 
         // Act & Assert
         Assert.Throws<ArgumentOutOfRangeException>(() => multiPlayerEngine.DecideActionMultiPlayer(mpState));
@@ -158,16 +152,14 @@ public class MultiPlayerStrategyEngineTests : PokerTestsBase
         // Arrange
         var gameState = new GameState
         {
-            CurrentPlayer = 0,
-            Round = 0,
             ActionHistory = ["R1", "R1"],
-            Pay = 100,
-            PlayerHoleCards =
+            Pot = 100,
+            PlayerCards =
             [
                 new Card(CardColor.Hearts, CardType.A),
                 new Card(CardColor.Spades, CardType.K)
             ],
-            Board = new BoardInfo()
+            BoardInfo = new BoardInfo()
         };
 
         var opponentStats = new PlayerStatsRelative(100, 25, 20, 8, 65, 45, 70, 35);
@@ -185,7 +177,7 @@ public class MultiPlayerStrategyEngineTests : PokerTestsBase
             OpponentStats = [opponentStats, opponentStats, opponentStats]
         };
 
-        var multiPlayerEngine = new MultiPlayerStrategyEngine(_headsUpEngine, _boardGenerator, _scalingConfig);
+        var multiPlayerEngine = new MultiPlayerStrategyEngine(_headsUpEngine, _scalingConfig);
 
         // Act
         var twoOpponentResult = multiPlayerEngine.DecideActionMultiPlayer(twoOpponentState);

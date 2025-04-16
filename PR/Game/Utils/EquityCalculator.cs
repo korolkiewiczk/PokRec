@@ -46,7 +46,7 @@ public static class EquityCalculator
     {
         var handEquities = GetOrGenerateHandEquities(basicIterations);
         var avgStats = PlayerHandEquityAdjuster.ComputeWeightedAverageStats(stats);
-        var adjHandEquities = PlayerHandEquityAdjuster.AdjustHandEquities(handEquities, avgStats);
+        var adjHandEquities = avgStats != null ? PlayerHandEquityAdjuster.AdjustHandEquities(handEquities, avgStats) : handEquities;
 
         // Convert to simulation parameters with the calculated equities
         var parameters = new SimulationParameters(randomSetDefinition, adjHandEquities);

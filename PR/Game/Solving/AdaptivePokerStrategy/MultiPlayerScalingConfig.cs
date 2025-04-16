@@ -12,15 +12,15 @@ public record MultiPlayerScalingConfig
     /// For example, if set to 0.1, then with 3 opponents the aggressive factor becomes
     /// 1 / (1 + (3-1)*0.1) ≈ 0.83.
     /// </summary>
-    public double AggressiveScalingCoefficient { get; set; } = 0.1;
+    public float AggressiveScalingCoefficient { get; set; } = 0.1f;
 
     /// <summary>
     /// Weight for the composite (aggregated opponent) strategy.
     /// </summary>
-    public double CompositeWeight { get; set; } = 0.5;
+    public float CompositeWeight { get; set; } = 0.5f;
 
     /// <summary>
     /// Weight for the average of pairwise strategies.
     /// </summary>
-    public double PairwiseWeight { get; set; } = 0.5;
+    public float PairwiseWeight { get; set; } = 0.5f;
 }

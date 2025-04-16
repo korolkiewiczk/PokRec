@@ -40,17 +40,15 @@ public class PokerDecisionEngineTests : PokerTestsBase
         // Arrange
         var gameState = new GameState
         {
-            CurrentPlayer = 0,
-            Round = 0,
             ActionHistory = ["R1", "R1"], // SB vs BB
-            Pay = 0,
+            Pot = 0,
             PlayerStack = 50,
-            PlayerHoleCards =
+            PlayerCards =
             [
                 new Card(CardColor.Hearts, CardType.A),
                 new Card(CardColor.Spades, CardType.K)
             ],
-            Board = new BoardInfo()
+            BoardInfo = new BoardInfo()
         };
 
         var opponentStats = new PlayerStatsRelative(100, 25, 20, 8, 65, 45, 70, 35);
@@ -71,17 +69,15 @@ public class PokerDecisionEngineTests : PokerTestsBase
         // Arrange
         var gameState = new GameState
         {
-            CurrentPlayer = 0,
-            Round = 1,
             ActionHistory = ["R1", "C", "C"], // Preflop action
-            Pay = 0,
+            Pot = 0,
             PlayerStack = 50,
-            PlayerHoleCards =
+            PlayerCards =
             [
                 new Card(CardColor.Hearts, CardType.A),
                 new Card(CardColor.Spades, CardType.K)
             ],
-            Board = new BoardInfo
+            BoardInfo = new BoardInfo
             {
                 Hand = 1 // Simplified hand strength for testing
             }
@@ -105,17 +101,15 @@ public class PokerDecisionEngineTests : PokerTestsBase
         // Arrange
         var gameState = new GameState
         {
-            CurrentPlayer = 0,
-            Round = 0,
             ActionHistory = ["C"],
-            Pay = 0,
+            Pot = 0,
             PlayerStack = 50,
-            PlayerHoleCards =
+            PlayerCards =
             [
                 new Card(CardColor.Hearts, CardType.A),
                 new Card(CardColor.Spades, CardType.K)
             ],
-            Board = new BoardInfo()
+            BoardInfo = new BoardInfo()
         };
 
         // Test with a tight opponent (low VPIP, high fold to 3bet)
@@ -144,17 +138,15 @@ public class PokerDecisionEngineTests : PokerTestsBase
         // Arrange
         var gameState = new GameState
         {
-            CurrentPlayer = 0,
-            Round = 0,
             ActionHistory = ["R1"],
-            Pay = 0,
+            Pot = 0,
             PlayerStack = 50,
-            PlayerHoleCards =
+            PlayerCards =
             [
                 new Card(CardColor.Diamonds, CardType.Q),
                 new Card(CardColor.Clubs, CardType.Q)
             ],
-            Board = new BoardInfo()
+            BoardInfo = new BoardInfo()
         };
 
         var opponentFoldsOftenStats = new PlayerStatsRelative(150, 20, 15, 8, 90, 50, 40, 40);
@@ -178,17 +170,15 @@ public class PokerDecisionEngineTests : PokerTestsBase
         // Arrange
         var gameState = new GameState
         {
-            CurrentPlayer = 0,
-            Round = 1,
             ActionHistory = ["R1", "C1", "C1"],
-            Pay = 0,
+            Pot = 0,
             PlayerStack = 50,
-            PlayerHoleCards =
+            PlayerCards =
             [
                 new Card(CardColor.Spades, CardType.J),
                 new Card(CardColor.Hearts, CardType.C10)
             ],
-            Board = new BoardInfo()
+            BoardInfo = new BoardInfo()
         };
 
         var frequentCBetOpponentStats = new PlayerStatsRelative(120, 30, 20, 10, 40, 90, 30, 50);
@@ -212,17 +202,15 @@ public class PokerDecisionEngineTests : PokerTestsBase
         // Arrange
         var gameState = new GameState
         {
-            CurrentPlayer = 0,
-            Round = 0,
             ActionHistory = ["R1", "R1"],
-            Pay = 0,
+            Pot = 0,
             PlayerStack = 50,
-            PlayerHoleCards =
+            PlayerCards =
             [
                 new Card(CardColor.Clubs, CardType.C9),
                 new Card(CardColor.Hearts, CardType.C8)
             ],
-            Board = new BoardInfo()
+            BoardInfo = new BoardInfo()
         };
 
         var aggressiveButFoldsToPressureStats = new PlayerStatsRelative(200, 30, 40, 15, 50, 60, 85, 35);
@@ -246,17 +234,15 @@ public class PokerDecisionEngineTests : PokerTestsBase
         // Arrange
         var gameState = new GameState
         {
-            CurrentPlayer = 0,
-            Round = 0,
             ActionHistory = ["R1", "R1"],
-            Pay = 100,
+            Pot = 100,
             PlayerStack = 50,
-            PlayerHoleCards =
+            PlayerCards =
             [
                 new Card(CardColor.Hearts, CardType.A),
                 new Card(CardColor.Spades, CardType.K)
             ],
-            Board = new BoardInfo()
+            BoardInfo = new BoardInfo()
         };
 
         var opponentStats = new PlayerStatsRelative(100, 25, 20, 8, 65, 45, 70, 35);
@@ -277,17 +263,15 @@ public class PokerDecisionEngineTests : PokerTestsBase
         // Arrange
         var gameState = new GameState
         {
-            CurrentPlayer = 0,
-            Round = 0,
             ActionHistory = ["R1", "R1"],
-            Pay = 2,
+            Pot = 2,
             PlayerStack = 50,
-            PlayerHoleCards =
+            PlayerCards =
             [
                 new Card(CardColor.Clubs, CardType.C2),
                 new Card(CardColor.Diamonds, CardType.C3)
             ], // Weak hand
-            Board = new BoardInfo(),
+            BoardInfo = new BoardInfo(),
         };
 
         var opponentStats = new PlayerStatsRelative(100, 25, 20, 8, 65, 45, 70, 35);
@@ -315,17 +299,15 @@ public class PokerDecisionEngineTests : PokerTestsBase
         // Arrange
         var gameState = new GameState
         {
-            CurrentPlayer = 0,
-            Round = 0,
             ActionHistory = ["R1", "R1", "C", "C"],
-            Pay = -50,
+            Pot = -50,
             PlayerStack = 50,
-            PlayerHoleCards =
+            PlayerCards =
             [
                 new Card(CardColor.Hearts, CardType.A),
                 new Card(CardColor.Spades, CardType.K)
             ],
-            Board = new BoardInfo()
+            BoardInfo = new BoardInfo()
         };
 
         var opponentStats = new PlayerStatsRelative(100, 25, 20, 8, 65, 45, 70, 35);

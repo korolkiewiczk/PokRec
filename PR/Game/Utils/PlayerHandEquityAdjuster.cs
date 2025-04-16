@@ -62,6 +62,7 @@ public static class PlayerHandEquityAdjuster
 
         foreach (var stat in stats)
         {
+            if (stat == null) continue;
             double weight = GetHandsWeight(stat.Hands);
             if (weight == 0)
                 continue;
@@ -78,7 +79,7 @@ public static class PlayerHandEquityAdjuster
         }
 
         if (totalWeight == 0)
-            return new PlayerStatsRelative(0, 0, 0, 0, 0, 0, 0, 0);
+            return null;
 
         return new PlayerStatsRelative(
             Hands: stats.Sum(s => s.Hands) / stats.Count, // Optional averaging for total hands

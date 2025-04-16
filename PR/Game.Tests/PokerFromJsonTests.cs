@@ -102,10 +102,9 @@ public class PokerFromJsonTests : PokerTestsBase
         // Group actions into heads-up matchups between Player1 and other players
         for (int playerN = 2; playerN <= numPlayers; playerN++)
         {
-            var pos = PokerActionExtraction.DeterminePosition(gameActions, playerN);
-            var filteredActions = PokerActionExtraction.ExtractActions(gameActions, playerN, pos);
+            var filteredActions = PokerActionExtraction.ExtractActions(gameActions, playerN);
             
-            _testOutputHelper.WriteLine($"Player1 with Player{playerN}. Player1 as {pos}");
+            _testOutputHelper.WriteLine($"Player1 with Player{playerN}.");
             if (filteredActions.Count != 0)
             {
                 foreach (var a in filteredActions)

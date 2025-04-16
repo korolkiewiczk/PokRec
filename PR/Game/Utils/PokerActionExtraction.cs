@@ -9,36 +9,6 @@ namespace Game.Utils
         private const int HeroPosition = 1;
 
         /// <summary>
-        /// Determines the position for hero (player 1) versus the given opponent (playerNum).
-        /// </summary>
-        public static int DeterminePosition(List<PlayerAction> actions, int playerNum)
-        {
-            var noneActions = actions
-                .Where(a => (a.PlayerIndex == HeroPosition || a.PlayerIndex == playerNum) && a.Phase == PokerPhase.None)
-                .ToList();
-
-            if (!noneActions.Any())
-            {
-                var filtered = actions
-                    .Where(a => a.PlayerIndex == HeroPosition || a.PlayerIndex == playerNum)
-                    .ToList();
-
-                if (filtered.Count < 2) return 0;
-
-                var heroIndex = filtered.FindIndex(a => a.PlayerIndex == HeroPosition);
-                var oppIndex = filtered.FindIndex(a => a.PlayerIndex == playerNum);
-                return heroIndex < oppIndex ? 1 : 0;
-            }
-
-            var heroPreflopIndex = noneActions.FindIndex(a => a.PlayerIndex == HeroPosition);
-            var oppPreflopIndex = noneActions.FindIndex(a => a.PlayerIndex == playerNum);
-
-            if (heroPreflopIndex != -1 && oppPreflopIndex != -1) return heroPreflopIndex > oppPreflopIndex ? 0 : 1;
-
-            return heroPreflopIndex == -1 ? 0 : 1;
-        }
-
-        /// <summary>
         /// Extracts a heads‐up action log from the full multi‐player log.
         /// Only actions from hero (player1) and the chosen opponent (playerNum) are kept.
         /// The parameter pos indicates position of hero:
@@ -50,8 +20,9 @@ namespace Game.Utils
         ///    a Fold is inserted; otherwise a Check.
         /// Processing stops as soon as one of the two players folds.
         /// </summary>
-        public static List<PlayerAction> ExtractActions(List<PlayerAction> actions, int playerNum, int pos)
+        public static List<PlayerAction> ExtractActions(List<PlayerAction> actions, int playerNum)
         {
+            var pos = PokerActionExtraction.DeterminePosition(actions, playerNum);
             var result = new List<PlayerAction>();
 
             // Filter for heads-up actions only (hero = 1 and opponent = playerNum)
@@ -176,6 +147,36 @@ namespace Game.Utils
                 result.AddRange(processedPhase);
                 phaseActions.Clear();
             }
+        }
+
+        /// <summary>
+        /// Determines the position for hero (player 1) versus the given opponent (playerNum).
+        /// </summary>
+        private static int DeterminePosition(List<PlayerAction> actions, int playerNum)
+        {
+            var noneActions = actions
+                .Where(a => (a.PlayerIndex == HeroPosition || a.PlayerIndex == playerNum) && a.Phase == PokerPhase.None)
+                .ToList();
+
+            if (!noneActions.Any())
+            {
+                var filtered = actions
+                    .Where(a => a.PlayerIndex == HeroPosition || a.PlayerIndex == playerNum)
+                    .ToList();
+
+                if (filtered.Count < 2) return 0;
+
+                var heroIndex = filtered.FindIndex(a => a.PlayerIndex == HeroPosition);
+                var oppIndex = filtered.FindIndex(a => a.PlayerIndex == playerNum);
+                return heroIndex < oppIndex ? 1 : 0;
+            }
+
+            var heroPreflopIndex = noneActions.FindIndex(a => a.PlayerIndex == HeroPosition);
+            var oppPreflopIndex = noneActions.FindIndex(a => a.PlayerIndex == playerNum);
+
+            if (heroPreflopIndex != -1 && oppPreflopIndex != -1) return heroPreflopIndex > oppPreflopIndex ? 0 : 1;
+
+            return heroPreflopIndex == -1 ? 0 : 1;
         }
     }
 }
